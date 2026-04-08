@@ -1246,7 +1246,7 @@
       <div class="btn-group-sep"></div>
 
       <!-- Grupo 1: Cadastro -->
-      <button class="btn-header cadastro" onclick="openModal('modalAluno')" title="Cadastrar novo aluno">➕ Aluno</button>
+      <button class="btn-header cadastro" onclick="abrirCadastroAluno()" title="Cadastrar novo aluno">➕ Aluno</button>
       <button class="btn-header cadastro" onclick="openModal('modalObs')"   title="Registrar observação">📝 Observação</button>
       <button class="btn-header cadastro" onclick="openModal('modalEscola')" title="Configurar dados da escola">⚙️ Escola</button>
 
@@ -1616,10 +1616,11 @@
   </main>
 </div>
 
-<!-- ===== MODAL: NOVO ALUNO ===== -->
+<!-- ===== MODAL: NOVO ALUNO / EDITAR ALUNO ===== -->
 <div class="modal-overlay" id="modalAluno">
   <div class="modal">
-    <div class="modal-title">👤 Cadastrar Novo Aluno</div>
+    <div class="modal-title" id="modalAlunoTitle">👤 Cadastrar Novo Aluno</div>
+    <input type="hidden" id="alunoEditId" value="">
     <div class="form-grid">
       <div class="form-group">
         <label class="field-label">Nome Completo *</label>
@@ -1662,7 +1663,7 @@
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal('modalAluno')">Cancelar</button>
-      <button class="btn btn-primary" onclick="cadastrarAluno()">✅ Cadastrar Aluno</button>
+      <button class="btn btn-primary" id="btnSalvarAluno" onclick="salvarAluno()">✅ Cadastrar Aluno</button>
     </div>
   </div>
 </div>
@@ -2779,6 +2780,7 @@ function renderFrequencia() {
     ${diasShow.map(d => `<th data-tip="Dia ${d}">${d}</th>`).join('')}
     <th>% Freq.</th>
     <th>Faltas</th>
+    <th>Ações</th>
   </tr></thead><tbody>`;
 
   alunosFiltrados.forEach(a => {
@@ -2810,6 +2812,12 @@ function renderFrequencia() {
         </div>
       </td>
       <td style="font-family:Consolas,'Courier New',monospace;font-size:0.78rem;color:${faltas > 5 ? 'var(--vermelho)':'var(--cinza-mid)'}">${faltas}</td>
+      <td style="white-space:nowrap">
+        <button onclick="abrirEditarAluno(${a.id})" title="Editar aluno"
+          style="border:none;background:rgba(36,113,163,0.12);color:var(--azul-principal);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:0.72rem;margin-right:3px">✏️</button>
+        <button onclick="excluirAluno(${a.id})" title="Excluir aluno"
+          style="border:none;background:rgba(192,57,43,0.10);color:var(--vermelho);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:0.72rem">🗑️</button>
+      </td>
     </tr>`;
   });
   html += '</tbody></table>';
@@ -3429,7 +3437,31 @@ function renderRelatorio() {
 }
 
 // ===== CADASTROS =====
-function cadastrarAluno() {
+function abrirEditarAluno(id) {
+  const a = alunos.find(a => a.id === id);
+  if (!a) return;
+  document.getElementById('alunoEditId').value = id;
+  document.getElementById('modalAlunoTitle').textContent = '✏️ Editar Dados do Aluno';
+  document.getElementById('btnSalvarAluno').textContent = '💾 Salvar Alterações';
+  document.getElementById('alunoNome').value = a.nome || '';
+  document.getElementById('alunoMatricula').value = a.matricula || '';
+  document.getElementById('alunoNasc').value = a.nasc || '';
+  document.getElementById('alunoResp').value = a.resp || '';
+  document.getElementById('alunoContato').value = a.contato || '';
+  document.getElementById('alunoEndereco').value = a.endereco || '';
+  if (document.getElementById('alunoObs')) document.getElementById('alunoObs').value = a.obsInicial || '';
+  // Preencher turma
+  const selTurma = document.getElementById('alunoTurma');
+  selTurma.value = a.turmaId;
+  onAlunoTurmaChange();
+  // Preencher ano individual (multisseriada)
+  const selAno = document.getElementById('alunoAno');
+  if (selAno && a.ano) selAno.value = a.ano;
+  openModal('modalAluno');
+}
+
+function salvarAluno() {
+  const editId = document.getElementById('alunoEditId').value;
   const nome = document.getElementById('alunoNome').value.trim();
   const mat = document.getElementById('alunoMatricula').value.trim();
   const turmaId = parseInt(document.getElementById('alunoTurma').value);
@@ -3437,28 +3469,89 @@ function cadastrarAluno() {
 
   const alunoAnoEl = document.getElementById('alunoAno');
   const alunoAnoVal = alunoAnoEl ? alunoAnoEl.value : '';
-  alunos.push({
-    id: Date.now(),
-    nome, matricula: mat, turmaId,
-    ano: alunoAnoVal,  // ano individual (relevante em multisseriadas)
-    nasc: document.getElementById('alunoNasc').value,
-    resp: document.getElementById('alunoResp').value,
-    contato: document.getElementById('alunoContato').value,
-    endereco: document.getElementById('alunoEndereco').value
-  });
+  const obsEl = document.getElementById('alunoObs');
 
-  if (turmaAtual && turmaId === turmaAtual.id) {
-    alunosFiltrados = alunos.filter(a => a.turmaId === turmaAtual.id);
+  if (editId) {
+    // MODO EDIÇÃO
+    const idx = alunos.findIndex(a => a.id === parseInt(editId));
+    if (idx === -1) { showToast('⚠️ Aluno não encontrado.', 'gold'); return; }
+    const idAnterior = alunos[idx].turmaId;
+    alunos[idx] = {
+      ...alunos[idx],
+      nome, matricula: mat, turmaId,
+      ano: alunoAnoVal,
+      nasc: document.getElementById('alunoNasc').value,
+      resp: document.getElementById('alunoResp').value,
+      contato: document.getElementById('alunoContato').value,
+      endereco: document.getElementById('alunoEndereco').value,
+      obsInicial: obsEl ? obsEl.value : (alunos[idx].obsInicial || '')
+    };
+    // Atualizar nome nas observações
+    observacoes.forEach(o => { if (o.alunoId === parseInt(editId)) o.alunoNome = nome; });
+    showToast('✅ Dados do aluno atualizados!');
+  } else {
+    // MODO CADASTRO
+    alunos.push({
+      id: Date.now(),
+      nome, matricula: mat, turmaId,
+      ano: alunoAnoVal,
+      nasc: document.getElementById('alunoNasc').value,
+      resp: document.getElementById('alunoResp').value,
+      contato: document.getElementById('alunoContato').value,
+      endereco: document.getElementById('alunoEndereco').value,
+      obsInicial: obsEl ? obsEl.value : ''
+    });
+    showToast('✅ Aluno cadastrado com sucesso!');
   }
 
+  if (turmaAtual) alunosFiltrados = alunos.filter(a => a.turmaId === turmaAtual.id);
   renderTurmasRapidas();
   atualizarStats();
   renderSecaoAtual();
   atualizarSelectAlunos();
   closeModal('modalAluno');
-  showToast('✅ Aluno cadastrado com sucesso!');
+  // Limpar campos e resetar para modo cadastro
+  document.getElementById('alunoEditId').value = '';
+  document.getElementById('modalAlunoTitle').textContent = '👤 Cadastrar Novo Aluno';
+  document.getElementById('btnSalvarAluno').textContent = '✅ Cadastrar Aluno';
   document.getElementById('alunoNome').value = '';
   document.getElementById('alunoMatricula').value = '';
+}
+
+function abrirCadastroAluno() {
+  document.getElementById('alunoEditId').value = '';
+  document.getElementById('modalAlunoTitle').textContent = '👤 Cadastrar Novo Aluno';
+  document.getElementById('btnSalvarAluno').textContent = '✅ Cadastrar Aluno';
+  document.getElementById('alunoNome').value = '';
+  document.getElementById('alunoMatricula').value = '';
+  document.getElementById('alunoNasc').value = '';
+  document.getElementById('alunoResp').value = '';
+  document.getElementById('alunoContato').value = '';
+  document.getElementById('alunoEndereco').value = '';
+  const obsEl = document.getElementById('alunoObs');
+  if (obsEl) obsEl.value = '';
+  document.getElementById('areaAnoAluno').style.display = 'none';
+  openModal('modalAluno');
+}
+
+// Manter compatibilidade com chamadas antigas
+function cadastrarAluno() { salvarAluno(); }
+
+function excluirAluno(id) {
+  const a = alunos.find(a => a.id === id);
+  if (!a) return;
+  if (!confirm(`Excluir o aluno "${a.nome}"?\n\nTodos os dados de frequência, notas e observações serão removidos. Esta ação não pode ser desfeita.`)) return;
+  alunos = alunos.filter(a => a.id !== id);
+  delete frequencia[id];
+  delete notas[id];
+  observacoes = observacoes.filter(o => o.alunoId !== id);
+  if (turmaAtual) alunosFiltrados = alunos.filter(a => a.turmaId === turmaAtual.id);
+  renderTurmasRapidas();
+  atualizarStats();
+  renderSecaoAtual();
+  atualizarSelectAlunos();
+  document.getElementById('badgeObs').textContent = observacoes.length;
+  showToast('🗑️ Aluno removido.', 'gold');
 }
 
 // ===== TURMAS MULTISSERIADAS — UI =====
