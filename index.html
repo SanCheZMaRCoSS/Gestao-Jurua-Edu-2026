@@ -2676,6 +2676,7 @@ function renderTurmasRapidas() {
   const el = document.getElementById('turmasRapidas');
   el.innerHTML = '';
   ordenarTurmas(turmas).filter(t => !seg || t.segmento === seg).forEach(t => {
+    const count = alunos.filter(a => a.turmaId === t.id).length;
     const isActive = turmaAtual && turmaAtual.id === t.id;
     el.innerHTML += `
       <div class="sidebar-item ${isActive ? 'active' : ''}" style="position:relative;padding-right:64px" onclick="selecionarTurmaById(${t.id})">
