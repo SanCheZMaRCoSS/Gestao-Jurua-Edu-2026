@@ -1,0 +1,3386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escola Municipal Pedro Paulo da Silva — Sistema de Gestão Escolar · 2026</title>
+<style>
+  :root {
+    --azul-principal: #2471a3;
+    --azul-mid: #2e86c1;
+    --azul-light: #ebf5fb;
+    --azul-glow: #7fb3d3;
+    --dourado: #c9972b;
+    --dourado-light: #fdf3e0;
+    --off-white: #f7f6f2;
+    --cinza-text: #3a3a3a;
+    --cinza-mid: #6b7280;
+    --cinza-border: #d1d5db;
+    --vermelho: #c0392b;
+    --azul: #1e5fa6;
+    --branco: #ffffff;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    --radius: 12px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* Impede QUALQUER scroll horizontal na página.
+     Todo overflow horizontal fica contido nos seus containers. */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  body {
+    font-family: system-ui, sans-serif;
+    background: var(--off-white);
+    color: var(--cinza-text);
+    min-height: 100vh;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: linear-gradient(135deg, #1a5276 0%, var(--azul-principal) 55%, #2980b9 100%);
+    color: white;
+    padding: 0;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    /* Garante que o fundo azul cobre 100% da largura em qualquer tela */
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .header-inner {
+    width: 100%;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-sizing: border-box;
+    flex-wrap: nowrap;
+    /* SEM overflow:hidden aqui — deixar o texto do nome respirar */
+  }
+
+  /* Header-actions fica à direita, encolhe mas nunca some */
+  .header-actions {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .escola-logo {
+    width: 56px; height: 56px;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    backdrop-filter: blur(4px);
+  }
+
+  /* Área de nome+subtítulo — cresce mas deixa espaço para os botões */
+  .escola-info {
+    flex: 1 1 auto;
+    min-width: 180px;    /* nunca some completamente */
+  }
+  .escola-nome {
+    font-family: Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+    /* Permite quebrar em duas linhas se necessário — não trunca */
+    white-space: normal;
+    word-break: break-word;
+    overflow: visible;
+  }
+  .escola-sub {
+    font-size: 0.68rem;
+    opacity: 0.75;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-top: 3px;
+    font-weight: 400;
+    white-space: nowrap;   /* subtítulo fica em linha única */
+  }
+
+  /* Divisor visual entre grupos de botões */
+  .btn-group-sep {
+    width: 1px; height: 28px;
+    background: rgba(255,255,255,0.2);
+    flex-shrink: 0; margin: 0 4px;
+  }
+
+  /* Botão padrão do header — todos mesma altura e estilo base */
+  .btn-header {
+    background: rgba(255,255,255,0.13);
+    border: 1px solid rgba(255,255,255,0.28);
+    color: white;
+    padding: 0 14px;
+    height: 34px;
+    border-radius: 8px;
+    font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 5px; white-space: nowrap;
+    min-width: 0;
+  }
+  .btn-header:hover {
+    background: rgba(255,255,255,0.24);
+    border-color: rgba(255,255,255,0.45);
+  }
+  .btn-header:active { transform: scale(0.97); }
+
+  /* Grupo 1 — Cadastro (azul translúcido levemente mais vivo) */
+  .btn-header.cadastro {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.35);
+  }
+
+  /* Grupo 2 — Backup (tom âmbar/dourado suave) */
+  .btn-header.backup {
+    background: rgba(201,151,43,0.22);
+    border-color: rgba(201,151,43,0.45);
+  }
+  .btn-header.backup:hover { background: rgba(201,151,43,0.38); }
+
+  /* Grupo 3 — Nuvem (tom ciano suave) */
+  .btn-header.nuvem {
+    background: rgba(93,188,226,0.2);
+    border-color: rgba(93,188,226,0.4);
+  }
+  .btn-header.nuvem:hover { background: rgba(93,188,226,0.35); }
+
+  /* Botão primário — Salvar (dourado sólido, destaque) */
+  .btn-header.primary {
+    background: var(--dourado);
+    border-color: var(--dourado);
+    font-weight: 700;
+    padding: 0 18px;
+  }
+  .btn-header.primary:hover { background: #b8862a; border-color: #b8862a; }
+
+  /* ===== LAYOUT ===== */
+  .app-layout {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 28px 32px;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    min-height: calc(100vh - 88px);
+    /* Impede que o conteúdo interno empurre a página para fora */
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .main-content {
+    min-width: 0; /* permite que o grid encolha sem vazar */
+    overflow: hidden;
+  }
+
+  .card {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  /* Seções com tabelas largas: scroll interno, não da página */
+  #sec-frequencia .card,
+  #sec-notas      .card,
+  #sec-mediasfinal .card {
+    overflow: visible; /* o scroll fica no .table-container filho */
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .sidebar-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+
+  .sidebar-section-title {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--cinza-mid);
+    font-weight: 600;
+    padding: 14px 16px 8px;
+    border-bottom: 1px solid var(--cinza-border);
+  }
+
+  .sidebar-item {
+    padding: 11px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.85rem;
+    font-weight: 400;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    color: var(--cinza-text);
+  }
+  .sidebar-item:last-child { border-bottom: none; }
+  .sidebar-item:hover { background: var(--azul-light); color: var(--azul-principal); }
+  .sidebar-item.active {
+    background: var(--azul-light);
+    color: var(--azul-principal);
+    font-weight: 600;
+    border-left: 3px solid var(--azul-principal);
+  }
+  .sidebar-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+  .sidebar-item .badge {
+    margin-left: auto;
+    background: var(--azul-principal);
+    color: white;
+    font-size: 0.6rem;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+
+  /* TURMA SELECTOR */
+  .turma-select-area { padding: 12px; }
+  .field-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--cinza-mid);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  select, input {
+    width: 100%;
+    border: 1.5px solid var(--cinza-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-family: system-ui, sans-serif;
+    font-size: 0.82rem;
+    color: var(--cinza-text);
+    background: white;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  select:focus, input:focus { border-color: var(--azul-principal); }
+
+  /* ===== MAIN CONTENT ===== */
+  .main-content { display: flex; flex-direction: column; gap: 20px; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    background: white;
+    border-radius: var(--radius);
+    padding: 6px;
+    box-shadow: var(--shadow-sm);
+    gap: 4px;
+    border: 1px solid rgba(0,0,0,0.05);
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    font-family: system-ui, sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--cinza-mid);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .tab:hover { background: var(--azul-light); color: var(--azul-principal); }
+  .tab.active {
+    background: var(--azul-principal);
+    color: white;
+    box-shadow: 0 2px 8px rgba(36, 113, 163, 0.35);
+  }
+
+  /* CARDS */
+  .card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--cinza-border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .card-title {
+    font-family: Georgia, serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--azul-principal);
+    flex: 1;
+  }
+  .card-subtitle {
+    font-size: 0.72rem;
+    color: var(--cinza-mid);
+    margin-top: 2px;
+  }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .stat-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .stat-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--cinza-mid);
+    font-weight: 600;
+  }
+  .stat-value {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 1.85rem;
+    font-weight: 500;
+    color: var(--cinza-text);
+    line-height: 1;
+  }
+  .stat-value.green { color: var(--azul-principal); }
+  .stat-value.gold { color: var(--dourado); }
+  .stat-value.red { color: var(--vermelho); }
+  .stat-desc { font-size: 0.72rem; color: var(--cinza-mid); }
+  .stat-icon { font-size: 1.3rem; }
+
+  /* TABLE */
+  .table-container {
+    overflow-x: auto;
+    overflow-y: visible;
+    /* Nunca ultrapassa a largura da viewport */
+    max-width: 100%;
+    width: 100%;
+    -webkit-overflow-scrolling: touch; /* scroll suave no iOS */
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.80rem;
+  }
+  thead {
+    background: linear-gradient(to right, #ebf5fb, #ebf5fb);
+  }
+  th {
+    padding: 10px 12px;
+    text-align: center;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--azul-principal);
+    font-weight: 700;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--azul-light);
+  }
+  th.left { text-align: left; }
+  td {
+    padding: 8px 12px;
+    text-align: center;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    vertical-align: middle;
+  }
+  td.left { text-align: left; }
+  tr:hover td { background: rgba(232, 245, 238, 0.4); }
+
+  .aluno-nome { font-weight: 500; color: var(--cinza-text); }
+  .matricula { font-family: Consolas, 'Courier New', monospace; font-size: 0.68rem; color: var(--cinza-mid); }
+
+  /* FREQUENCY CELLS */
+  .freq-cell {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .freq-bar {
+    width: 40px; height: 5px; border-radius: 3px;
+    background: #e5e7eb;
+    overflow: hidden;
+  }
+  .freq-fill { height: 100%; border-radius: 3px; }
+  .freq-good .freq-fill { background: var(--azul-glow); }
+  .freq-warn .freq-fill { background: var(--dourado); }
+  .freq-bad .freq-fill { background: var(--vermelho); }
+  .freq-pct { font-family: Consolas, 'Courier New', monospace; font-size: 0.75rem; font-weight: 500; }
+  .freq-good .freq-pct { color: var(--azul-principal); }
+  .freq-warn .freq-pct { color: var(--dourado); }
+  .freq-bad .freq-pct { color: var(--vermelho); }
+
+  /* NOTA CELL */
+  .nota-input {
+    width: 44px;
+    border: 1.5px solid transparent;
+    border-radius: 5px;
+    padding: 4px 6px;
+    text-align: center;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+    background: transparent;
+    color: var(--cinza-text);
+    transition: all 0.2s;
+  }
+  .nota-input:focus {
+    border-color: var(--azul-principal);
+    background: var(--azul-light);
+    outline: none;
+  }
+
+  .media-badge {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+  .media-ap { background: #d6eaf8; color: #1a5276; }
+  .media-rec { background: #fff3cd; color: #856404; }
+  .media-rep { background: #f8d7da; color: #721c24; }
+
+  .situacao-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .sit-ap { background: #d6eaf8; color: #1a5276; }
+  .sit-rec { background: #fff3cd; color: #856404; }
+  .sit-rep { background: #f8d7da; color: #721c24; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    width: 90%;
+    max-width: 620px;
+    box-shadow: var(--shadow-lg);
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal-title {
+    font-family: Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--azul-principal);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  textarea {
+    width: 100%; border: 1.5px solid var(--cinza-border); border-radius: var(--radius-sm);
+    padding: 10px; font-family: system-ui, sans-serif; font-size: 0.82rem;
+    color: var(--cinza-text); resize: vertical; min-height: 80px; outline: none;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--azul-principal); }
+
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  .btn {
+    padding: 9px 20px;
+    border-radius: 8px;
+    border: none;
+    font-family: system-ui, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--azul-principal); color: white; }
+  .btn-primary:hover { background: #1a5276; }
+  .btn-secondary { background: var(--off-white); color: var(--cinza-text); border: 1.5px solid var(--cinza-border); }
+  .btn-secondary:hover { background: var(--cinza-border); }
+  .btn-danger { background: var(--vermelho); color: white; }
+  .btn-danger:hover { background: #a93226; }
+  .btn-gold { background: var(--dourado); color: white; }
+  .btn-gold:hover { background: #b8862a; }
+  .btn-sm { padding: 5px 12px; font-size: 0.73rem; }
+
+  /* MEDIA FINAL TABLE */
+  .mf-table th { font-size: 0.6rem; }
+  .mf-final {
+    font-family: Consolas, 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  /* OBSERVAÇÕES */
+  .obs-list { display: flex; flex-direction: column; gap: 10px; padding: 16px 20px; }
+  .obs-item {
+    background: var(--azul-light);
+    border-left: 3px solid var(--azul-principal);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+  }
+  .obs-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .obs-aluno { font-weight: 600; color: var(--azul-principal); }
+  .obs-data { font-size: 0.68rem; color: var(--cinza-mid); font-family: Consolas, 'Courier New', monospace; }
+  .obs-tipo {
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .obs-pedagogica { background: #cfe2ff; color: #0a58ca; }
+  .obs-comportamental { background: #fff3cd; color: #856404; }
+  .obs-familiar { background: #d6eaf8; color: #1a5276; }
+  .obs-saude { background: #f8d7da; color: #721c24; }
+  .obs-text { color: var(--cinza-text); line-height: 1.5; }
+
+  /* FREQUÊNCIA GRID */
+  .dias-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+    gap: 4px;
+    padding: 12px 16px;
+  }
+  .dia-btn {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    border: 1.5px solid var(--cinza-border);
+    font-size: 0.68rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: white;
+    color: var(--cinza-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Consolas, 'Courier New', monospace;
+  }
+  .dia-btn.presente { background: var(--azul-light); border-color: var(--azul-principal); color: var(--azul-principal); }
+  .dia-btn.falta { background: #f8d7da; border-color: #f5c6cb; color: var(--vermelho); }
+  .dia-btn.falta-just { background: #fff3cd; border-color: #ffc107; color: #856404; }
+
+  /* SECTION HIDDEN */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* LEGENDAS */
+  .legend {
+    display: flex; gap: 14px; align-items: center;
+    padding: 10px 16px;
+    border-top: 1px solid var(--cinza-border);
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.68rem; color: var(--cinza-mid); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-green { background: var(--azul-glow); }
+  .legend-gold { background: var(--dourado); }
+  .legend-red { background: var(--vermelho); }
+  .legend-blue { background: var(--azul); }
+
+  /* PRINT */
+  .print-note {
+    background: var(--dourado-light);
+    border: 1px solid #f0d080;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.75rem;
+    color: #7a5c00;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* PAGINAÇÃO */
+  .pagination { display: flex; gap: 6px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--cinza-border); }
+  .page-btn {
+    width: 30px; height: 30px; border-radius: 6px; border: 1.5px solid var(--cinza-border);
+    background: white; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-family: Consolas, 'Courier New', monospace; font-weight: 500; color: var(--cinza-text); transition: all 0.15s;
+  }
+  .page-btn:hover { border-color: var(--azul-principal); color: var(--azul-principal); }
+  .page-btn.active { background: var(--azul-principal); border-color: var(--azul-principal); color: white; }
+  .page-info { font-size: 0.72rem; color: var(--cinza-mid); margin-left: 4px; }
+
+  /* TOOLTIP */
+  [data-tip] { position: relative; cursor: help; }
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+    background: #222; color: white; font-size: 0.68rem; padding: 4px 8px;
+    border-radius: 5px; white-space: nowrap; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s; z-index: 99;
+  }
+  [data-tip]:hover::after { opacity: 1; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .app-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .header-inner { padding: 12px 16px; }
+    .app-layout { padding: 16px; }
+  }
+
+  /* NOTIFICAÇÃO */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--azul-principal); color: white;
+    padding: 12px 20px; border-radius: 10px;
+    font-size: 0.82rem; font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.35s cubic-bezier(.4,0,.2,1);
+    z-index: 300;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* DISCIPLINAS SCROLL */
+  .disciplinas-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 4px;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+  .disciplinas-scroll table { min-width: 900px; }
+
+  /* HEADER TURMA INFO */
+  .turma-info-bar {
+    display: flex; align-items: center; gap: 16px;
+    background: var(--azul-light);
+    border: 1px solid rgba(36,113,163,0.15);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 0.78rem;
+  }
+  .turma-info-item { display: flex; align-items: center; gap: 5px; }
+  .turma-info-label { color: var(--cinza-mid); }
+  .turma-info-value { font-weight: 600; color: var(--azul-principal); }
+  .turma-info-divider { width: 1px; height: 20px; background: rgba(36,113,163,0.2); }
+
+  /* PROGRESSO BIMESTRAL */
+  .bimestre-tabs {
+    display: flex; gap: 6px;
+    padding: 0 20px 0;
+    border-bottom: 1px solid var(--cinza-border);
+  }
+  .bim-tab {
+    padding: 10px 16px;
+    border: none; background: transparent;
+    font-family: system-ui, sans-serif;
+    font-size: 0.78rem; font-weight: 500;
+    color: var(--cinza-mid); cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s; margin-bottom: -1px;
+  }
+  .bim-tab:hover { color: var(--azul-principal); }
+  .bim-tab.active { color: var(--azul-principal); border-bottom-color: var(--azul-principal); font-weight: 600; }
+
+  .empty-state {
+    padding: 40px 20px; text-align: center;
+    color: var(--cinza-mid); font-size: 0.85rem;
+  }
+  .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+  /* MEDIA FINAL DESTAQUE */
+  .mf-destaque {
+    background: linear-gradient(135deg, #ebf5fb 0%, #ebf5fb 100%);
+    border: 2px solid rgba(36,113,163,0.15);
+  }
+  .mf-col-final {
+    background: rgba(36,113,163,0.06);
+    border-left: 2px solid rgba(36,113,163,0.15);
+  }
+
+  /* ===== BACKUP / EXPORT-IMPORT ===== */
+  .backup-info-box {
+    background: var(--azul-light);
+    border: 1px solid rgba(36,113,163,0.2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.80rem;
+    color: var(--cinza-text);
+    line-height: 1.6;
+    margin-bottom: 6px;
+  }
+  .backup-info-box strong { color: var(--azul-principal); }
+  .import-preview-card {
+    background: var(--off-white);
+    border: 1.5px solid var(--cinza-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.80rem;
+    line-height: 1.8;
+  }
+  .import-preview-card .pi-row { display:flex; gap:8px; }
+  .import-preview-card .pi-label { color: var(--cinza-mid); min-width:120px; }
+  .import-preview-card .pi-value { font-weight:600; color: var(--azul-principal); }
+  /* estilos export-btn/import-btn migrados para .backup e .nuvem */
+
+
+  /* Coluna de recuperação bimestral */
+  .nota-input[style*="var(--dourado)"] { font-weight: 700; }
+  .rec-header { color: var(--dourado) !important; background: #fdf9ee !important; }
+  thead tr:nth-child(2) th { padding: 4px 8px !important; background: #fafaf5; }
+
+
+  /* ===== SYNC / NUVEM ===== */
+  .sync-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.13);
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 20px;
+    padding: 0 12px;
+    height: 34px;                  /* mesma altura dos btn-header */
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: white;
+    cursor: default;
+    white-space: nowrap;
+    flex-shrink: 0;
+    /* garante que não herda fundo de elementos-pai */
+    isolation: isolate;
+  }
+  .sync-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sync-dot.offline  { background: #9ca3af; }
+  .sync-dot.online   { background: #34d399; box-shadow: 0 0 6px #34d399; }
+  .sync-dot.syncing  { background: #fbbf24; animation: pulse-sync 1s infinite; }
+  .sync-dot.error    { background: #f87171; }
+  .sync-dot.pending  { background: #fb923c; box-shadow: 0 0 6px #fb923c; }
+  @keyframes pulse-sync {
+    0%,100% { opacity:1; } 50% { opacity:0.3; }
+  }
+
+  /* Faixa de pendentes */
+  .pending-bar {
+    display: none;
+    background: #fff8e1;
+    border-bottom: 2px solid #f0d080;
+    padding: 7px 32px;
+    font-size: 0.75rem;
+    color: #7a5c00;
+    align-items: center;
+    gap: 10px;
+  }
+  .pending-bar.visible { display: flex; }
+  .pending-bar strong { color: #b45309; }
+
+  /* Cloud config section inside modal escola */
+  .cloud-section {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 2px dashed var(--cinza-border);
+  }
+  .cloud-section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    color: var(--azul);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .cloud-status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 0.68rem; font-weight: 600;
+    margin-left: 8px;
+  }
+  .cloud-on  { background:#d1fae5; color:#065f46; }
+  .cloud-off { background:#f3f4f6; color:#6b7280; }
+  .cloud-err { background:#fee2e2; color:#991b1b; }
+
+  /* Histórico de sync */
+  .sync-log {
+    max-height: 120px;
+    overflow-y: auto;
+    background: #f8fafc;
+    border: 1px solid var(--cinza-border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.68rem;
+    color: var(--cinza-text);
+    margin-top: 8px;
+  }
+  .sync-log .log-ok   { color: #065f46; }
+  .sync-log .log-err  { color: #991b1b; }
+  .sync-log .log-info { color: #1e40af; }
+
+
+  /* ===== TURMAS MULTISSERIADAS ===== */
+  .multi-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+    color: white; font-size: 0.6rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    margin-left: 4px; vertical-align: middle;
+  }
+  .anos-check-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 6px;
+    padding: 10px 12px;
+    background: var(--off-white);
+    border: 1.5px solid var(--cinza-border);
+    border-radius: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .ano-check-item {
+    display: flex; align-items: center; gap: 7px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    transition: background 0.15s;
+  }
+  .ano-check-item:hover { background: var(--azul-light); }
+  .ano-check-item input[type=checkbox] {
+    width: 15px; height: 15px; accent-color: var(--azul-principal);
+    cursor: pointer; flex-shrink: 0;
+  }
+  .anos-selecionados-preview {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; min-height: 22px;
+  }
+  .ano-tag {
+    background: var(--azul-light); color: var(--azul-principal);
+    border: 1px solid rgba(36,113,163,0.25);
+    font-size: 0.68rem; font-weight: 600;
+    padding: 2px 9px; border-radius: 20px;
+  }
+  .ano-tag-vazio { font-size: 0.72rem; color: var(--cinza-mid); font-style: italic; }
+  .aluno-ano-badge {
+    display: inline-block;
+    background: rgba(124,58,237,0.12);
+    color: #5b21b6;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 20px;
+    margin-left: 5px;
+    vertical-align: middle;
+  }
+  .multi-section-divider {
+    font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: #7c3aed; font-weight: 700;
+    padding: 6px 12px 2px;
+    border-top: 1px solid rgba(124,58,237,0.15);
+    margin-top: 4px;
+  }
+
+
+  /* ===== DIÁRIO DE CLASSE ===== */
+  .diario-nav {
+    display: flex; gap: 8px; align-items: center;
+    padding: 12px 20px; border-bottom: 1px solid var(--cinza-border);
+    flex-wrap: wrap;
+  }
+  .diario-nav input[type=date] {
+    width: auto; padding: 7px 10px; font-size: 0.82rem;
+    border: 1.5px solid var(--cinza-border); border-radius: 8px;
+  }
+  .diario-nav select { width: auto; }
+
+  .diario-grid {
+    display: flex; flex-direction: column; gap: 0;
+  }
+  .diario-entry {
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    transition: background 0.15s;
+  }
+  .diario-entry:hover { background: rgba(232,245,238,0.3); }
+  .diario-entry-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; cursor: pointer;
+  }
+  .diario-disc-tag {
+    font-size: 0.68rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px;
+    background: var(--azul-light); color: var(--azul-principal);
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .diario-disc-tag.eja   { background: #e0e7ff; color: #3730a3; }
+  .diario-disc-tag.ei    { background: #fce7f3; color: #9d174d; }
+  .diario-disc-tag.multi { background: #f3e8ff; color: #6b21a8; }
+  .diario-date-tag {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.72rem; color: var(--cinza-mid);
+    flex-shrink: 0;
+  }
+  .diario-preview {
+    flex: 1; font-size: 0.80rem; color: var(--cinza-text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-style: italic;
+  }
+  .diario-preview.vazio { color: var(--cinza-mid); }
+  .diario-expand-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--cinza-mid); font-size: 0.75rem; padding: 4px;
+    transition: transform 0.2s;
+  }
+  .diario-expand-btn.open { transform: rotate(180deg); }
+
+  .diario-entry-body {
+    display: none; padding: 0 20px 16px; flex-direction: column; gap: 10px;
+  }
+  .diario-entry-body.open { display: flex; }
+
+  .diario-field-group { display: flex; flex-direction: column; gap: 4px; }
+  .diario-field-label {
+    font-size: 0.65rem; text-transform: uppercase;
+    letter-spacing: 0.08em; font-weight: 700;
+    color: var(--cinza-mid);
+  }
+  .diario-textarea {
+    width: 100%; border: 1.5px solid var(--cinza-border);
+    border-radius: 8px; padding: 8px 12px;
+    font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+    font-size: 0.82rem; color: var(--cinza-text);
+    resize: vertical; min-height: 60px; outline: none;
+    transition: border-color 0.2s; line-height: 1.5;
+    background: white;
+  }
+  .diario-textarea:focus { border-color: var(--azul-principal); }
+  .diario-textarea.conteudo { min-height: 70px; }
+  .diario-textarea.objetivo { min-height: 50px; }
+
+  .diario-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .diario-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  .diario-salvo-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.65rem; color: var(--azul-principal); font-weight: 600;
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .diario-salvo-badge.show { opacity: 1; }
+
+  .diario-empty {
+    padding: 40px 20px; text-align: center;
+    color: var(--cinza-mid); font-size: 0.85rem;
+  }
+
+  .diario-calendar {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    padding: 12px 20px; border-bottom: 1px solid var(--cinza-border);
+  }
+  .diario-day-pill {
+    padding: 4px 12px; border-radius: 20px; border: 1.5px solid var(--cinza-border);
+    font-size: 0.72rem; font-weight: 600; cursor: pointer;
+    font-family: Consolas, 'Courier New', monospace;
+    transition: all 0.15s; background: white; color: var(--cinza-text);
+  }
+  .diario-day-pill:hover { border-color: var(--azul-principal); color: var(--azul-principal); }
+  .diario-day-pill.com-registro {
+    background: var(--azul-light); border-color: var(--azul-principal);
+    color: var(--azul-principal);
+  }
+  .diario-day-pill.selecionado {
+    background: var(--azul-principal); border-color: var(--azul-principal); color: white;
+  }
+
+  .ano-grupo-header {
+    padding: 6px 20px; font-size: 0.65rem; text-transform: uppercase;
+    letter-spacing: 0.1em; font-weight: 700; color: #6b21a8;
+    background: rgba(124,58,237,0.06);
+    border-top: 1px solid rgba(124,58,237,0.12);
+    border-bottom: 1px solid rgba(124,58,237,0.12);
+  }
+
+  /* Badge contador */
+  .badge-diario {
+    background: var(--azul-principal); color: white;
+    font-size: 0.6rem; padding: 2px 7px;
+    border-radius: 20px; font-weight: 600; margin-left: auto;
+  }
+
+
+  /* ===== SELETOR DE ESCOLAS ===== */
+  .escola-switcher {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 10px;
+    padding: 5px 12px 5px 10px;
+    cursor: pointer;
+    transition: background 0.2s;
+    max-width: 220px;
+  }
+  .escola-switcher:hover { background: rgba(255,255,255,0.22); }
+  .escola-switcher-icon { font-size: 1rem; flex-shrink: 0; }
+  .escola-switcher-info { flex: 1; overflow: hidden; }
+  .escola-switcher-nome {
+    font-size: 0.72rem; font-weight: 700; color: white;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+  .escola-switcher-hint {
+    font-size: 0.58rem; color: rgba(255,255,255,0.65);
+    white-space: nowrap;
+  }
+  .escola-switcher-arrow { font-size: 0.6rem; color: rgba(255,255,255,0.7); flex-shrink:0; }
+
+  /* Modal seletor */
+  .perfis-grid {
+    display: flex; flex-direction: column; gap: 8px;
+    max-height: 340px; overflow-y: auto;
+    padding: 4px 0;
+  }
+  .perfil-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-radius: 10px;
+    border: 1.5px solid var(--cinza-border);
+    background: white; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .perfil-card:hover { border-color: var(--azul-principal); background: var(--azul-light); }
+  .perfil-card.ativo {
+    border-color: var(--azul-principal); background: var(--azul-light);
+    box-shadow: 0 0 0 2px rgba(36,113,163,0.15);
+  }
+  .perfil-card-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .perfil-card-info { flex: 1; overflow: hidden; }
+  .perfil-card-nome {
+    font-weight: 700; font-size: 0.88rem; color: var(--cinza-text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .perfil-card-detalhe {
+    font-size: 0.70rem; color: var(--cinza-mid); margin-top: 2px;
+  }
+  .perfil-card-badge {
+    font-size: 0.62rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px;
+    background: var(--azul-principal); color: white;
+    flex-shrink: 0;
+  }
+  .perfil-card-ativo-badge {
+    font-size: 0.62rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px;
+    background: var(--dourado); color: white;
+    flex-shrink: 0;
+  }
+  .perfil-card-actions {
+    display: flex; gap: 4px; flex-shrink: 0;
+  }
+  .perfil-action-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 0.85rem; padding: 3px 5px; border-radius: 5px;
+    transition: background 0.15s; color: var(--cinza-mid);
+  }
+  .perfil-action-btn:hover { background: rgba(0,0,0,0.08); }
+  .perfil-action-btn.del:hover { background: #f8d7da; color: var(--vermelho); }
+
+  .nova-escola-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; border-radius: 10px;
+    border: 2px dashed var(--cinza-border);
+    background: var(--off-white); cursor: pointer;
+    color: var(--azul-principal); font-weight: 600; font-size: 0.85rem;
+    transition: all 0.15s; margin-top: 4px;
+  }
+  .nova-escola-btn:hover { border-color: var(--azul-principal); background: var(--azul-light); }
+
+  .perfis-empty {
+    text-align: center; padding: 24px 16px;
+    color: var(--cinza-mid); font-size: 0.82rem;
+  }
+  .perfis-empty .ei { font-size: 2rem; margin-bottom: 8px; }
+
+
+  /* ===== EXPORTAR TODAS / CARREGAR DA NUVEM ===== */
+  /* estilos all-export/cloud-load migrados para .backup e .nuvem */
+
+  .cloud-load-perfil {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 10px;
+    border: 1.5px solid var(--cinza-border);
+    background: white; margin-bottom: 8px;
+    transition: all 0.15s;
+  }
+  .cloud-load-perfil:hover { border-color: var(--azul); background: #eff6ff; }
+  .cloud-load-perfil-info { flex:1 }
+  .cloud-load-perfil-nome { font-weight:700; font-size:0.88rem; color:var(--cinza-text); }
+  .cloud-load-perfil-det  { font-size:0.70rem; color:var(--cinza-mid); margin-top:2px; }
+  .cloud-status-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius:8px;
+    background: var(--off-white); border:1px solid var(--cinza-border);
+    font-size:0.80rem; margin-bottom:12px;
+  }
+  .progress-bar-wrap {
+    width:100%; background:#e5e7eb; border-radius:6px;
+    height:8px; overflow:hidden; margin:8px 0;
+  }
+  .progress-bar-fill {
+    height:100%; background:var(--azul-principal); border-radius:6px;
+    transition: width 0.4s ease;
+  }
+
+
+  /* ===== HEADER RESPONSIVO ===== */
+
+  /* Texto dos botões fica em span.btn-txt */
+  .btn-header .btn-txt { display: inline; }
+
+  /* escola-switcher compacta em telas menores (nome da escola NÃO trunca) */
+  .escola-switcher { max-width: 200px; }
+  .escola-switcher-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Em telas menores que 1300px: esconder texto dos botões de backup/nuvem */
+  @media (max-width: 1299px) {
+    .btn-header.backup .btn-txt,
+    .btn-header.nuvem  .btn-txt { display: none; }
+    .btn-header.backup,
+    .btn-header.nuvem  { padding: 0 10px; min-width: 34px; }
+  }
+
+  /* Em telas menores que 1100px: esconder texto de todos os botões */
+  @media (max-width: 1099px) {
+    .btn-header .btn-txt { display: none; }
+    .btn-header { padding: 0 10px; min-width: 34px; }
+    .escola-switcher-hint { display: none; }
+    .escola-switcher { max-width: 140px; }
+    .btn-group-sep { margin: 0 2px; }
+    .sync-status #syncTempo { display: none; }
+    /* Nome da escola reduz um pouco mas nunca desaparece */
+    .escola-nome { font-size: 1rem; }
+    .escola-sub  { display: none; }   /* subtítulo some, não o nome */
+  }
+
+  /* Em telas menores que 800px: esconder separadores e compactar mais */
+  @media (max-width: 799px) {
+    .btn-group-sep { display: none; }
+    .header-inner { gap: 6px; padding: 8px 12px; flex-wrap: wrap; }
+    .escola-logo { width: 32px; height: 32px; font-size: 14px; flex-shrink: 0; }
+    .escola-nome { font-size: 0.92rem; white-space: normal; }
+    .escola-sub  { display: none; }
+    .escola-info { min-width: 120px; }
+    .escola-switcher { max-width: 110px; }
+    .sync-status { padding: 0 8px; }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-inner">
+    <div class="escola-logo" style="padding:2px;overflow:hidden;background:transparent;border:2px solid rgba(255,255,255,0.3);border-radius:10px"><img src="data:image/png;base64,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" alt="SEMED" style="width:100%;height:100%;object-fit:contain;border-radius:8px"></div>
+    <div class="escola-info">
+      <div class="escola-nome" id="headerNomeEscola">Escola Municipal São José</div>
+      <div class="escola-sub" id="headerSubEscola">Rede Municipal de Ensino · Juruá — Amazonas · Ano Letivo 2026</div>
+    </div>
+    <div class="header-actions">
+
+      <!-- Seletor de escola (removido na v21 — arquitetura Sheets-first) -->
+      <div class="escola-switcher" onclick="openModal('modalSeletor')" title="Trocar de escola" style="flex-shrink:1;min-width:0">
+        <span class="escola-switcher-icon">🏫</span>
+        <div class="escola-switcher-info" style="min-width:0">
+          <div class="escola-switcher-nome" id="switcherNome">Escola Municipal São José</div>
+          <div class="escola-switcher-hint">Trocar de escola</div>
+        </div>
+        <span class="escola-switcher-arrow">▼</span>
+      </div>
+
+      <div class="btn-group-sep"></div>
+
+      <!-- Grupo 1: Cadastro -->
+      <button class="btn-header cadastro" onclick="abrirCadastroAluno()" title="Cadastrar novo aluno">➕ Aluno</button>
+      <button class="btn-header cadastro" onclick="openModal('modalObs')"   title="Registrar observação">📝 Observação</button>
+      <button class="btn-header cadastro" onclick="openModal('modalEscola')" title="Configurar dados da escola">⚙️ Escola</button>
+
+      <div class="btn-group-sep"></div>
+
+      <!-- Grupo 2: Backup -->
+      <button class="btn-header backup" onclick="exportarDados()"            title="Exportar backup desta escola">📤 Exportar</button>
+      <button class="btn-header backup" onclick="exportarTodasEscolas()"     title="Exportar todas as escolas">📦 Todas</button>
+      <button class="btn-header backup" onclick="document.getElementById('inputImportar').click()" title="Importar backup JSON">📥 Importar</button>
+      <input type="file" id="inputImportar" accept=".json" style="display:none" onchange="importarDados(event)">
+
+      <div class="btn-group-sep"></div>
+
+      <!-- Grupo 3: Nuvem -->
+      <button class="btn-header nuvem" onclick="openModal('modalCarregarNuvem')" title="Carregar dados do Google Sheets">☁️ Carregar</button>
+      <button class="btn-header nuvem" onclick="sincronizarAgora()" id="btnSync"  title="Sincronizar com Google Sheets">🔄 Sincronizar</button>
+
+      <div class="btn-group-sep"></div>
+
+      <!-- Status de sincronização -->
+      <div id="syncStatus" class="sync-status" title="Status de conexão com o Google Sheets">
+        <span id="syncDot" class="sync-dot offline"></span>
+        <span id="syncEstado">Offline</span><span id="syncTempo" style="opacity:0.7;margin-left:2px"></span>
+      </div>
+
+      <!-- Salvar (destaque) -->
+      <button class="btn-header primary" onclick="salvarTudo()" title="Salvar todos os dados">💾 Salvar</button>
+
+    </div>
+  </div>
+</header>
+
+<!-- FAIXA: SINCRONIZAÇÕES PENDENTES -->
+<div class="pending-bar" id="pendingBar">
+  <span>🔶</span>
+  <span>Há <strong id="pendingCount">0</strong> alteração(ões) aguardando sincronização com o Google Sheets.</span>
+  <button class="btn btn-sm" onclick="sincronizarAgora()"
+    style="background:var(--dourado);color:white;border:none;margin-left:auto">
+    🔄 Sincronizar agora
+  </button>
+  <button onclick="document.getElementById('pendingBar').classList.remove('visible')"
+    style="background:none;border:none;cursor:pointer;color:#7a5c00;font-size:1rem">✕</button>
+</div>
+
+<!-- LAYOUT PRINCIPAL -->
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <!-- Turma Selector -->
+    <div class="sidebar-card">
+      <div class="sidebar-section-title">🎓 Selecionar Turma</div>
+      <div class="turma-select-area">
+        <div class="field-label">Segmento</div>
+        <select id="selSegmento" onchange="filtrarTurmas()" style="margin-bottom:10px">
+          <option value="">Todos</option>
+          <option value="EI">Educação Infantil</option>
+          <option value="EF1">Ens. Fundamental I</option>
+          <option value="EF2">Ens. Fundamental II</option>
+          <option value="EIEF">🌿 EI + Anos Iniciais (Misto)</option>
+          <option value="EJA1">EJA — Fund. I</option>
+          <option value="EJA2">EJA — Fund. II</option>
+        </select>
+        <div class="field-label">Turma</div>
+        <select id="selTurma" onchange="selecionarTurma()">
+          <option value="">Selecione...</option>
+        </select>
+        <div style="margin-top:10px">
+          <div class="field-label">Buscar Aluno</div>
+          <input type="text" id="buscaAluno" placeholder="🔍 Nome ou matrícula..." oninput="filtrarAlunos()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Navegação -->
+    <div class="sidebar-card">
+      <div class="sidebar-section-title">📋 Módulos</div>
+      <div class="sidebar-item active" onclick="showSection('frequencia', this)">
+        <span class="icon">📅</span> Frequência
+      </div>
+      <div class="sidebar-item" onclick="showSection('notas', this)">
+        <span class="icon">📊</span> Notas Bimestrais
+      </div>
+      <div class="sidebar-item" onclick="showSection('mediasfinal', this)">
+        <span class="icon">🏆</span> Médias Finais
+      </div>
+      <div class="sidebar-item" onclick="showSection('diario', this)">
+        <span class="icon">📓</span> Diário de Classe
+        <span class="badge" id="badgeDiario">0</span>
+      </div>
+      <div class="sidebar-item" onclick="showSection('observacoes', this)">
+        <span class="icon">🗒️</span> Observações
+        <span class="badge" id="badgeObs">0</span>
+      </div>
+      <div class="sidebar-item" onclick="showSection('relatorio', this)">
+        <span class="icon">📄</span> Relatório
+      </div>
+    </div>
+
+    <!-- Turmas rápidas -->
+    <div class="sidebar-card">
+      <div class="sidebar-section-title">⚡ Turmas Rápidas</div>
+      <div id="turmasRapidas"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-label">Total de Alunos</div>
+        <div class="stat-value green" id="statTotal">0</div>
+        <div class="stat-desc" id="statTurmaDesc">turma selecionada</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-label">Freq. Média</div>
+        <div class="stat-value" id="statFreq">—</div>
+        <div class="stat-desc">presença no período</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-label">Média Geral</div>
+        <div class="stat-value gold" id="statMedia">—</div>
+        <div class="stat-desc">todas as disciplinas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-label">Em Risco</div>
+        <div class="stat-value red" id="statRisco">0</div>
+        <div class="stat-desc">abaixo de 60%</div>
+      </div>
+    </div>
+
+    <!-- TURMA INFO -->
+    <div class="turma-info-bar" id="turmaInfoBar">
+      <div class="turma-info-item">
+        <span class="turma-info-label">Turma:</span>
+        <span class="turma-info-value" id="tiTurma">—</span>
+      </div>
+      <div class="turma-info-divider"></div>
+      <div class="turma-info-item">
+        <span class="turma-info-label">Segmento:</span>
+        <span class="turma-info-value" id="tiSegmento">—</span>
+      </div>
+      <div class="turma-info-divider"></div>
+      <div class="turma-info-item">
+        <span class="turma-info-label">Turno:</span>
+        <span class="turma-info-value" id="tiTurno">—</span>
+      </div>
+      <div class="turma-info-divider"></div>
+      <div class="turma-info-item">
+        <span class="turma-info-label">Professor(a):</span>
+        <span class="turma-info-value" id="tiProf">—</span>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="showSection('frequencia', null, this)">📅 Frequência</button>
+      <button class="tab" onclick="showSection('notas', null, this)">📊 Notas</button>
+      <button class="tab" onclick="showSection('mediasfinal', null, this)">🏆 Médias Finais</button>
+      <button class="tab" onclick="showSection('diario', null, this)">📓 Diário</button>
+      <button class="tab" onclick="showSection('observacoes', null, this)">🗒️ Observações</button>
+      <button class="tab" onclick="showSection('relatorio', null, this)">📄 Relatório</button>
+    </div>
+
+    <!-- =========== SEÇÃO: FREQUÊNCIA =========== -->
+    <div id="sec-frequencia" class="section active">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Controle de Frequência</div>
+            <div class="card-subtitle">Registro de presença e faltas por período letivo</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="selMes" onchange="renderFrequencia()" style="width:auto">
+              <option value="3">Março</option>
+              <option value="4">Abril</option>
+              <option value="5">Maio</option>
+              <option value="6">Junho</option>
+              <option value="7">Julho</option>
+              <option value="8">Agosto</option>
+              <option value="9">Setembro</option>
+              <option value="10">Outubro</option>
+              <option value="11">Novembro</option>
+              <option value="12">Dezembro</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="marcarTodos('P')">✅ Todos P</button>
+            <button class="btn btn-danger btn-sm" onclick="marcarTodos('F')">❌ Todos F</button>
+          </div>
+        </div>
+        <div class="table-container" id="tabelaFrequencia">
+          <div class="empty-state">
+            <div class="empty-icon">🏫</div>
+            <div>Selecione uma turma para visualizar a frequência</div>
+          </div>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot legend-green"></span>≥ 75% — Aprovado</span>
+          <span class="legend-item"><span class="legend-dot legend-gold"></span>60–74% — Atenção</span>
+          <span class="legend-item"><span class="legend-dot legend-red"></span>&lt; 60% — Em Risco</span>
+          <span style="margin-left:auto;font-size:0.68rem;color:var(--cinza-mid)">P = Presente · F = Falta · J = Justificada</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========== SEÇÃO: NOTAS =========== -->
+    <div id="sec-notas" class="section">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Notas e Médias Bimestrais</div>
+            <div class="card-subtitle">Registro de avaliações por disciplina e bimestre</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="calcularMedias()">🔄 Calcular Médias</button>
+            <button class="btn btn-gold btn-sm" onclick="exportarNotas()">📥 Exportar</button>
+          </div>
+        </div>
+
+        <div class="bimestre-tabs">
+          <button class="bim-tab active" onclick="switchBimestre(1, this)">1º Bimestre</button>
+          <button class="bim-tab" onclick="switchBimestre(2, this)">2º Bimestre</button>
+          <button class="bim-tab" onclick="switchBimestre(3, this)">3º Bimestre</button>
+          <button class="bim-tab" onclick="switchBimestre(4, this)">4º Bimestre</button>
+        </div>
+
+        <div class="disciplinas-scroll">
+          <div id="tabelaNotas">
+            <div class="empty-state">
+              <div class="empty-icon">📊</div>
+              <div>Selecione uma turma para registrar as notas</div>
+            </div>
+          </div>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot legend-green"></span>Aprovado ≥ 5,0</span>
+          <span class="legend-item"><span class="legend-dot legend-gold"></span>Recuperação 3,0–4,9</span>
+          <span class="legend-item"><span class="legend-dot legend-red"></span>Reprovado &lt; 3,0</span>
+          <span style="margin-left:auto;font-size:0.68rem;color:var(--cinza-mid)">Escala: 0 a 10</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========== SEÇÃO: MÉDIAS FINAIS =========== -->
+    <div id="sec-mediasfinal" class="section">
+      <div class="card mf-destaque">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Médias Finais e Situação do Aluno</div>
+            <div class="card-subtitle">Consolidado somativo anual por disciplina</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="calcularMediasFinais()">🔄 Recalcular</button>
+            <button class="btn btn-gold btn-sm" onclick="gerarBoletim()">📋 Gerar Boletim</button>
+          </div>
+        </div>
+        <div class="disciplinas-scroll">
+          <div id="tabelaMediasFinal">
+            <div class="empty-state">
+              <div class="empty-icon">🏆</div>
+              <div>Selecione uma turma para ver as médias finais</div>
+            </div>
+          </div>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-dot legend-green"></span>Aprovado ≥ 5,0</span>
+          <span class="legend-item"><span class="legend-dot legend-gold"></span>Recuperação Final 3,0–4,9</span>
+          <span class="legend-item"><span class="legend-dot legend-red"></span>Reprovado &lt; 3,0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========== SEÇÃO: DIÁRIO DE CLASSE =========== -->
+    <div id="sec-diario" class="section">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📓 Diário de Classe</div>
+            <div class="card-subtitle">Registro de conteúdos, objetivos, metodologia e avaliação por disciplina e data</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="navegarDiario(-1)">◀ Dia anterior</button>
+            <button class="btn btn-secondary btn-sm" onclick="navegarDiario(1)">Próximo dia ▶</button>
+            <button class="btn btn-gold btn-sm" onclick="exportarDiario()">🖨️ Imprimir Diário</button>
+          </div>
+        </div>
+
+        <!-- Navegação por data -->
+        <div class="diario-nav">
+          <label style="font-size:0.78rem;font-weight:600;color:var(--cinza-text)">Data:</label>
+          <input type="date" id="diarioData" onchange="renderDiario()">
+          <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
+            <label style="font-size:0.72rem;color:var(--cinza-mid)">Agrupamento:</label>
+            <select id="diarioModo" onchange="renderDiario()" style="width:auto;font-size:0.78rem">
+              <option value="disc_data">Por Disciplina e Data</option>
+              <option value="data">Por Data (todas as disciplinas)</option>
+              <option value="ano_disc">Por Ano/Série e Disciplina (Multisseriada)</option>
+            </select>
+          </div>
+          <span id="diarioBadgeData" style="margin-left:auto;font-size:0.72rem;color:var(--cinza-mid)"></span>
+        </div>
+
+        <!-- Dias com registro no mês -->
+        <div id="diarioCalendario" class="diario-calendar" style="display:none"></div>
+
+        <!-- Lista de registros do dia -->
+        <div id="diarioConteudo">
+          <div class="diario-empty">
+            <div style="font-size:2rem;margin-bottom:8px">📓</div>
+            <div>Selecione uma turma e uma data para registrar os conteúdos.</div>
+          </div>
+        </div>
+
+        <div style="padding:10px 20px;border-top:1px solid var(--cinza-border);font-size:0.72rem;color:var(--cinza-mid);display:flex;align-items:center;gap:16px">
+          <span>💡 Os registros são salvos automaticamente ao digitar.</span>
+          <span id="diarioAutoSalvo" class="diario-salvo-badge">✅ Salvo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========== SEÇÃO: OBSERVAÇÕES =========== -->
+    <div id="sec-observacoes" class="section">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Observações Pedagógicas e Comportamentais</div>
+            <div class="card-subtitle">Registros individuais do acompanhamento do aluno</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modalObs')">➕ Nova Observação</button>
+        </div>
+        <div id="listaObs">
+          <div class="empty-state">
+            <div class="empty-icon">🗒️</div>
+            <div>Nenhuma observação registrada ainda.<br>Clique em "Nova Observação" para adicionar.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========== SEÇÃO: RELATÓRIO =========== -->
+    <div id="sec-relatorio" class="section">
+      <div class="print-note">
+        📄 <strong>Dica:</strong> Use Ctrl+P ou o botão abaixo para imprimir ou salvar como PDF o relatório desta turma.
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Relatório Geral da Turma</div>
+            <div class="card-subtitle" id="relSubtitle">Selecione uma turma</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ Imprimir</button>
+        </div>
+        <div id="relatorioConteudo" style="padding:20px">
+          <div class="empty-state">
+            <div class="empty-icon">📄</div>
+            <div>Selecione uma turma para gerar o relatório.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ===== MODAL: NOVO ALUNO / EDITAR ALUNO ===== -->
+<div class="modal-overlay" id="modalAluno">
+  <div class="modal">
+    <div class="modal-title" id="modalAlunoTitle">👤 Cadastrar Novo Aluno</div>
+    <input type="hidden" id="alunoEditId" value="">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="field-label">Nome Completo *</label>
+        <input type="text" id="alunoNome" placeholder="Nome do aluno">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Matrícula *</label>
+        <input type="text" id="alunoMatricula" placeholder="Ex: 2026001">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Data de Nascimento</label>
+        <input type="date" id="alunoNasc">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Turma *</label>
+        <select id="alunoTurma" onchange="onAlunoTurmaChange()"></select>
+      </div>
+      <div class="form-group" id="areaAnoAluno" style="display:none">
+        <label class="field-label">Ano/Série do Aluno <span style="color:#7c3aed;font-weight:700">★ Multisseriada</span></label>
+        <select id="alunoAno">
+          <option value="">— Selecione o ano do aluno —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Responsável</label>
+        <input type="text" id="alunoResp" placeholder="Nome do responsável">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Contato</label>
+        <input type="text" id="alunoContato" placeholder="(97) 9 9999-9999">
+      </div>
+      <div class="form-group full">
+        <label class="field-label">Endereço</label>
+        <input type="text" id="alunoEndereco" placeholder="Rua, nº, bairro">
+      </div>
+      <div class="form-group full">
+        <label class="field-label">Necessidades Especiais / Observações iniciais</label>
+        <textarea id="alunoObs" placeholder="Descreva aqui se houver alguma necessidade especial, laudo, etc."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalAluno')">Cancelar</button>
+      <button class="btn btn-primary" id="btnSalvarAluno" onclick="salvarAluno()">✅ Cadastrar Aluno</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: OBSERVAÇÃO ===== -->
+<div class="modal-overlay" id="modalObs">
+  <div class="modal">
+    <div class="modal-title">🗒️ Registrar Observação</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="field-label">Aluno *</label>
+        <select id="obsAluno"></select>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Tipo *</label>
+        <select id="obsTipo">
+          <option value="pedagogica">📚 Pedagógica</option>
+          <option value="comportamental">⚠️ Comportamental</option>
+          <option value="familiar">👨‍👩‍👧 Familiar</option>
+          <option value="saude">🏥 Saúde</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="field-label">Data *</label>
+        <input type="date" id="obsData">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Responsável pelo Registro</label>
+        <input type="text" id="obsResponsavel" placeholder="Nome do professor">
+      </div>
+      <div class="form-group full">
+        <label class="field-label">Observação *</label>
+        <textarea id="obsTexto" placeholder="Descreva detalhadamente a observação..." style="min-height:120px"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalObs')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarObservacao()">💾 Salvar Observação</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: NOVA / EDITAR TURMA -->
+<div class="modal-overlay" id="modalTurma">
+  <div class="modal">
+    <div class="modal-title" id="modalTurmaTitle">🏫 Cadastrar Nova Turma</div>
+    <input type="hidden" id="turmaEditId" value="">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="field-label">Nome da Turma *</label>
+        <input type="text" id="turmaNome" placeholder="Ex: 3º Ano A">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Segmento *</label>
+        <select id="turmaSegmento" onchange="onSegmentoTurmaChange()">
+          <option value="EI">Educação Infantil</option>
+          <option value="EF1">Ens. Fundamental I</option>
+          <option value="EF2">Ens. Fundamental II</option>
+          <option value="EIEF">🌿 Misto — EI + Anos Iniciais</option>
+          <option value="EJA1">EJA — Fundamental I</option>
+          <option value="EJA2">EJA — Fundamental II</option>
+        </select>
+      </div>
+      <!-- Aviso misto EI+EF1 -->
+      <div id="avisoEIEF" style="display:none;grid-column:1/-1;background:rgba(124,58,237,0.08);border:1.5px solid rgba(124,58,237,0.25);border-radius:8px;padding:10px 14px;font-size:0.78rem;color:#4c1d95;line-height:1.6">
+        🌿 <strong>Segmento Misto — EI + Anos Iniciais</strong><br>
+        Modalidade comum em escolas ribeirinhas e rurais de Juruá/AM, onde crianças da
+        Educação Infantil e dos Anos Iniciais do Ensino Fundamental estudam na mesma turma.
+        A turma será automaticamente configurada como <strong>multisseriada</strong>.
+        Cada criança receberá avaliação adequada ao seu nível: <em>qualitativa</em> para EI
+        e <em>notas bimestrais</em> para os Anos Iniciais.
+      </div>
+
+      <div class="form-group">
+        <label class="field-label">Turno *</label>
+        <select id="turmaTurno">
+          <option value="Matutino">Matutino</option>
+          <option value="Vespertino">Vespertino</option>
+          <option value="Noturno">Noturno</option>
+          <option value="Integral">Integral</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label class="field-label">Tipo de Organização</label>
+        <div style="display:flex;gap:10px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;cursor:pointer;padding:7px 14px;border-radius:8px;border:1.5px solid var(--cinza-border);transition:all 0.15s" id="lblRegular">
+            <input type="radio" name="tipoTurma" id="tipoRegular" value="regular" checked onchange="onTipoTurmaChange()" style="accent-color:var(--azul-principal)">
+            📚 Seriada (um ano/série)
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;cursor:pointer;padding:7px 14px;border-radius:8px;border:1.5px solid var(--cinza-border);transition:all 0.15s" id="lblMulti">
+            <input type="radio" name="tipoTurma" id="tipoMulti" value="multisseriada" onchange="onTipoTurmaChange()" style="accent-color:#7c3aed">
+            🔀 Multisseriada (dois ou mais anos)
+          </label>
+        </div>
+      </div>
+
+      <!-- Seleção para turma REGULAR (um único ano) -->
+      <div class="form-group full" id="areaAnoRegular">
+        <label class="field-label">Ano/Fase</label>
+        <select id="turmaAno">
+          <optgroup label="Educação Infantil">
+            <option value="Berçário">Berçário</option>
+            <option value="Maternal I">Maternal I</option>
+            <option value="Maternal II">Maternal II</option>
+            <option value="Pré I">Pré I</option>
+            <option value="Pré II">Pré II</option>
+          </optgroup>
+          <optgroup label="Ens. Fundamental I">
+            <option value="1º Ano">1º Ano</option>
+            <option value="2º Ano">2º Ano</option>
+            <option value="3º Ano">3º Ano</option>
+            <option value="4º Ano">4º Ano</option>
+            <option value="5º Ano">5º Ano</option>
+          </optgroup>
+          <optgroup label="🌿 Misto EI + Anos Iniciais">
+            <option value="EI+EF1 (Berçário ao 5º Ano)">EI + EF1 (Berçário ao 5º Ano)</option>
+            <option value="EI+EF1 (Maternal ao 5º Ano)">EI + EF1 (Maternal ao 5º Ano)</option>
+            <option value="EI+EF1 (Pré ao 5º Ano)">EI + EF1 (Pré ao 5º Ano)</option>
+            <option value="EI+EF1 (Pré I e Pré II ao 3º Ano)">EI + EF1 (Pré ao 3º Ano)</option>
+            <option value="EI+EF1 (1º ao 5º Ano com Pré)">EI + EF1 (1º ao 5º Ano com Pré)</option>
+          </optgroup>
+          <optgroup label="Ens. Fundamental II">
+            <option value="6º Ano">6º Ano</option>
+            <option value="7º Ano">7º Ano</option>
+            <option value="8º Ano">8º Ano</option>
+            <option value="9º Ano">9º Ano</option>
+          </optgroup>
+          <optgroup label="EJA — Fund. I (Portaria 247/2025)">
+            <option value="EJA 1ª Etapa (1º ano)">EJA 1ª Etapa — 1º ano</option>
+            <option value="EJA 2ª Etapa (2º e 3º anos)">EJA 2ª Etapa — 2º e 3º anos</option>
+            <option value="EJA 3ª Etapa (4º e 5º anos)">EJA 3ª Etapa — 4º e 5º anos</option>
+          </optgroup>
+          <optgroup label="EJA — Fund. II (Portaria 247/2025)">
+            <option value="EJA 1ª Etapa (6º e 7º anos)">EJA 1ª Etapa — 6º e 7º anos</option>
+            <option value="EJA 2ª Etapa (8º e 9º anos)">EJA 2ª Etapa — 8º e 9º anos</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <!-- Seleção para turma MULTISSERIADA (múltiplos anos) -->
+      <div class="form-group full" id="areaAnosMulti" style="display:none">
+        <label class="field-label">Anos/Séries que compõem a turma <span style="color:var(--cinza-mid);font-weight:400">(selecione dois ou mais)</span></label>
+        <div class="anos-check-grid" id="anosCheckGrid">
+          <!-- preenchido dinamicamente por renderAnosCheckboxes() -->
+        </div>
+        <div class="anos-selecionados-preview" id="anosPreview">
+          <span class="ano-tag-vazio">Nenhum ano selecionado</span>
+        </div>
+      </div>
+
+      <div class="form-group full">
+        <label class="field-label">Professor(a) Responsável</label>
+        <input type="text" id="turmaProf" placeholder="Nome do professor(a)">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalTurma')">Cancelar</button>
+      <button class="btn btn-primary" id="btnSalvarTurma" onclick="salvarTurma()">✅ Criar Turma</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIGURAR ESCOLA -->
+<div class="modal-overlay" id="modalEscola">
+  <div class="modal">
+    <div class="modal-title">⚙️ Configurar Dados da Escola</div>
+    <p style="font-size:0.80rem;color:var(--cinza-mid);margin-bottom:18px;line-height:1.5">
+      Personalize o sistema para a sua escola. As informações aparecem no cabeçalho e nos relatórios impressos.
+    </p>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label class="field-label">Nome da Escola *</label>
+        <input type="text" id="cfgNomeEscola" placeholder="Ex: Escola Municipal São José">
+      </div>
+      <div class="form-group full">
+        <label class="field-label">Município e Estado</label>
+        <input type="text" id="cfgMunicipio" placeholder="Ex: Juruá — Amazonas">
+      </div>
+      <div class="form-group">
+        <label class="field-label">Ano Letivo</label>
+        <input type="text" id="cfgAnoLetivo" placeholder="Ex: 2026">
+      </div>
+      <div class="form-group">
+        <label class="field-label">INEP / Código da Escola</label>
+        <input type="text" id="cfgInep" placeholder="Ex: 13000000">
+      </div>
+      <div class="form-group full">
+        <label class="field-label">Diretor(a)</label>
+        <input type="text" id="cfgDiretor" placeholder="Nome do(a) diretor(a)">
+      </div>
+      <div class="form-group full">
+        <label class="field-label">Secretário(a)</label>
+        <input type="text" id="cfgSecretario" placeholder="Nome do(a) secretário(a)">
+      </div>
+    </div>
+    <!-- CONFIGURAÇÃO DA NUVEM -->
+    <div class="cloud-section">
+      <div class="cloud-section-title">
+        ☁️ Sincronização com Google Sheets
+        <span class="cloud-status-pill cloud-off" id="cloudPill">Não configurado</span>
+      </div>
+      <p style="font-size:0.75rem;color:var(--cinza-mid);margin-bottom:12px;line-height:1.5">
+        Cole abaixo a URL do seu Google Apps Script para ativar a sincronização automática na nuvem.
+        Quando configurado, os dados são salvos localmente <em>e</em> enviados ao Google Sheets sempre que houver internet.
+      </p>
+      <div class="form-group" style="margin-bottom:10px">
+        <label class="field-label">Código da Escola *</label>
+        <input type="text" id="cfgEscolaCode" placeholder="Ex: ESC001 ou EMSJOSE"
+          style="font-family:Consolas,'Courier New',monospace">
+      </div>
+      <div class="form-group full" style="margin-bottom:10px">
+        <label class="field-label">URL do Script desta Escola (Google Apps Script)</label>
+        <input type="url" id="cfgScriptUrl" placeholder="https://script.google.com/macros/s/…/exec"
+          style="font-family:Consolas,'Courier New',monospace;font-size:0.70rem">
+      </div>
+      <div class="form-group full" style="margin-bottom:10px">
+        <label class="field-label">URL do Script da SEMED (consolidado central) <span style="font-weight:400;color:var(--cinza-mid)">— opcional</span></label>
+        <input type="url" id="cfgSemedUrl" placeholder="https://script.google.com/macros/s/…/exec (planilha da SEMED)"
+          style="font-family:Consolas,'Courier New',monospace;font-size:0.70rem">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn btn-secondary btn-sm" onclick="testarConexaoCloud()">🔌 Testar conexão</button>
+        <button class="btn btn-sm" style="background:var(--azul);color:white" onclick="sincronizarAgora()">🔄 Sincronizar agora</button>
+        <button class="btn btn-danger btn-sm" onclick="limparConfigCloud()">🗑️ Remover configuração</button>
+      </div>
+      <div class="sync-log" id="syncLog">
+        <span class="log-info">— Histórico de sincronização aparecerá aqui —</span>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalEscola')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarConfigEscola()">💾 Aplicar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: SELETOR DE ESCOLAS -->
+<div class="modal-overlay" id="modalSeletor">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title">🏫 Selecionar Escola</div>
+    <p style="font-size:0.80rem;color:var(--cinza-mid);margin-bottom:16px;line-height:1.5">
+      Cada escola tem seus próprios dados (turmas, alunos, notas, frequência e diário) armazenados separadamente.
+      Troque de escola a qualquer momento sem perder dados.
+    </p>
+    <div class="perfis-grid" id="perfisList"></div>
+    <div class="nova-escola-btn" onclick="criarNovoPerfil()">
+      <span style="font-size:1.3rem">➕</span>
+      Cadastrar Nova Escola
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('modalSeletor')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: IMPORTAR BACKUP -->
+<div class="modal-overlay" id="modalImportar">
+  <div class="modal">
+    <div class="modal-title">📥 Importar Backup</div>
+    <div id="importPreview" style="margin-bottom:14px"></div>
+    <div id="importAviso" style="background:#fff8e1;border:1px solid #f0d080;border-radius:8px;padding:12px 14px;font-size:0.78rem;color:#7a5c00;margin-bottom:14px;line-height:1.6">
+      ⚠️ <strong>Atenção:</strong> Esta ação <strong>não pode ser desfeita</strong>. Recomenda-se exportar antes de importar.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalImportar')">Cancelar</button>
+      <button class="btn btn-danger" id="btnConfirmarImport" onclick="confirmarImportacao()">⚠️ Confirmar Importação</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CARREGAR DA NUVEM -->
+<div class="modal-overlay" id="modalCarregarNuvem">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-title">☁️ Carregar Dados do Google Sheets</div>
+    <p style="font-size:0.80rem;color:var(--cinza-mid);margin-bottom:14px;line-height:1.5">
+      Baixa os dados salvos no Google Sheets para este computador. Útil para acessar dados de outra máquina
+      ou recuperar um backup da nuvem.
+    </p>
+
+    <div class="cloud-status-row" id="cloudLoadStatus">
+      <span id="cloudLoadDot" style="width:10px;height:10px;border-radius:50%;background:#9ca3af;flex-shrink:0"></span>
+      <span id="cloudLoadMsg">Selecione uma escola abaixo para carregar.</span>
+    </div>
+
+    <div style="font-size:0.70rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:var(--cinza-mid);margin-bottom:8px">
+      Escolas configuradas com Google Sheets
+    </div>
+    <div id="cloudLoadLista" style="max-height:260px;overflow-y:auto;margin-bottom:12px"></div>
+
+    <div class="progress-bar-wrap" id="cloudProgressWrap" style="display:none">
+      <div class="progress-bar-fill" id="cloudProgressBar" style="width:0%"></div>
+    </div>
+
+    <div style="background:#ebf5fb;border-radius:8px;padding:10px 14px;font-size:0.75rem;color:#1a5276;line-height:1.6;margin-bottom:4px">
+      💡 <strong>Como funciona:</strong> O sistema lê os dados do Google Sheets desta escola e os restaura aqui.
+      Os dados locais desta escola serão <strong>substituídos</strong> pelos dados da nuvem.
+    </div>
+
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn btn-secondary" onclick="closeModal('modalCarregarNuvem')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><div class="toast" id="toast">✅ Salvo com sucesso!</div>
+
+
+<script>
+// ================================================================
+// SISTEMA DE GESTÃO ESCOLAR — Rede Municipal de Juruá/AM · 2026
+// Arquitetura: Google Sheets como fonte única de dados (Opção 4)
+// Todos os dados lidos/escritos diretamente no Google Sheets.
+// localStorage usado APENAS para configuração (URL do script, etc.)
+// ================================================================
+
+// ===== CONSTANTES =====
+const ANOS_POR_SEGMENTO = {
+  EI:   ['Berçário','Maternal I','Maternal II','Pré I','Pré II'],
+  EF1:  ['1º Ano','2º Ano','3º Ano','4º Ano','5º Ano'],
+  EF2:  ['6º Ano','7º Ano','8º Ano','9º Ano'],
+  EIEF: ['Berçário','Maternal I','Maternal II','Pré I','Pré II',
+         '1º Ano','2º Ano','3º Ano','4º Ano','5º Ano'],
+  EJA1: ['EJA 1ª Etapa (1º ano)','EJA 2ª Etapa (2º e 3º anos)','EJA 3ª Etapa (4º e 5º anos)'],
+  EJA2: ['EJA 1ª Etapa (6º e 7º anos)','EJA 2ª Etapa (8º e 9º anos)']
+};
+
+const DISCIPLINAS = {
+  EI:   ['O Eu, o Outro e o Nós','Corpo, Gestos e Movimentos','Traços, Sons, Cores e Formas',
+         'Escuta, Fala, Pensamento e Imaginação','Espaços, Tempos, Quantidades, Relações e Transformações'],
+  EF1:  ['Língua Portuguesa','Matemática','Ciências','História','Geografia','Arte','Ed. Física','Ensino Religioso'],
+  EF2:  ['Língua Portuguesa','Matemática','Ciências','História','Geografia','Arte','Ed. Física','Ensino Religioso','Língua Inglesa','L.E.M.'],
+  EIEF: ['Língua Portuguesa','Matemática','Ciências','História','Geografia','Arte','Ed. Física','Ensino Religioso'],
+  EJA1: ['Língua Portuguesa','Matemática','Ciências','História','Geografia','Arte','Ed. Física'],
+  EJA2: ['Língua Portuguesa','Matemática','Ciências','História','Geografia','Arte','Ed. Física','Língua Inglesa','L.E.M.']
+};
+
+const MEDIA_APROVACAO = { EI: null, EF1: 6.0, EF2: 6.0, EIEF: null, EJA1: 6.0, EJA2: 6.0 };
+
+const SEGMENTO_LABEL = {
+  EI:'Educação Infantil', EF1:'Ens. Fund. I', EF2:'Ens. Fund. II',
+  EIEF:'EI + Anos Iniciais', EJA1:'EJA — Fund. I', EJA2:'EJA — Fund. II'
+};
+
+const SEGMENTO_ICON  = { EI:'🌱', EF1:'📗', EF2:'📘', EIEF:'🌿', EJA1:'🌙', EJA2:'🌙' };
+const SEGMENTO_ORDEM = { EI:1, EF1:2, EF2:3, EIEF:4, EJA1:5, EJA2:6 };
+const ANO_ORDEM = [
+  'Berçário','Maternal I','Maternal II','Pré I','Pré II',
+  '1º Ano','2º Ano','3º Ano','4º Ano','5º Ano',
+  '6º Ano','7º Ano','8º Ano','9º Ano',
+  'EJA 1ª Etapa (1º ano)','EJA 2ª Etapa (2º e 3º anos)','EJA 3ª Etapa (4º e 5º anos)',
+  'EJA 1ª Etapa (6º e 7º anos)','EJA 2ª Etapa (8º e 9º anos)'
+];
+
+// ===== ESTADO EM MEMÓRIA (cache local durante a sessão) =====
+let nomeEscola      = 'Escola Municipal Pedro Paulo da Silva';
+let municipioEscola = 'Juruá — Amazonas';
+let configEscola    = { diretor:'Daiana Venâncio Pedroza', secretario:'', inep:'13087410', anoLetivo:'2026' };
+let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbxvEmky8DDzD7fncibN8B0gRlxdjKgR5zTrMXhrNcX3umksexoCcm6xBxvJrJqH2vu5/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMPPSILVA', ativo:true, semedAtivo:true };
+
+let turmas          = [];
+let alunos          = [];
+let notas           = {};
+let frequencia      = {};
+let observacoes     = [];
+let diario          = {};
+
+let turmaAtual      = null;
+let bimestreAtual   = 1;
+let alunosFiltrados = [];
+let secaoAtual      = 'frequencia';
+
+// Temporizador para auto-salvar frequência/notas após edição
+let autoSaveTimer   = null;
+
+
+const ESCOLA_FIXA = {
+  nomeEscola:      'Escola Municipal Pedro Paulo da Silva',
+  municipioEscola: 'Juruá — Amazonas',
+  configEscola:    { diretor:'Daiana Venâncio Pedroza', secretario:'', inep:'13087410', anoLetivo:'2026' },
+  cloudConfig:     { scriptUrl:'https://script.google.com/macros/s/AKfycbxvEmky8DDzD7fncibN8B0gRlxdjKgR5zTrMXhrNcX3umksexoCcm6xBxvJrJqH2vu5/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMPPSILVA', ativo:true, semedAtivo:true }
+};
+// ===== CONFIGURAÇÃO (única coisa que fica no localStorage) =====
+function carregarConfig() {
+  nomeEscola      = ESCOLA_FIXA.nomeEscola;
+  municipioEscola = ESCOLA_FIXA.municipioEscola;
+  cloudConfig     = { ...ESCOLA_FIXA.cloudConfig };
+  configEscola    = { ...ESCOLA_FIXA.configEscola };
+  try {
+    const c = localStorage.getItem('gestao_config_EMPPSILVA');
+    if (c) {
+      const parsed = JSON.parse(c);
+      if (parsed.configEscola?.secretario) configEscola.secretario = parsed.configEscola.secretario;
+      if (parsed.configEscola?.anoLetivo)  configEscola.anoLetivo  = parsed.configEscola.anoLetivo;
+    }
+  } catch(err) { console.warn('Config local:', err); }
+}
+
+function salvarConfig() {
+  try {
+    localStorage.setItem('gestao_config_EMPPSILVA', JSON.stringify({
+      configEscola: { secretario: configEscola.secretario, anoLetivo: configEscola.anoLetivo }
+    }));
+  } catch(err) { console.warn('Erro ao salvar config:', err); }
+}
+
+// ===== API: COMUNICAÇÃO COM GOOGLE SHEETS =====
+async function chamarScript(action, dados = {}) {
+  if (!cloudConfig.scriptUrl) throw new Error('Script não configurado.');
+  const body = JSON.stringify({ action, ...dados });
+  const resp = await fetch(cloudConfig.scriptUrl, {
+    method: 'POST',
+    body,
+    headers: { 'Content-Type': 'text/plain' }
+  });
+  if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
+  return await resp.json();
+}
+
+// Carregar TODOS os dados do Sheets para a memória
+async function carregarDoSheets() {
+  setSyncStatus('syncing', 'Carregando...');
+  try {
+    const res = await chamarScript('LOAD', { escolaCode: cloudConfig.escolaCode });
+    if (!res.ok) throw new Error(res.msg || 'Erro ao carregar');
+
+    const d = res.dados;
+    turmas      = d.turmas      || [];
+    alunos      = d.alunos      || [];
+    notas       = d.notas       || {};
+    frequencia  = d.frequencia  || {};
+    observacoes = d.observacoes || [];
+    diario      = d.diario      || {};
+
+    if (d.nomeEscola)      nomeEscola      = d.nomeEscola;
+    if (d.municipioEscola) municipioEscola = d.municipioEscola;
+    if (d.configEscola)    Object.assign(configEscola, d.configEscola);
+
+    salvarConfig();
+    setSyncStatus('online', 'Carregado · ' + new Date().toLocaleTimeString('pt-BR'));
+    return true;
+  } catch(e) {
+    setSyncStatus('offline', 'Erro: ' + e.message);
+    showToast('❌ Erro ao carregar: ' + e.message, 'red');
+    return false;
+  }
+}
+
+// Salvar dados completos no Sheets
+async function salvarNoSheets() {
+  if (!cloudConfig.scriptUrl) {
+    showToast('⚠️ Configure o script em ⚙️ Escola antes de salvar.', 'gold');
+    return false;
+  }
+  setSyncStatus('syncing', 'Salvando...');
+  try {
+    const payload = montarPayload();
+    const res = await chamarScript('SAVE', { data: payload });
+    if (!res.ok) throw new Error(res.msg || 'Erro ao salvar');
+
+    // Notificar SEMED se configurado
+    if (cloudConfig.semedAtivo && cloudConfig.semedScriptUrl) {
+      notificarSemed(payload).catch(() => {});
+    }
+
+    setSyncStatus('online', 'Salvo · ' + new Date().toLocaleTimeString('pt-BR'));
+    showToast('✅ Dados salvos no Google Sheets!');
+    return true;
+  } catch(e) {
+    setSyncStatus('offline', 'Erro ao salvar');
+    showToast('❌ Erro ao salvar: ' + e.message, 'red');
+    return false;
+  }
+}
+
+// Salvar apenas um registro específico (turma, aluno, frequência, nota)
+// Para operações pontuais sem reenviar tudo
+async function salvarParcial(tipo, dados) {
+  if (!cloudConfig.scriptUrl) return false;
+  try {
+    const res = await chamarScript('SAVE_PARTIAL', { tipo, dados,
+      escolaCode: cloudConfig.escolaCode,
+      nomeEscola, municipioEscola, configEscola
+    });
+    return res && res.ok;
+  } catch(e) {
+    console.warn('Erro no salvamento parcial, enviando completo:', e);
+    return false;
+  }
+}
+
+async function notificarSemed(payload) {
+  await fetch(cloudConfig.semedScriptUrl, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'SEMED_UPDATE', data: payload }),
+    headers: { 'Content-Type': 'text/plain' }
+  });
+}
+
+function montarPayload() {
+  return {
+    nomeEscola, municipioEscola, configEscola,
+    escolaCode: cloudConfig.escolaCode,
+    turmas, alunos, notas, frequencia, observacoes, diario
+  };
+}
+
+// Auto-save com debounce — evita salvar a cada tecla
+function agendarAutoSave(msg = '') {
+  clearTimeout(autoSaveTimer);
+  setSyncStatus('syncing', msg || 'Aguardando...');
+  autoSaveTimer = setTimeout(() => salvarNoSheets(), 3000);
+}
+
+// ===== INIT =====
+async function init() {
+  carregarConfig();
+  aplicarNomeEscola();
+  populaTurmaSelects();
+  renderTurmasRapidas();
+  atualizarSelectAlunos();
+  renderSecaoAtual();
+  document.getElementById('badgeObs').textContent = '0';
+  atualizarCloudPill();
+
+  // Configurar data do diário
+  const hoje = new Date();
+  const dEl = document.getElementById('diarioData');
+  if (dEl) dEl.value = hoje.toISOString().split('T')[0];
+
+  if (cloudConfig.scriptUrl && cloudConfig.ativo) {
+    // Carregar dados do Sheets automaticamente ao abrir
+    setSyncStatus('syncing', 'Conectando...');
+    const ok = await carregarDoSheets();
+    if (ok) {
+      atualizarInterfaceCompleta();
+    }
+  } else {
+    setSyncStatus('offline', 'Script não configurado');
+    if (!cloudConfig.scriptUrl) {
+      showToast('⚙️ Configure o script em ⚙️ Escola para começar.', 'gold');
+    }
+  }
+}
+
+function atualizarInterfaceCompleta() {
+  turmaAtual = null;
+  alunosFiltrados = [];
+  document.getElementById('selTurma').value = '';
+  document.getElementById('buscaAluno').value = '';
+  aplicarNomeEscola();
+  populaTurmaSelects();
+  renderTurmasRapidas();
+  atualizarSelectAlunos();
+  renderSecaoAtual();
+  atualizarBadgeDiario();
+  document.getElementById('badgeObs').textContent = observacoes.length;
+}
+
+// ===== INTERFACE =====
+function aplicarNomeEscola() {
+  document.getElementById('headerNomeEscola').textContent = nomeEscola;
+  document.getElementById('headerSubEscola').textContent =
+    'Rede Municipal de Ensino · ' + municipioEscola + ' · Ano Letivo ' + (configEscola.anoLetivo || '2026');
+  document.title = nomeEscola + ' — Sistema de Gestão Escolar';
+  const sw = document.getElementById('switcherNome');
+  if (sw) sw.textContent = nomeEscola;
+}
+
+function ordenarTurmas(lista) {
+  return [...lista].sort((a, b) => {
+    const segA = SEGMENTO_ORDEM[a.segmento] || 99;
+    const segB = SEGMENTO_ORDEM[b.segmento] || 99;
+    if (segA !== segB) return segA - segB;
+    const multiA = a.multisseriada ? 1 : 0;
+    const multiB = b.multisseriada ? 1 : 0;
+    if (multiA !== multiB) return multiA - multiB;
+    const iA = ANO_ORDEM.indexOf(a.ano);
+    const iB = ANO_ORDEM.indexOf(b.ano);
+    if ((iA === -1 ? 99 : iA) !== (iB === -1 ? 99 : iB)) return (iA === -1 ? 99 : iA) - (iB === -1 ? 99 : iB);
+    return (a.nome || '').localeCompare(b.nome || '', 'pt-BR');
+  });
+}
+
+function populaTurmaSelects() {
+  const seg     = document.getElementById('selSegmento').value;
+  const sel     = document.getElementById('selTurma');
+  const alunoSel = document.getElementById('alunoTurma');
+  sel.innerHTML = '<option value="">Selecione a turma...</option>';
+  if (alunoSel) alunoSel.innerHTML = '';
+  ordenarTurmas(turmas).filter(t => !seg || t.segmento === seg).forEach(t => {
+    sel.innerHTML     += `<option value="${t.id}">${t.nome} — ${t.ano}</option>`;
+    if (alunoSel) alunoSel.innerHTML += `<option value="${t.id}">${t.nome}</option>`;
+  });
+}
+
+function filtrarTurmas() { populaTurmaSelects(); renderTurmasRapidas(); }
+
+function renderTurmasRapidas() {
+  const seg = document.getElementById('selSegmento').value;
+  const el  = document.getElementById('turmasRapidas');
+  el.innerHTML = '';
+  ordenarTurmas(turmas).filter(t => !seg || t.segmento === seg).forEach(t => {
+    const count    = alunos.filter(a => a.turmaId === t.id).length;
+    const isActive = turmaAtual && turmaAtual.id === t.id;
+    el.innerHTML += `
+      <div class="sidebar-item ${isActive ? 'active' : ''}" style="position:relative;padding-right:64px" onclick="selecionarTurmaById(${t.id})">
+        <span class="icon">${SEGMENTO_ICON[t.segmento] || '📋'}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${t.nome}${t.multisseriada ? '<span class="multi-badge">Multi</span>' : ''}
+        </span>
+        <span class="badge">${count}</span>
+        <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;gap:3px" onclick="event.stopPropagation()">
+          <button onclick="abrirEditarTurma(${t.id})" title="Editar turma"
+            style="border:none;background:rgba(36,113,163,0.12);color:var(--azul-principal);width:22px;height:22px;border-radius:4px;cursor:pointer;font-size:0.7rem;display:flex;align-items:center;justify-content:center">✏️</button>
+          <button onclick="excluirTurma(${t.id})" title="Excluir turma"
+            style="border:none;background:rgba(192,57,43,0.10);color:var(--vermelho);width:22px;height:22px;border-radius:4px;cursor:pointer;font-size:0.7rem;display:flex;align-items:center;justify-content:center">🗑️</button>
+        </span>
+      </div>`;
+  });
+  el.innerHTML += `<div class="sidebar-item" onclick="abrirNovaTurma()" style="color:var(--azul-principal);border-top:1px dashed var(--cinza-border)">
+    <span class="icon">➕</span> Nova Turma
+  </div>`;
+}
+
+function selecionarTurmaById(id) {
+  document.getElementById('selTurma').value = id;
+  selecionarTurma();
+}
+
+function selecionarTurma() {
+  const id    = parseInt(document.getElementById('selTurma').value);
+  turmaAtual  = turmas.find(t => t.id === id) || null;
+  alunosFiltrados = turmaAtual ? alunos.filter(a => a.turmaId === id) : [];
+  renderTurmasRapidas();
+  atualizarInfoBar();
+  atualizarStats();
+  renderSecaoAtual();
+  atualizarSelectAlunos();
+}
+
+function filtrarAlunos() {
+  const q = document.getElementById('buscaAluno').value.toLowerCase();
+  if (!turmaAtual) return;
+  alunosFiltrados = alunos.filter(a =>
+    a.turmaId === turmaAtual.id &&
+    (a.nome.toLowerCase().includes(q) || a.matricula.includes(q))
+  );
+  renderSecaoAtual();
+}
+
+function atualizarInfoBar() {
+  if (!turmaAtual) return;
+  document.getElementById('tiTurma').textContent = turmaAtual.nome + (turmaAtual.multisseriada ? ' 🔀' : '');
+  document.getElementById('tiSegmento').textContent =
+    (turmaAtual.multisseriada ? 'Multisseriada · ' : '') + (SEGMENTO_LABEL[turmaAtual.segmento] || turmaAtual.segmento);
+  document.getElementById('tiTurno').textContent  = turmaAtual.turno;
+  document.getElementById('tiProf').textContent   = turmaAtual.prof || '—';
+}
+
+function atualizarStats() {
+  if (!turmaAtual) return;
+  const al = alunos.filter(a => a.turmaId === turmaAtual.id);
+  document.getElementById('statTotal').textContent     = al.length;
+  document.getElementById('statTurmaDesc').textContent = turmaAtual.nome;
+
+  let somaFreq = 0, countFreq = 0;
+  al.forEach(a => { somaFreq += getFreqAluno(a.id).pct; countFreq++; });
+  const freqMedia = countFreq ? somaFreq / countFreq : 0;
+  const elFreq = document.getElementById('statFreq');
+  elFreq.textContent = countFreq ? freqMedia.toFixed(0) + '%' : '—';
+  elFreq.className   = 'stat-value ' + (freqMedia >= 75 ? 'green' : freqMedia >= 60 ? 'gold' : 'red');
+
+  const discs = DISCIPLINAS[turmaAtual.segmento];
+  const mAp   = MEDIA_APROVACAO[turmaAtual.segmento];
+  let somaMedia = 0, countMedia = 0;
+  al.forEach(a => {
+    discs.forEach(d => {
+      const mf = calcMediaFinal(a.id, d);
+      if (mf !== null) { somaMedia += mf; countMedia++; }
+    });
+  });
+  const statMediaEl = document.getElementById('statMedia');
+  statMediaEl.textContent = (mAp === null || !countMedia) ? '—' : (somaMedia/countMedia).toFixed(1);
+
+  const risco = al.filter(a => getFreqAluno(a.id).pct < 75).length;
+  document.getElementById('statRisco').textContent = risco;
+}
+
+// ===== FREQUÊNCIA =====
+function getFreqAluno(alunoId) {
+  if (!frequencia[alunoId]) return { pct: 100, faltas: 0, dias: 0 };
+  let total = 0, presentes = 0;
+  Object.values(frequencia[alunoId]).forEach(mes => {
+    Object.values(mes).forEach(v => { total++; if (v==='P') presentes++; if (v==='J') presentes += 0.5; });
+  });
+  return { pct: total ? Math.round(presentes/total*100) : 100, faltas: total - presentes, dias: total };
+}
+
+function renderFrequencia() {
+  const el = document.getElementById('tabelaFrequencia');
+  if (!turmaAtual || alunosFiltrados.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div>Selecione uma turma</div></div>';
+    return;
+  }
+  const mes      = parseInt(document.getElementById('selMes').value);
+  const diasMes  = new Date(2026, mes, 0).getDate();
+  const diasUteis = [];
+  for (let d = 1; d <= diasMes; d++) {
+    const dow = new Date(2026, mes-1, d).getDay();
+    if (dow >= 1 && dow <= 5) diasUteis.push(d);
+  }
+  const diasShow = diasUteis.slice(0, 22);
+
+  let html = `<table><thead><tr>
+    <th class="left" style="min-width:180px">Aluno</th>
+    <th class="left">Matrícula</th>
+    ${diasShow.map(d => `<th data-tip="Dia ${d}">${d}</th>`).join('')}
+    <th>% Freq.</th><th>Faltas</th><th>Ações</th>
+  </tr></thead><tbody>`;
+
+  alunosFiltrados.forEach(a => {
+    if (!frequencia[a.id]) frequencia[a.id] = {};
+    if (!frequencia[a.id][mes]) frequencia[a.id][mes] = {};
+    diasShow.forEach(d => { if (!frequencia[a.id][mes][d]) frequencia[a.id][mes][d] = 'P'; });
+
+    const { pct, faltas } = getFreqAluno(a.id);
+    const cls = pct >= 75 ? 'freq-good' : pct >= 60 ? 'freq-warn' : 'freq-bad';
+
+    html += `<tr>
+      <td class="left"><div class="aluno-nome">${a.nome}</div></td>
+      <td class="left"><span class="matricula">${a.matricula}</span></td>
+      ${diasShow.map(d => {
+        const v   = frequencia[a.id][mes][d] || 'P';
+        const cor = v==='P' ? '#2e86c1' : v==='F' ? '#c0392b' : '#b8860b';
+        return `<td><button onclick="toggleFreq(${a.id},${mes},${d})"
+          style="border:none;background:${v==='P'?'#ebf5fb':v==='F'?'#f8d7da':'#fff3cd'};color:${cor};width:26px;height:26px;border-radius:5px;font-weight:700;font-size:0.72rem;cursor:pointer;transition:all 0.15s"
+          data-tip="${v==='P'?'Presente':v==='F'?'Falta':'Justificada'}">${v}</button></td>`;
+      }).join('')}
+      <td><div class="freq-cell ${cls}">
+        <div class="freq-bar"><div class="freq-fill" style="width:${pct}%"></div></div>
+        <span class="freq-pct">${pct}%</span>
+      </div></td>
+      <td style="font-family:Consolas,monospace;font-size:0.78rem;color:${faltas>5?'var(--vermelho)':'var(--cinza-mid)'}">${faltas}</td>
+      <td style="white-space:nowrap">
+        <button onclick="abrirEditarAluno(${a.id})" title="Editar aluno"
+          style="border:none;background:rgba(36,113,163,0.12);color:var(--azul-principal);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:0.72rem;margin-right:3px">✏️</button>
+        <button onclick="excluirAluno(${a.id})" title="Excluir aluno"
+          style="border:none;background:rgba(192,57,43,0.10);color:var(--vermelho);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:0.72rem">🗑️</button>
+      </td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function toggleFreq(alunoId, mes, dia) {
+  if (!frequencia[alunoId]) frequencia[alunoId] = {};
+  if (!frequencia[alunoId][mes]) frequencia[alunoId][mes] = {};
+  const ciclo = { P:'F', F:'J', J:'P' };
+  frequencia[alunoId][mes][dia] = ciclo[frequencia[alunoId][mes][dia] || 'P'];
+  renderFrequencia();
+  atualizarStats();
+  agendarAutoSave('Frequência alterada...');
+}
+
+function marcarTodos(v) {
+  const mes = parseInt(document.getElementById('selMes').value);
+  alunosFiltrados.forEach(a => {
+    if (!frequencia[a.id]) frequencia[a.id] = {};
+    if (!frequencia[a.id][mes]) frequencia[a.id][mes] = {};
+    const diasMes = new Date(2026, mes, 0).getDate();
+    for (let d = 1; d <= diasMes; d++) {
+      const dow = new Date(2026, mes-1, d).getDay();
+      if (dow >= 1 && dow <= 5) frequencia[a.id][mes][d] = v;
+    }
+  });
+  renderFrequencia();
+  atualizarStats();
+  agendarAutoSave('Frequência alterada...');
+}
+
+// ===== NOTAS =====
+function switchBimestre(b, el) {
+  bimestreAtual = b;
+  document.querySelectorAll('.bim-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderNotas();
+}
+
+function getDiscAluno(aluno) {
+  const t = turmas.find(t => t.id === aluno.turmaId);
+  if (!t) return [];
+  if (t.multisseriada && aluno.ano) {
+    const seg = getSegmentoByAno(aluno.ano) || t.segmento;
+    return DISCIPLINAS[seg] || DISCIPLINAS[t.segmento] || [];
+  }
+  return DISCIPLINAS[t.segmento] || [];
+}
+
+function getSegmentoByAno(ano) {
+  const prioridade = ['EI','EF1','EF2','EJA1','EJA2','EIEF'];
+  for (const seg of prioridade) {
+    if ((ANOS_POR_SEGMENTO[seg] || []).includes(ano)) return seg;
+  }
+  return null;
+}
+
+function getNota(alunoId, disc, bim, tipo='reg') {
+  const key = tipo === 'rec' ? bim + '_rec' : bim;
+  return notas[alunoId]?.[disc]?.[key] ?? '';
+}
+
+function setNota(alunoId, disc, bim, val, tipo='reg') {
+  if (!notas[alunoId]) notas[alunoId] = {};
+  if (!notas[alunoId][disc]) notas[alunoId][disc] = {};
+  const key = tipo === 'rec' ? bim + '_rec' : bim;
+  notas[alunoId][disc][key] = val === '' ? '' : (parseFloat(val) || 0);
+  agendarAutoSave('Nota alterada...');
+}
+
+function calcNotaEfetivaBim(alunoId, disc, bim) {
+  const reg = notas[alunoId]?.[disc]?.[bim];
+  const rec = notas[alunoId]?.[disc]?.[bim + '_rec'];
+  const nReg = (reg !== undefined && reg !== '') ? parseFloat(reg) : null;
+  const nRec = (rec !== undefined && rec !== '') ? parseFloat(rec) : null;
+  if (nReg === null) return null;
+  if (nRec !== null) return Math.max(nReg, nRec);
+  return nReg;
+}
+
+function calcMediaBim(alunoId, disc, bim) { return calcNotaEfetivaBim(alunoId, disc, bim); }
+
+function calcMediaFinal(alunoId, disc) {
+  const vals = [1,2,3,4].map(b => calcMediaBim(alunoId, disc, b)).filter(v => v !== null);
+  if (!vals.length) return null;
+  return vals.reduce((s,v) => s+v, 0) / vals.length;
+}
+
+function renderNotas() {
+  const el = document.getElementById('tabelaNotas');
+  if (!turmaAtual || alunosFiltrados.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><div>Selecione uma turma</div></div>';
+    return;
+  }
+  const seg  = turmaAtual.segmento;
+  const bim  = bimestreAtual;
+  const isMultiRender = (turmaAtual.multisseriada && turmaAtual.anos && turmaAtual.anos.length > 1) || seg === 'EIEF';
+  const discs    = DISCIPLINAS[seg];
+  const mediaMin = MEDIA_APROVACAO[seg];
+
+  if (seg === 'EI') {
+    const niveisEI = ['NS','PS','S','PD'];
+    let html = `
+      <div style="padding:12px 16px 4px;font-size:0.75rem;background:#ebf5fb;border-bottom:1px solid #aed6f1;color:#1a5276;line-height:1.6">
+        🌱 <strong>Educação Infantil — Avaliação Qualitativa</strong><br>
+        Campos de Experiência (BNCC) — sem notas numéricas.
+      </div>
+      <table><thead><tr>
+        <th class="left" style="min-width:170px">Criança</th>
+        ${discs.map(d => `<th data-tip="${d}" style="min-width:110px;font-size:0.6rem">${d.length>14?d.substr(0,13)+'…':d}</th>`).join('')}
+      </tr></thead><tbody>`;
+    alunosFiltrados.forEach(a => {
+      html += `<tr>
+        <td class="left"><div class="aluno-nome">${a.nome}</div><div class="matricula">${a.matricula}</div></td>
+        ${discs.map(d => {
+          const val = notas[a.id]?.[d]?.['ei_'+bim] || '';
+          return `<td><select onchange="setNotaEI(${a.id},'${d}',${bim},this.value)"
+            style="width:100%;border:1.5px solid var(--cinza-border);border-radius:5px;padding:4px 5px;font-size:0.68rem;font-family:inherit;background:white;cursor:pointer">
+            <option value="">—</option>
+            ${niveisEI.map(n => `<option value="${n}" ${val===n?'selected':''}>${n}</option>`).join('')}
+          </select></td>`;
+        }).join('')}
+      </tr>`;
+    });
+    html += `</tbody></table>
+      <div style="padding:8px 16px;font-size:0.68rem;color:var(--cinza-mid);border-top:1px solid var(--cinza-border)">
+        <strong>NS</strong> = Não Satisfatório &nbsp;|&nbsp; <strong>PS</strong> = Parcialmente Satisfatório &nbsp;|&nbsp; <strong>S</strong> = Satisfatório &nbsp;|&nbsp; <strong>PD</strong> = Plenamente Desenvolvido
+      </div>`;
+    el.innerHTML = html;
+    return;
+  }
+
+  const mediaLabel = mediaMin !== null ? `Média ≥ ${mediaMin.toFixed(1)}` : 'Média';
+  let html = `<table><thead>
+    <tr>
+      <th class="left" rowspan="2" style="min-width:170px;vertical-align:middle">Aluno</th>
+      ${discs.map(d => `<th colspan="2" data-tip="${d}" style="min-width:120px;border-bottom:1px solid rgba(36,113,163,0.15)">${d.length>10?d.substr(0,9)+'…':d}</th>`).join('')}
+      <th rowspan="2" style="vertical-align:middle;min-width:80px">${mediaLabel}</th>
+    </tr>
+    <tr>
+      ${discs.map(() => `
+        <th style="font-size:0.58rem;color:#555;font-weight:600;background:#f9fbf9;min-width:52px">Avaliação</th>
+        <th style="font-size:0.58rem;color:var(--dourado);font-weight:600;background:#fdf9ee;min-width:52px">Recuperação</th>
+      `).join('')}
+    </tr>
+  </thead><tbody>`;
+
+  if (isMultiRender) {
+    const anosTurma = turmaAtual.anos || [];
+    const porAno = {}; anosTurma.forEach(a => porAno[a] = []);
+    const semAno = [];
+    alunosFiltrados.forEach(al => {
+      if (al.ano && porAno[al.ano] !== undefined) porAno[al.ano].push(al);
+      else semAno.push(al);
+    });
+    const grupos = [...anosTurma.map(a => ({label:a, lista:porAno[a]})), semAno.length ? {label:'Ano não definido',lista:semAno} : null].filter(Boolean);
+    grupos.forEach(({label, lista}) => {
+      if (!lista.length) return;
+      const discGrupo = lista[0].ano ? (DISCIPLINAS[getSegmentoByAno(lista[0].ano)] || discs) : discs;
+      const mMinGrupo = lista[0].ano ? (MEDIA_APROVACAO[getSegmentoByAno(lista[0].ano)] || mediaMin) : mediaMin;
+      html += `<tr><td colspan="99" class="multi-section-divider">🔀 ${label}</td></tr>`;
+      lista.forEach(a => {
+        let soma = 0, cnt = 0;
+        const cells = discGrupo.map(d => {
+          const vReg = getNota(a.id, d, bim, 'reg');
+          const vRec = getNota(a.id, d, bim, 'rec');
+          const ef   = calcNotaEfetivaBim(a.id, d, bim);
+          if (ef !== null) { soma += ef; cnt++; }
+          const recUsada = vRec !== '' && parseFloat(vRec) > parseFloat(vReg || 0);
+          return `<td style="background:#f9fbf9"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+              value="${vReg}" onchange="setNota(${a.id},'${d}',${bim},this.value,'reg');calcularMedias()" placeholder="—"></td>
+            <td style="background:#fdf9ee"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+              value="${vRec}" onchange="setNota(${a.id},'${d}',${bim},this.value,'rec');calcularMedias()" placeholder="—"
+              style="border-color:${recUsada?'var(--dourado)':'transparent'};color:${recUsada?'var(--dourado)':'inherit'}"></td>`;
+        }).join('');
+        const media = cnt ? soma/cnt : null;
+        const mA = mMinGrupo || 6.0;
+        const mediaCls = media===null?'':(media>=mA?'media-ap':media>=(mA-2)?'media-rec':'media-rep');
+        html += `<tr>
+          <td class="left"><div class="aluno-nome">${a.nome}<span class="aluno-ano-badge">${a.ano||''}</span></div><div class="matricula">${a.matricula}</div></td>
+          ${cells}
+          <td><span class="media-badge ${mediaCls}">${media!==null?media.toFixed(1):'—'}</span></td>
+        </tr>`;
+      });
+    });
+  } else {
+    alunosFiltrados.forEach(a => {
+      let soma = 0, cnt = 0;
+      const cells = discs.map(d => {
+        const vReg = getNota(a.id, d, bim, 'reg');
+        const vRec = getNota(a.id, d, bim, 'rec');
+        const ef   = calcNotaEfetivaBim(a.id, d, bim);
+        if (ef !== null) { soma += ef; cnt++; }
+        const recUsada = vRec !== '' && parseFloat(vRec) > parseFloat(vReg || 0);
+        return `<td style="background:#f9fbf9"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+            value="${vReg}" onchange="setNota(${a.id},'${d}',${bim},this.value,'reg');calcularMedias()" placeholder="—"></td>
+          <td style="background:#fdf9ee"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+            value="${vRec}" onchange="setNota(${a.id},'${d}',${bim},this.value,'rec');calcularMedias()" placeholder="—"
+            style="border-color:${recUsada?'var(--dourado)':'transparent'};color:${recUsada?'var(--dourado)':'inherit'}"></td>`;
+      }).join('');
+      const media = cnt ? soma/cnt : null;
+      const mediaCls = media===null?'':(media>=(mediaMin||6)?'media-ap':media>=((mediaMin||6)-2)?'media-rec':'media-rep');
+      html += `<tr>
+        <td class="left"><div class="aluno-nome">${a.nome}</div><div class="matricula">${a.matricula}</div></td>
+        ${cells}
+        <td><span class="media-badge ${mediaCls}">${media!==null?media.toFixed(1):'—'}</span></td>
+      </tr>`;
+    });
+  }
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+function setNotaEI(alunoId, disc, bim, val) {
+  if (!notas[alunoId]) notas[alunoId] = {};
+  if (!notas[alunoId][disc]) notas[alunoId][disc] = {};
+  notas[alunoId][disc]['ei_' + bim] = val;
+  agendarAutoSave('Avaliação alterada...');
+}
+
+function calcularMedias() { /* notas já atualizadas em memória */ }
+function calcularMediasFinais() { renderMediasFinal(); }
+
+function renderMediasFinal() {
+  const el = document.getElementById('tabelaMediasFinal');
+  if (!turmaAtual || alunosFiltrados.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏆</div><div>Selecione uma turma</div></div>';
+    return;
+  }
+  const seg   = turmaAtual.segmento;
+  const discs = DISCIPLINAS[seg];
+  const mAp   = MEDIA_APROVACAO[seg];
+
+  if (mAp === null) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🌱</div><div>Educação Infantil não utiliza médias finais numéricas.</div></div>';
+    return;
+  }
+
+  function parecerFinal(alunoId, disc) {
+    const mf = calcMediaFinal(alunoId, disc);
+    if (mf === null) return { cls:'', txt:'—' };
+    if (mf >= mAp)       return { cls:'media-ap',  txt:'Aprovado' };
+    if (mf >= mAp - 2.0) return { cls:'media-rec', txt:'Rec. Final' };
+    return { cls:'media-rep', txt:'Reprovado' };
+  }
+
+  let html = `<table class="mf-table"><thead><tr>
+    <th class="left" style="min-width:170px">Aluno</th>
+    ${discs.map(d => `<th data-tip="${d}" style="font-size:0.6rem">${d.substr(0,8)}</th>`).join('')}
+    <th>Méd. Final</th><th>Freq.</th><th>Situação</th>
+  </tr></thead><tbody>`;
+
+  alunosFiltrados.forEach(a => {
+    let soma = 0, cnt = 0;
+    const cells = discs.map(d => {
+      const mf = calcMediaFinal(a.id, d);
+      if (mf !== null) { soma += mf; cnt++; }
+      const p = parecerFinal(a.id, d);
+      return `<td><span class="media-badge ${p.cls} mf-final">${mf!==null?mf.toFixed(1):'—'}</span></td>`;
+    }).join('');
+    const media = cnt ? soma/cnt : null;
+    const freq  = getFreqAluno(a.id);
+    const sit   = !cnt ? '—' : freq.pct < 75 ? 'Rep. Faltas' : media >= mAp ? 'Aprovado' : media >= mAp-2 ? 'Rec. Final' : 'Reprovado';
+    const sitCls = sit==='Aprovado'?'sit-ap':sit==='Rec. Final'?'sit-rec':'sit-rep';
+    html += `<tr>
+      <td class="left mf-destaque"><div class="aluno-nome">${a.nome}</div><div class="matricula">${a.matricula}</div></td>
+      ${cells}
+      <td class="mf-col-final"><span class="media-badge ${media!==null?(media>=mAp?'media-ap':media>=mAp-2?'media-rec':'media-rep'):''} mf-final">${media!==null?media.toFixed(1):'—'}</span></td>
+      <td>${freq.pct}%</td>
+      <td><span class="situacao-badge ${sitCls}">${sit}</span></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+// ===== OBSERVAÇÕES =====
+function atualizarSelectAlunos() {
+  const sel = document.getElementById('obsAluno');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecione o aluno...</option>';
+  const lista = turmaAtual ? alunos.filter(a => a.turmaId === turmaAtual.id) : alunos;
+  lista.sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'))
+       .forEach(a => { sel.innerHTML += `<option value="${a.id}">${a.nome}</option>`; });
+}
+
+function salvarObservacao() {
+  const alunoId = parseInt(document.getElementById('obsAluno').value);
+  const tipo    = document.getElementById('obsTipo').value;
+  const data    = document.getElementById('obsData').value;
+  const texto   = document.getElementById('obsTexto').value.trim();
+  const resp    = document.getElementById('obsResponsavel').value.trim();
+  if (!alunoId || !tipo || !texto) { showToast('⚠️ Preencha os campos obrigatórios!', 'gold'); return; }
+  const aluno = alunos.find(a => a.id === alunoId);
+  observacoes.push({ alunoId, alunoNome: aluno?.nome || '', tipo, data, texto, resp });
+  renderObservacoes();
+  document.getElementById('badgeObs').textContent = observacoes.length;
+  closeModal('modalObs');
+  document.getElementById('obsTexto').value = '';
+  agendarAutoSave('Observação adicionada...');
+  showToast('✅ Observação registrada!');
+}
+
+function renderObservacoes() {
+  const el = document.getElementById('listaObs');
+  if (!observacoes.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🗒️</div><div>Nenhuma observação registrada ainda.</div></div>';
+    return;
+  }
+  const tipoLabel = { pedagogica:'Pedagógica', comportamental:'Comportamental', familiar:'Familiar', saude:'Saúde' };
+  const tipoCls   = { pedagogica:'obs-pedagogica', comportamental:'obs-comportamental', familiar:'obs-familiar', saude:'obs-saude' };
+  const filtro = turmaAtual ? observacoes.filter(o => { const a = alunos.find(a => a.id===o.alunoId); return !a || a.turmaId===turmaAtual.id; }) : observacoes;
+  if (!filtro.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🗒️</div><div>Nenhuma observação nesta turma.</div></div>';
+    return;
+  }
+  el.innerHTML = '<div class="obs-list">' + filtro.map((o,i) => `
+    <div class="obs-item">
+      <div class="obs-header">
+        <span class="obs-aluno">👤 ${o.alunoNome}</span>
+        <span class="obs-tipo ${tipoCls[o.tipo]}">${tipoLabel[o.tipo]}</span>
+        <span class="obs-data">${o.data ? new Date(o.data+'T00:00:00').toLocaleDateString('pt-BR') : ''}</span>
+        ${o.resp ? `<span style="font-size:0.68rem;color:var(--cinza-mid)">· ${o.resp}</span>` : ''}
+        <button onclick="removerObs(${i})" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#999;font-size:0.8rem">🗑️</button>
+      </div>
+      <div class="obs-text">${o.texto}</div>
+    </div>`).join('') + '</div>';
+}
+
+function removerObs(i) {
+  const filtro = turmaAtual ? observacoes.filter(o => { const a = alunos.find(a => a.id===o.alunoId); return !a || a.turmaId===turmaAtual.id; }) : observacoes;
+  const obs = filtro[i];
+  const idx = observacoes.indexOf(obs);
+  if (idx > -1) observacoes.splice(idx, 1);
+  renderObservacoes();
+  document.getElementById('badgeObs').textContent = observacoes.length;
+  agendarAutoSave('Observação removida...');
+  showToast('🗑️ Observação removida.', 'gold');
+}
+
+// ===== RELATÓRIO =====
+function renderRelatorio() {
+  if (!turmaAtual) return;
+  document.getElementById('relSubtitle').textContent = `${turmaAtual.nome} — ${turmaAtual.ano} · ${turmaAtual.turno} · ${turmaAtual.prof}`;
+  const discs = DISCIPLINAS[turmaAtual.segmento];
+  const al    = alunosFiltrados;
+  if (!al.length) {
+    document.getElementById('relatorioConteudo').innerHTML = '<div class="empty-state">Sem alunos nesta turma.</div>';
+    return;
+  }
+  let html = `<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:2px solid var(--azul-light)">
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <div><strong>Turma:</strong> ${turmaAtual.nome}</div>
+      <div><strong>Ano/Série:</strong> ${turmaAtual.ano}</div>
+      <div><strong>Segmento:</strong> ${SEGMENTO_LABEL[turmaAtual.segmento]||turmaAtual.segmento}</div>
+      <div><strong>Turno:</strong> ${turmaAtual.turno}</div>
+      <div><strong>Professor(a):</strong> ${turmaAtual.prof}</div>
+      <div><strong>Total de Alunos:</strong> ${al.length}</div>
+    </div></div>
+  <table style="width:100%;border-collapse:collapse;font-size:0.78rem;margin-bottom:20px">
+    <thead style="background:var(--azul-light)"><tr>
+      <th style="padding:8px 10px;text-align:left;border:1px solid #ccc;color:var(--azul-principal)">Aluno</th>
+      ${discs.map(d => `<th style="padding:8px 6px;text-align:center;border:1px solid #ccc;color:var(--azul-principal);font-size:0.6rem">${d.substr(0,8)}</th>`).join('')}
+      <th style="padding:8px 10px;text-align:center;border:1px solid #ccc;color:var(--azul-principal)">Méd. Final</th>
+      <th style="padding:8px 10px;text-align:center;border:1px solid #ccc;color:var(--azul-principal)">Freq.</th>
+      <th style="padding:8px 10px;text-align:center;border:1px solid #ccc;color:var(--azul-principal)">Situação</th>
+    </tr></thead><tbody>`;
+  const mAp = MEDIA_APROVACAO[turmaAtual.segmento];
+  al.forEach(a => {
+    let soma = 0, cnt = 0;
+    const cells = discs.map(d => {
+      const mf = calcMediaFinal(a.id, d);
+      if (mf !== null) { soma += mf; cnt++; }
+      const cor = mf===null?'#999':mf>=6?'#2471a3':mf>=4?'#856404':'#721c24';
+      return `<td style="padding:6px;text-align:center;border:1px solid #ddd;font-weight:600;color:${cor}">${mf!==null?mf.toFixed(1):'—'}</td>`;
+    }).join('');
+    const media = cnt ? soma/cnt : null;
+    const freq  = getFreqAluno(a.id);
+    const sit   = !cnt ? '—' : freq.pct<75 ? 'Rep. Faltas' : mAp===null ? 'Qualitativo' : media>=mAp ? 'Aprovado' : media>=mAp-2 ? 'Rec. Final' : 'Reprovado';
+    const sitColor = sit==='Aprovado'?'#2471a3':sit==='Rec. Final'?'#856404':'#721c24';
+    html += `<tr>
+      <td style="padding:6px 10px;border:1px solid #ddd">${a.nome}</td>${cells}
+      <td style="padding:6px;text-align:center;border:1px solid #ddd;font-weight:700">${media!==null?media.toFixed(1):'—'}</td>
+      <td style="padding:6px;text-align:center;border:1px solid #ddd">${freq.pct}%</td>
+      <td style="padding:6px;text-align:center;border:1px solid #ddd;font-weight:600;color:${sitColor}">${sit}</td>
+    </tr>`;
+  });
+  const obs = observacoes.filter(o => al.find(a => a.id===o.alunoId));
+  html += `</tbody></table>`;
+  if (obs.length) {
+    html += `<h3 style="font-family:Georgia,serif;color:var(--azul-principal);margin-bottom:12px">Observações da Turma</h3>`;
+    obs.forEach(o => { html += `<div style="border-left:3px solid var(--azul-principal);padding:8px 12px;margin-bottom:8px;background:var(--azul-light);border-radius:0 6px 6px 0;font-size:0.78rem">
+      <strong>${o.alunoNome}</strong> · <em>${o.tipo}</em> · ${o.data?new Date(o.data+'T00:00:00').toLocaleDateString('pt-BR'):''}
+      <br>${o.texto}</div>`; });
+  }
+  html += `<div style="margin-top:40px;display:flex;gap:60px;padding-top:20px;border-top:1px solid #ccc">
+    <div style="text-align:center"><div style="border-top:1px solid #333;padding-top:6px;margin-top:40px;font-size:0.75rem">Diretor(a): ${configEscola.diretor||'___________________________'}</div></div>
+    <div style="text-align:center"><div style="border-top:1px solid #333;padding-top:6px;margin-top:40px;font-size:0.75rem">Professor(a): ${turmaAtual.prof||'___________________________'}</div></div>
+    <div style="text-align:center"><div style="border-top:1px solid #333;padding-top:6px;margin-top:40px;font-size:0.75rem">Secretário(a): ${configEscola.secretario||'___________________________'}</div></div>
+  </div>`;
+  document.getElementById('relatorioConteudo').innerHTML = html;
+}
+
+// ===== CADASTRO DE ALUNOS =====
+function abrirCadastroAluno() {
+  document.getElementById('alunoEditId').value = '';
+  document.getElementById('modalAlunoTitle').textContent = '👤 Cadastrar Novo Aluno';
+  document.getElementById('btnSalvarAluno').textContent  = '✅ Cadastrar Aluno';
+  ['alunoNome','alunoMatricula','alunoResp','alunoContato','alunoEndereco'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('alunoNasc').value = '';
+  const obsEl = document.getElementById('alunoObs'); if (obsEl) obsEl.value = '';
+  document.getElementById('areaAnoAluno').style.display = 'none';
+  openModal('modalAluno');
+}
+
+function abrirEditarAluno(id) {
+  const a = alunos.find(a => a.id === id);
+  if (!a) return;
+  document.getElementById('alunoEditId').value = id;
+  document.getElementById('modalAlunoTitle').textContent = '✏️ Editar Dados do Aluno';
+  document.getElementById('btnSalvarAluno').textContent  = '💾 Salvar Alterações';
+  document.getElementById('alunoNome').value      = a.nome      || '';
+  document.getElementById('alunoMatricula').value = a.matricula || '';
+  document.getElementById('alunoNasc').value      = a.nasc      || '';
+  document.getElementById('alunoResp').value      = a.resp      || '';
+  document.getElementById('alunoContato').value   = a.contato   || '';
+  document.getElementById('alunoEndereco').value  = a.endereco  || '';
+  const obsEl = document.getElementById('alunoObs'); if (obsEl) obsEl.value = a.obsInicial || '';
+  document.getElementById('alunoTurma').value = a.turmaId;
+  onAlunoTurmaChange();
+  const selAno = document.getElementById('alunoAno');
+  if (selAno && a.ano) selAno.value = a.ano;
+  openModal('modalAluno');
+}
+
+async function salvarAluno() {
+  const editId  = document.getElementById('alunoEditId').value;
+  const nome    = document.getElementById('alunoNome').value.trim();
+  const mat     = document.getElementById('alunoMatricula').value.trim();
+  const turmaId = parseInt(document.getElementById('alunoTurma').value);
+  if (!nome || !mat || !turmaId) { showToast('⚠️ Preencha os campos obrigatórios!', 'gold'); return; }
+
+  const alunoAnoVal = document.getElementById('alunoAno')?.value || '';
+  const obsEl       = document.getElementById('alunoObs');
+
+  if (editId) {
+    const idx = alunos.findIndex(a => a.id === parseInt(editId));
+    if (idx === -1) return;
+    alunos[idx] = { ...alunos[idx], nome, matricula:mat, turmaId, ano:alunoAnoVal,
+      nasc: document.getElementById('alunoNasc').value,
+      resp: document.getElementById('alunoResp').value,
+      contato: document.getElementById('alunoContato').value,
+      endereco: document.getElementById('alunoEndereco').value,
+      obsInicial: obsEl?.value || alunos[idx].obsInicial || '' };
+    observacoes.forEach(o => { if (o.alunoId === parseInt(editId)) o.alunoNome = nome; });
+    showToast('✅ Dados do aluno atualizados!');
+  } else {
+    alunos.push({ id: Date.now(), nome, matricula:mat, turmaId, ano:alunoAnoVal,
+      nasc: document.getElementById('alunoNasc').value,
+      resp: document.getElementById('alunoResp').value,
+      contato: document.getElementById('alunoContato').value,
+      endereco: document.getElementById('alunoEndereco').value,
+      obsInicial: obsEl?.value || '' });
+    showToast('✅ Aluno cadastrado!');
+  }
+
+  if (turmaAtual) alunosFiltrados = alunos.filter(a => a.turmaId === turmaAtual.id);
+  renderTurmasRapidas(); atualizarStats(); renderSecaoAtual(); atualizarSelectAlunos();
+  closeModal('modalAluno');
+  document.getElementById('alunoEditId').value = '';
+  document.getElementById('modalAlunoTitle').textContent = '👤 Cadastrar Novo Aluno';
+  document.getElementById('btnSalvarAluno').textContent  = '✅ Cadastrar Aluno';
+  document.getElementById('alunoNome').value = '';
+  document.getElementById('alunoMatricula').value = '';
+
+  // Salvar imediatamente ao cadastrar/editar aluno
+  await salvarNoSheets();
+}
+
+function cadastrarAluno() { salvarAluno(); }
+
+async function excluirAluno(id) {
+  const a = alunos.find(a => a.id === id);
+  if (!a) return;
+  if (!confirm(`Excluir o aluno "${a.nome}"?\n\nTodos os dados serão removidos. Esta ação não pode ser desfeita.`)) return;
+  alunos = alunos.filter(a => a.id !== id);
+  delete frequencia[id]; delete notas[id];
+  observacoes = observacoes.filter(o => o.alunoId !== id);
+  if (turmaAtual) alunosFiltrados = alunos.filter(a => a.turmaId === turmaAtual.id);
+  renderTurmasRapidas(); atualizarStats(); renderSecaoAtual(); atualizarSelectAlunos();
+  document.getElementById('badgeObs').textContent = observacoes.length;
+  showToast('🗑️ Aluno removido.', 'gold');
+  await salvarNoSheets();
+}
+
+// ===== CADASTRO DE TURMAS =====
+function onSegmentoTurmaChange() {
+  const seg = document.getElementById('turmaSegmento').value;
+  const avisoEl = document.getElementById('avisoEIEF');
+  if (avisoEl) avisoEl.style.display = seg==='EIEF' ? '' : 'none';
+  if (seg === 'EIEF') { document.getElementById('tipoMulti').checked = true; onTipoTurmaChange(); }
+  if (document.getElementById('tipoMulti').checked) renderAnosCheckboxes();
+}
+
+function onTipoTurmaChange() {
+  const isMulti = document.getElementById('tipoMulti').checked;
+  document.getElementById('areaAnoRegular').style.display = isMulti ? 'none' : '';
+  document.getElementById('areaAnosMulti').style.display  = isMulti ? '' : 'none';
+  document.getElementById('lblRegular').style.borderColor = isMulti ? 'var(--cinza-border)' : 'var(--azul-principal)';
+  document.getElementById('lblMulti').style.borderColor   = isMulti ? '#7c3aed' : 'var(--cinza-border)';
+  if (isMulti) renderAnosCheckboxes();
+}
+
+function renderAnosCheckboxes() {
+  const seg  = document.getElementById('turmaSegmento').value;
+  const anos = ANOS_POR_SEGMENTO[seg] || [];
+  document.getElementById('anosCheckGrid').innerHTML = anos.map(a =>
+    `<label class="ano-check-item"><input type="checkbox" value="${a}" onchange="atualizarPreviewAnos()" style="accent-color:#7c3aed"> ${a}</label>`
+  ).join('');
+  atualizarPreviewAnos();
+}
+
+function atualizarPreviewAnos() {
+  const sel  = getAnosSelecionados();
+  const prev = document.getElementById('anosPreview');
+  prev.innerHTML = sel.length ? sel.map(a => `<span class="ano-tag">${a}</span>`).join('') : '<span class="ano-tag-vazio">Nenhum ano selecionado</span>';
+}
+
+function getAnosSelecionados() { return [...document.querySelectorAll('#anosCheckGrid input:checked')].map(c => c.value); }
+function setAnosSelecionados(anos) {
+  document.querySelectorAll('#anosCheckGrid input[type=checkbox]').forEach(cb => { cb.checked = anos.includes(cb.value); });
+  atualizarPreviewAnos();
+}
+
+function onAlunoTurmaChange() {
+  const tid  = parseInt(document.getElementById('alunoTurma').value);
+  const t    = turmas.find(t => t.id === tid);
+  const area = document.getElementById('areaAnoAluno');
+  const sel  = document.getElementById('alunoAno');
+  if (t && t.multisseriada && t.anos && t.anos.length > 1) {
+    sel.innerHTML = '<option value="">— Selecione o ano do aluno —</option>' + t.anos.map(a => `<option value="${a}">${a}</option>`).join('');
+    area.style.display = '';
+  } else { area.style.display = 'none'; sel.innerHTML = ''; }
+}
+
+function abrirNovaTurma() {
+  document.getElementById('turmaEditId').value = '';
+  document.getElementById('modalTurmaTitle').textContent = '🏫 Cadastrar Nova Turma';
+  document.getElementById('btnSalvarTurma').textContent  = '✅ Criar Turma';
+  document.getElementById('turmaNome').value     = '';
+  document.getElementById('turmaSegmento').value = 'EF1';
+  document.getElementById('turmaTurno').value    = 'Matutino';
+  document.getElementById('turmaAno').value      = '1º Ano';
+  document.getElementById('turmaProf').value     = '';
+  document.getElementById('tipoRegular').checked = true;
+  onTipoTurmaChange();
+  openModal('modalTurma');
+}
+
+function abrirEditarTurma(id) {
+  const t = turmas.find(t => t.id === id);
+  if (!t) return;
+  document.getElementById('turmaEditId').value = id;
+  document.getElementById('modalTurmaTitle').textContent = '✏️ Editar Turma';
+  document.getElementById('btnSalvarTurma').textContent  = '💾 Salvar Alterações';
+  document.getElementById('turmaNome').value     = t.nome      || '';
+  document.getElementById('turmaSegmento').value = t.segmento  || 'EF1';
+  document.getElementById('turmaTurno').value    = t.turno     || 'Matutino';
+  document.getElementById('turmaProf').value     = t.prof      || '';
+  onSegmentoTurmaChange();
+  if (t.multisseriada) {
+    document.getElementById('tipoMulti').checked = true;
+    onTipoTurmaChange();
+    renderAnosCheckboxes();
+    setAnosSelecionados(t.anos || []);
+  } else {
+    document.getElementById('tipoRegular').checked = true;
+    onTipoTurmaChange();
+    document.getElementById('turmaAno').value = t.ano || '';
+  }
+  openModal('modalTurma');
+}
+
+async function salvarTurma() {
+  const editId    = document.getElementById('turmaEditId').value;
+  const nome      = document.getElementById('turmaNome').value.trim();
+  const segmento  = document.getElementById('turmaSegmento').value;
+  const turno     = document.getElementById('turmaTurno').value;
+  const prof      = document.getElementById('turmaProf').value.trim();
+  const isMulti   = document.getElementById('tipoMulti').checked;
+
+  if (!nome || !segmento) { showToast('⚠️ Preencha os campos obrigatórios!', 'gold'); return; }
+
+  let ano = '', anos = [], multisseriada = false;
+  if (isMulti) {
+    anos = getAnosSelecionados();
+    if (!anos.length) { showToast('⚠️ Selecione pelo menos um ano!', 'gold'); return; }
+    multisseriada = true;
+    ano = anos.join(' + ');
+  } else {
+    ano = document.getElementById('turmaAno').value;
+  }
+
+  if (editId) {
+    const idx = turmas.findIndex(t => t.id === parseInt(editId));
+    if (idx >= 0) turmas[idx] = { ...turmas[idx], nome, segmento, turno, prof, ano, anos, multisseriada };
+    showToast('✅ Turma atualizada!');
+  } else {
+    turmas.push({ id: Date.now(), nome, segmento, turno, prof, ano, anos, multisseriada });
+    showToast('✅ Turma criada!');
+  }
+
+  populaTurmaSelects(); renderTurmasRapidas();
+  closeModal('modalTurma');
+  await salvarNoSheets();
+}
+
+async function excluirTurma(id) {
+  const t = turmas.find(t => t.id === id);
+  if (!t) return;
+  const nAlunos = alunos.filter(a => a.turmaId === id).length;
+  if (!confirm(`Excluir a turma "${t.nome}"?${nAlunos ? `\n\n⚠️ Esta turma tem ${nAlunos} aluno(s). Os alunos também serão removidos.` : ''}\n\nEsta ação não pode ser desfeita.`)) return;
+  turmas = turmas.filter(t => t.id !== id);
+  const alunosRemovidos = alunos.filter(a => a.turmaId === id).map(a => a.id);
+  alunos = alunos.filter(a => a.turmaId !== id);
+  alunosRemovidos.forEach(aid => { delete frequencia[aid]; delete notas[aid]; });
+  observacoes = observacoes.filter(o => !alunosRemovidos.includes(o.alunoId));
+  if (turmaAtual?.id === id) { turmaAtual = null; alunosFiltrados = []; document.getElementById('selTurma').value = ''; }
+  populaTurmaSelects(); renderTurmasRapidas(); renderSecaoAtual(); atualizarStats();
+  showToast('🗑️ Turma removida.', 'gold');
+  await salvarNoSheets();
+}
+
+function cadastrarTurma() { salvarTurma(); }
+
+// ===== SEÇÕES =====
+function showSection(sec, sideItem, tabBtn) {
+  secaoAtual = sec;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  const secEl = document.getElementById('sec-' + sec);
+  if (secEl) secEl.classList.add('active');
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  if (sideItem) sideItem.classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (tabBtn) tabBtn.classList.add('active');
+  renderSecaoAtual();
+}
+
+function renderSecaoAtual() {
+  switch(secaoAtual) {
+    case 'frequencia':  renderFrequencia();   break;
+    case 'notas':       renderNotas();        break;
+    case 'mediasfinal': renderMediasFinal();  break;
+    case 'diario':      renderDiario();       break;
+    case 'observacoes': renderObservacoes();  break;
+    case 'relatorio':   renderRelatorio();    break;
+  }
+}
+
+// ===== DIÁRIO DE CLASSE =====
+function getDiarioEntry(turmaId, grupo, data, disc) {
+  return diario[turmaId]?.[grupo]?.[data]?.[disc] || { conteudo:'', objetivo:'', recursos:'' };
+}
+
+function setDiarioField(turmaId, grupo, data, disc, campo, valor) {
+  if (!diario[turmaId]) diario[turmaId] = {};
+  if (!diario[turmaId][grupo]) diario[turmaId][grupo] = {};
+  if (!diario[turmaId][grupo][data]) diario[turmaId][grupo][data] = {};
+  if (!diario[turmaId][grupo][data][disc]) diario[turmaId][grupo][data][disc] = { conteudo:'', objetivo:'', recursos:'' };
+  diario[turmaId][grupo][data][disc][campo] = valor;
+  agendarAutoSave('Diário alterado...');
+}
+
+function atualizarBadgeDiario() {
+  let cnt = 0;
+  Object.values(diario).forEach(grupos => Object.values(grupos).forEach(datas => Object.values(datas).forEach(discs => Object.values(discs).forEach(e => { if (e.conteudo?.trim()) cnt++; }))));
+  document.getElementById('badgeDiario').textContent = cnt;
+}
+
+function getDiasComRegistro(turmaId) {
+  const dias = new Set();
+  const grupos = diario[turmaId] || {};
+  Object.values(grupos).forEach(datas => Object.keys(datas).forEach(d => dias.add(d)));
+  return dias;
+}
+
+function renderDiario() {
+  if (!turmaAtual) {
+    document.getElementById('diarioConteudo').innerHTML = '<div class="diario-empty"><div style="font-size:2rem;margin-bottom:8px">📓</div><div>Selecione uma turma.</div></div>';
+    return;
+  }
+  const dataSel = document.getElementById('diarioData').value;
+  const modo    = document.getElementById('diarioModo').value;
+  if (!dataSel) {
+    document.getElementById('diarioConteudo').innerHTML = '<div class="diario-empty"><div style="font-size:2rem;margin-bottom:8px">📅</div><div>Selecione uma data.</div></div>';
+    return;
+  }
+  renderDiarioCalendario(turmaAtual.id, dataSel);
+  const grupos = getDiscDiario(turmaAtual, modo === 'ano_disc' ? null : dataSel);
+  let html = '';
+  grupos.forEach(({grupoKey, discs}) => {
+    const grupoLabel = turmaAtual.multisseriada ? `<div class="diario-grupo-label">🔀 ${grupoKey}</div>` : '';
+    html += grupoLabel;
+    discs.forEach(disc => {
+      const entry = getDiarioEntry(turmaAtual.id, grupoKey, dataSel, disc);
+      const eid   = `${turmaAtual.id}_${grupoKey}_${dataSel}_${disc}`.replace(/[^a-zA-Z0-9_]/g,'_');
+      html += `
+        <div class="diario-entry" id="de_${eid}">
+          <div class="diario-entry-header" onclick="toggleDiarioEntry('${eid}')">
+            <span class="diario-disc">${disc}</span>
+            <span class="diario-entry-preview">${entry.conteudo ? entry.conteudo.substr(0,60)+'...' : 'Clique para registrar'}</span>
+            <span class="diario-toggle">▼</span>
+          </div>
+          <div class="diario-entry-body" id="deb_${eid}" style="display:none">
+            <div class="form-group full" style="padding:12px 16px 0">
+              <label class="field-label">Conteúdo Ministrado *</label>
+              <textarea id="dc_${eid}" placeholder="Descreva o conteúdo ministrado..." style="min-height:80px"
+                oninput="diarioInputHandler(this,'${turmaAtual.id}','${grupoKey}','${dataSel}','${disc}','conteudo')">${escHtml(entry.conteudo)}</textarea>
+            </div>
+            <div class="form-group full" style="padding:8px 16px 0">
+              <label class="field-label">Objetivos / Habilidades BNCC</label>
+              <textarea id="do_${eid}" placeholder="Objetivos de aprendizagem..." style="min-height:60px"
+                oninput="diarioInputHandler(this,'${turmaAtual.id}','${grupoKey}','${dataSel}','${disc}','objetivo')">${escHtml(entry.objetivo)}</textarea>
+            </div>
+            <div class="form-group full" style="padding:8px 16px 12px">
+              <label class="field-label">Recursos Didáticos</label>
+              <textarea id="dr_${eid}" placeholder="Livro, data show, material concreto..." style="min-height:50px"
+                oninput="diarioInputHandler(this,'${turmaAtual.id}','${grupoKey}','${dataSel}','${disc}','recursos')">${escHtml(entry.recursos)}</textarea>
+            </div>
+          </div>
+        </div>`;
+    });
+  });
+  document.getElementById('diarioConteudo').innerHTML = html || '<div class="diario-empty">Nenhum registro para esta data.</div>';
+  atualizarBadgeDiario();
+}
+
+function escHtml(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function diarioInputHandler(ta, turmaId, grupo, data, disc, campo) {
+  setDiarioField(parseInt(turmaId), grupo, data, disc, campo, ta.value);
+  atualizarBadgeDiario();
+  const eid  = `${turmaId}_${grupo}_${data}_${disc}`.replace(/[^a-zA-Z0-9_]/g,'_');
+  const prev = document.querySelector(`#de_${eid} .diario-entry-preview`);
+  if (prev) prev.textContent = ta.value ? ta.value.substr(0,60)+'...' : 'Clique para registrar';
+  const salvo = document.getElementById('diarioAutoSalvo');
+  if (salvo) { salvo.textContent = '⏳ Salvando...'; salvo.style.opacity = '1'; }
+}
+
+function toggleDiarioEntry(eid) {
+  const body = document.getElementById('deb_' + eid);
+  if (!body) return;
+  body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+
+function renderDiarioCalendario(turmaId, dataSel) {
+  const cal = document.getElementById('diarioCalendario');
+  if (!cal) return;
+  const diasComReg = getDiasComRegistro(turmaId);
+  const [ano, mes] = dataSel.split('-').map(Number);
+  const diasMes = new Date(ano, mes, 0).getDate();
+  let html = '<div style="display:flex;flex-wrap:wrap;gap:4px;padding:8px 16px">';
+  for (let d = 1; d <= diasMes; d++) {
+    const dt  = `${ano}-${String(mes).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = new Date(ano, mes-1, d).getDay();
+    if (dow === 0 || dow === 6) continue;
+    const temReg = diasComReg.has(dt);
+    const isSel  = dt === dataSel;
+    html += `<button onclick="selecionarDataDiario('${dt}')" style="width:28px;height:28px;border-radius:5px;border:1.5px solid ${isSel?'var(--azul-principal)':temReg?'var(--dourado)':'var(--cinza-border)'};background:${isSel?'var(--azul-principal)':temReg?'var(--dourado-light)':'white'};color:${isSel?'white':temReg?'#7a5c00':'var(--cinza-text)'};font-size:0.72rem;cursor:pointer;font-weight:${isSel||temReg?'700':'400'}">${d}</button>`;
+  }
+  html += '</div>';
+  cal.innerHTML = html;
+  cal.style.display = '';
+}
+
+function selecionarDataDiario(data) {
+  document.getElementById('diarioData').value = data;
+  renderDiario();
+}
+
+function navegarDiario(delta) {
+  const el  = document.getElementById('diarioData');
+  const dt  = new Date(el.value + 'T00:00:00');
+  dt.setDate(dt.getDate() + delta);
+  el.value  = dt.toISOString().split('T')[0];
+  renderDiario();
+}
+
+function exportarDiario() { window.print(); }
+
+function getDiscDiario(turma, data) {
+  if (!turma) return [];
+  if (turma.multisseriada && turma.anos && turma.anos.length > 1) {
+    return turma.anos.map(ano => {
+      const seg = getSegmentoByAno(ano) || turma.segmento;
+      return { grupoKey: ano, discs: DISCIPLINAS[seg] || DISCIPLINAS[turma.segmento] || [] };
+    });
+  }
+  return [{ grupoKey: turma.ano || turma.nome, discs: DISCIPLINAS[turma.segmento] || [] }];
+}
+
+// ===== CONFIGURAÇÃO DA ESCOLA =====
+function abrirConfigEscola() {
+  document.getElementById('cfgNomeEscola').value    = nomeEscola;
+  document.getElementById('cfgMunicipio').value     = municipioEscola;
+  document.getElementById('cfgDiretor').value       = configEscola.diretor    || '';
+  document.getElementById('cfgSecretario').value    = configEscola.secretario || '';
+  document.getElementById('cfgInep').value          = configEscola.inep       || '';
+  document.getElementById('cfgAnoLetivo').value     = configEscola.anoLetivo  || '2026';
+  document.getElementById('cfgScriptUrl').value     = cloudConfig.scriptUrl   || '';
+  document.getElementById('cfgSemedUrl').value      = cloudConfig.semedScriptUrl || '';
+  document.getElementById('cfgEscolaCode').value    = cloudConfig.escolaCode  || '';
+  document.getElementById('cfgCloudAtivo').checked  = cloudConfig.ativo;
+  document.getElementById('cfgSemedAtivo').checked  = cloudConfig.semedAtivo;
+  atualizarCloudPill();
+  openModal('modalEscola');
+}
+
+function salvarConfigEscola() {
+  nomeEscola      = document.getElementById('cfgNomeEscola').value.trim() || nomeEscola;
+  municipioEscola = document.getElementById('cfgMunicipio').value.trim()  || municipioEscola;
+  configEscola.diretor    = document.getElementById('cfgDiretor').value.trim();
+  configEscola.secretario = document.getElementById('cfgSecretario').value.trim();
+  configEscola.inep       = document.getElementById('cfgInep').value.trim();
+  configEscola.anoLetivo  = document.getElementById('cfgAnoLetivo').value.trim() || '2026';
+  cloudConfig.scriptUrl      = document.getElementById('cfgScriptUrl').value.trim();
+  cloudConfig.semedScriptUrl = document.getElementById('cfgSemedUrl').value.trim();
+  cloudConfig.escolaCode     = document.getElementById('cfgEscolaCode').value.trim();
+  cloudConfig.ativo          = document.getElementById('cfgCloudAtivo').checked;
+  cloudConfig.semedAtivo     = document.getElementById('cfgSemedAtivo').checked;
+  salvarConfig();
+  aplicarNomeEscola();
+  atualizarCloudPill();
+  closeModal('modalEscola');
+  showToast('✅ Configurações salvas!');
+  if (cloudConfig.scriptUrl && cloudConfig.ativo) {
+    carregarDoSheets().then(ok => { if (ok) atualizarInterfaceCompleta(); });
+  }
+}
+
+function atualizarCloudPill() {
+  const pill = document.getElementById('cloudPill');
+  if (!pill) return;
+  if (cloudConfig.ativo && cloudConfig.scriptUrl) {
+    pill.textContent  = '✅ ATIVO · ' + (cloudConfig.semedAtivo ? 'SEMED ✅' : 'SEMED ○');
+    pill.style.background = '#27ae60';
+  } else {
+    pill.textContent  = '○ Inativo';
+    pill.style.background = '#95a5a6';
+  }
+}
+
+async function testarConexaoCloud() {
+  const url  = document.getElementById('cfgScriptUrl').value.trim();
+  const code = document.getElementById('cfgEscolaCode').value.trim();
+  if (!url) { showToast('⚠️ Informe a URL do script.', 'gold'); return; }
+  showToast('🔄 Testando conexão...', 'gold');
+  try {
+    const resp = await fetch(url, { method:'POST', body: JSON.stringify({action:'PING'}), headers:{'Content-Type':'text/plain'} });
+    const json = await resp.json();
+    if (json.ok) showToast('✅ Conexão OK: ' + (json.msg || 'Script ativo!'));
+    else         showToast('⚠️ Script respondeu com erro: ' + json.msg, 'gold');
+  } catch(e) { showToast('❌ Falha na conexão: ' + e.message, 'red'); }
+}
+
+function limparConfigCloud() {
+  if (!confirm('Remover toda a configuração de nuvem desta escola?')) return;
+  cloudConfig = { scriptUrl:'', semedScriptUrl:'', escolaCode:'', ativo:false, semedAtivo:false };
+  salvarConfig();
+  atualizarCloudPill();
+  closeModal('modalEscola');
+  showToast('🗑️ Configuração removida.', 'gold');
+}
+
+// ===== SYNC STATUS =====
+function setSyncStatus(estado, label) {
+  const dot   = document.getElementById('syncDot');
+  const texto = document.getElementById('syncEstado');
+  if (!dot || !texto) return;
+  dot.className = 'sync-dot ' + (estado === 'online' ? 'online' : estado === 'syncing' ? 'syncing' : 'offline');
+  texto.textContent = label || estado;
+}
+
+// ===== EXPORTAR / IMPORTAR (backup manual) =====
+function exportarDados() {
+  const dados = { _meta:{ versao:'3.0', exportadoEm: new Date().toISOString() },
+    nomeEscola, municipioEscola, configEscola, turmas, alunos, notas, frequencia, observacoes, diario };
+  baixarJSON(dados, `backup_${(cloudConfig.escolaCode||'escola').toLowerCase()}_${new Date().toISOString().split('T')[0]}.json`);
+  showToast('📤 Backup exportado!');
+}
+
+function exportarTodasEscolas() { exportarDados(); }
+
+function baixarJSON(obj, nome) {
+  const a = document.createElement('a');
+  a.href  = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(obj, null, 2));
+  a.download = nome;
+  a.click();
+}
+
+let dadosParaImportar = null;
+function importarDados(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      dadosParaImportar = JSON.parse(e.target.result);
+      showToast('📥 Arquivo lido. Confirme a importação.', 'gold');
+      confirmarImportacao();
+    } catch(err) { showToast('❌ Arquivo inválido.', 'red'); }
+  };
+  reader.readAsText(file);
+}
+
+function confirmarImportacao() {
+  if (!dadosParaImportar) return;
+  if (!confirm(`Importar dados de "${dadosParaImportar.nomeEscola || 'escola'}"?\n\nOs dados atuais em memória serão substituídos.`)) return;
+  const d = dadosParaImportar;
+  nomeEscola      = d.nomeEscola      || nomeEscola;
+  municipioEscola = d.municipioEscola || municipioEscola;
+  if (d.configEscola) Object.assign(configEscola, d.configEscola);
+  turmas      = d.turmas      || [];
+  alunos      = d.alunos      || [];
+  notas       = d.notas       || {};
+  frequencia  = d.frequencia  || {};
+  observacoes = d.observacoes || [];
+  diario      = d.diario      || {};
+  atualizarInterfaceCompleta();
+  showToast('✅ Dados importados! Clique em 💾 Salvar para enviar ao Sheets.', 'gold');
+  dadosParaImportar = null;
+}
+
+// ===== SALVAR (botão principal) =====
+async function salvarTudo() { await salvarNoSheets(); }
+
+// ===== MODAL =====
+function openModal(id) {
+  document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('open');
+  if (id === 'modalEscola') abrirConfigEscola();
+  if (id === 'modalObs') {
+    atualizarSelectAlunos();
+    document.getElementById('obsData').value = new Date().toISOString().split('T')[0];
+  }
+}
+
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+// ===== TOAST =====
+function showToast(msg, type = 'green') {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.background = type === 'red' ? 'var(--vermelho)' : type === 'gold' ? 'var(--dourado)' : 'var(--azul-principal)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function gerarBoletim() { showSection('relatorio', null, null); renderRelatorio(); }
+
+// ===== INIT =====
+init();
+</script>
+</body>
+</html>
