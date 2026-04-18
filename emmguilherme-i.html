@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Escola Municipal Manoel Guilherme (Anexo — Santa Bárbara) — Sistema de Gestão Escolar · 2026</title>
+<title>Escola Municipal Manoel Guilherme (Anexo I — Santa Bárbara) — Sistema de Gestão Escolar · 2026</title>
 <style>
   :root {
     --azul-principal: #2471a3;
@@ -1219,6 +1219,161 @@
     .sync-status { padding: 0 8px; }
   }
 
+  /* ===== MODO ESCURO ADAPTATIVO ===== */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --azul-principal: #4a9fd4;
+      --azul-mid:       #5aabe0;
+      --azul-light:     #1a2e3d;
+      --azul-glow:      #4a8fad;
+      --dourado:        #d4a843;
+      --dourado-light:  #2a2010;
+      --off-white:      #111827;
+      --cinza-text:     #e5e7eb;
+      --cinza-mid:      #9ca3af;
+      --cinza-border:   #374151;
+      --vermelho:       #e05555;
+      --azul:           #4a9fd4;
+      --branco:         #1f2937;
+      --shadow-sm:      0 1px 3px rgba(0,0,0,0.4);
+      --shadow-md:      0 4px 16px rgba(0,0,0,0.5);
+      --shadow-lg:      0 8px 32px rgba(0,0,0,0.6);
+    }
+
+    body { background: #111827; color: #e5e7eb; }
+
+    /* Cards e painéis brancos */
+    .card, .sidebar-card, .stat-card, .tabs,
+    .modal, .import-preview-card, .backup-info-box,
+    .turma-info-bar { background: #1f2937 !important; }
+
+    /* Inputs e selects */
+    select, input, textarea {
+      background: #1f2937 !important;
+      color: #e5e7eb !important;
+      border-color: #374151 !important;
+    }
+    select:focus, input:focus, textarea:focus {
+      border-color: var(--azul-principal) !important;
+    }
+
+    /* Tabelas */
+    thead { background: #1a2e3d !important; }
+    tr:hover td { background: rgba(74,159,212,0.08) !important; }
+    th { color: var(--azul-principal) !important; border-bottom-color: #374151 !important; }
+    td { border-bottom-color: #2d3748 !important; }
+
+    /* Sidebar items */
+    .sidebar-item { color: #d1d5db; border-bottom-color: #2d3748; }
+    .sidebar-item:hover { background: #1a2e3d !important; color: var(--azul-principal) !important; }
+    .sidebar-item.active { background: #1a2e3d !important; color: var(--azul-principal) !important; border-left-color: var(--azul-principal) !important; }
+
+    /* Tabs */
+    .tab { color: #9ca3af; }
+    .tab:hover { background: #1a2e3d !important; color: var(--azul-principal) !important; }
+    .tab.active { background: var(--azul-principal) !important; color: white !important; }
+
+    /* Bimestre tabs */
+    .bim-tab { color: #9ca3af; }
+    .bim-tab:hover { color: var(--azul-principal); }
+    .bim-tab.active { color: var(--azul-principal); border-bottom-color: var(--azul-principal); }
+
+    /* Botões */
+    .btn-secondary { background: #2d3748 !important; color: #e5e7eb !important; border-color: #374151 !important; }
+    .btn-secondary:hover { background: #374151 !important; }
+
+    /* Notas */
+    .nota-input { background: transparent; color: #e5e7eb; }
+    .nota-input:focus { background: #1a2e3d !important; }
+    td[style*="#f9fbf9"] { background: #1e2d1e !important; }
+    td[style*="#fdf9ee"] { background: #2a2010 !important; }
+
+    /* Media badges */
+    .media-ap  { background: #1a3a5c !important; color: #7ec8e3 !important; }
+    .media-rec { background: #3a2a00 !important; color: #f0c060 !important; }
+    .media-rep { background: #3a1010 !important; color: #f08080 !important; }
+
+    /* Situação badges */
+    .sit-ap  { background: #1a3a5c !important; color: #7ec8e3 !important; }
+    .sit-rec { background: #3a2a00 !important; color: #f0c060 !important; }
+    .sit-rep { background: #3a1010 !important; color: #f08080 !important; }
+
+    /* Observações */
+    .obs-item { background: #1a2e3d !important; border-left-color: var(--azul-principal) !important; }
+    .obs-pedagogica    { background: #1a2a4a !important; color: #90c4e8 !important; }
+    .obs-comportamental{ background: #3a2a00 !important; color: #f0c060 !important; }
+    .obs-familiar      { background: #1a2e3d !important; color: #90c4e8 !important; }
+    .obs-saude         { background: #3a1010 !important; color: #f08080 !important; }
+
+    /* Frequência botões */
+    .dia-btn { background: #1f2937 !important; border-color: #374151 !important; color: #e5e7eb !important; }
+    .dia-btn.presente { background: #1a2e3d !important; border-color: var(--azul-principal) !important; color: var(--azul-principal) !important; }
+    .dia-btn.falta { background: #3a1010 !important; border-color: #6b2020 !important; color: #f08080 !important; }
+    .dia-btn.falta-just { background: #3a2a00 !important; border-color: #6b5000 !important; color: #f0c060 !important; }
+
+    /* Diário */
+    .diario-entry { background: #1f2937 !important; border-color: #374151 !important; }
+    .diario-entry-header { background: #1a2e3d !important; }
+    .diario-entry-header:hover { background: #243447 !important; }
+
+    /* Modal overlay */
+    .modal-overlay { background: rgba(0,0,0,0.75) !important; }
+
+    /* Toast */
+    .toast { box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important; }
+
+    /* Pending bar */
+    .pending-bar { background: #3a2a00 !important; border-color: #6b5000 !important; color: #f0c060 !important; }
+
+    /* Print note */
+    .print-note { background: #2a2010 !important; border-color: #6b5000 !important; color: #f0c060 !important; }
+
+    /* Turma info bar */
+    .turma-info-bar { background: #1a2e3d !important; border-color: rgba(74,159,212,0.2) !important; }
+    .turma-info-label { color: #9ca3af !important; }
+    .turma-info-value { color: var(--azul-principal) !important; }
+    .turma-info-divider { background: rgba(74,159,212,0.2) !important; }
+
+    /* Paginação */
+    .page-btn { background: #1f2937 !important; border-color: #374151 !important; color: #e5e7eb !important; }
+    .page-btn:hover { border-color: var(--azul-principal) !important; color: var(--azul-principal) !important; }
+    .page-btn.active { background: var(--azul-principal) !important; border-color: var(--azul-principal) !important; color: white !important; }
+
+    /* Sync status */
+    .sync-status { background: rgba(255,255,255,0.08) !important; border-color: rgba(255,255,255,0.15) !important; }
+
+    /* Card titles */
+    .card-title { color: var(--azul-principal) !important; }
+    .card-subtitle { color: #9ca3af !important; }
+    .card-header { border-bottom-color: #374151 !important; }
+
+    /* Legenda */
+    .legend-item { color: #9ca3af !important; }
+
+    /* Sidebar section title */
+    .sidebar-section-title { color: #9ca3af !important; border-bottom-color: #374151 !important; }
+
+    /* Field labels */
+    .field-label { color: #9ca3af !important; }
+
+    /* Stat cards */
+    .stat-label { color: #9ca3af !important; }
+    .stat-desc  { color: #9ca3af !important; }
+    .stat-value { color: #e5e7eb !important; }
+    .stat-value.green { color: var(--azul-principal) !important; }
+    .stat-value.gold  { color: var(--dourado) !important; }
+    .stat-value.red   { color: var(--vermelho) !important; }
+
+    /* Empty state */
+    .empty-state { color: #6b7280 !important; }
+
+    /* Matricula */
+    .matricula { color: #6b7280 !important; }
+
+    /* Separador multisseriado */
+    .multi-section-divider { background: #1a2e3d !important; color: #9ca3af !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -1271,6 +1426,11 @@
         <span id="syncDot" class="sync-dot offline"></span>
         <span id="syncEstado">Offline</span><span id="syncTempo" style="opacity:0.7;margin-left:2px"></span>
       </div>
+
+      <!-- Grupo 4: Documentos -->
+      <div class="btn-group-sep"></div>
+      <button class="btn-header" onclick="openModal('modalDocumentos')" title="Gerar documentos oficiais"
+        style="background:rgba(39,174,96,0.2);border-color:rgba(39,174,96,0.4)">📋 Documentos</button>
 
       <!-- Salvar (destaque) -->
       <button class="btn-header primary" onclick="salvarTudo()" title="Salvar todos os dados">💾 Salvar</button>
@@ -1970,6 +2130,83 @@
   </div>
 </div>
 
+<!-- ===== MODAL: DOCUMENTOS OFICIAIS ===== -->
+<div class="modal-overlay" id="modalDocumentos">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-title">📋 Gerar Documentos Oficiais</div>
+    <p style="font-size:0.82rem;color:var(--cinza-mid);margin-bottom:20px">
+      Selecione a turma na sidebar antes de gerar. Os documentos serão gerados com os dados da turma selecionada.
+    </p>
+
+    <!-- Planilha de Frequência -->
+    <div style="border:1px solid var(--cinza-border);border-radius:10px;padding:16px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:0.88rem;color:var(--azul-principal);margin-bottom:10px">📅 Planilha de Frequência</div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="field-label">Mês</label>
+          <select id="docFreqMes">
+            <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+            <option value="3">Março</option><option value="4">Abril</option>
+            <option value="5">Maio</option><option value="6">Junho</option>
+            <option value="7">Julho</option><option value="8">Agosto</option>
+            <option value="9">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="field-label">Pedagogo(a)</label>
+          <input type="text" id="docFreqPedagogo" placeholder="Nome do(a) pedagogo(a)">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-primary btn-sm" onclick="gerarFrequenciaXLSX()" style="flex:1">📊 Excel (.xlsx)</button>
+        <button class="btn btn-secondary btn-sm" onclick="gerarFrequenciaPDF()" style="flex:1">🖨️ PDF / Imprimir</button>
+      </div>
+    </div>
+
+    <!-- Registro Bimestral -->
+    <div style="border:1px solid var(--cinza-border);border-radius:10px;padding:16px;margin-bottom:12px">
+      <div style="font-weight:600;font-size:0.88rem;color:var(--azul-principal);margin-bottom:10px">📊 Registro Bimestral de Notas</div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="field-label">Bimestre</label>
+          <select id="docNotaBim">
+            <option value="1">1º Bimestre</option><option value="2">2º Bimestre</option>
+            <option value="3">3º Bimestre</option><option value="4">4º Bimestre</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="field-label">Pedagogo(a)</label>
+          <input type="text" id="docNotaPedagogo" placeholder="Nome do(a) pedagogo(a)">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-primary btn-sm" onclick="gerarRegistroBimestralXLSX()" style="flex:1">📊 Excel (.xlsx)</button>
+        <button class="btn btn-secondary btn-sm" onclick="gerarRegistroBimestralPDF()" style="flex:1">🖨️ PDF / Imprimir</button>
+      </div>
+    </div>
+
+    <!-- Ata Final -->
+    <div style="border:1px solid var(--cinza-border);border-radius:10px;padding:16px;margin-bottom:16px">
+      <div style="font-weight:600;font-size:0.88rem;color:var(--azul-principal);margin-bottom:10px">🏆 Ata Final de Resultados</div>
+      <div class="form-grid" style="grid-template-columns:1fr;gap:10px">
+        <div class="form-group">
+          <label class="field-label">Pedagogo(a)</label>
+          <input type="text" id="docAtaPedagogo" placeholder="Nome do(a) pedagogo(a)">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-primary btn-sm" onclick="gerarAtaFinalXLSX()" style="flex:1">📊 Excel (.xlsx)</button>
+        <button class="btn btn-secondary btn-sm" onclick="gerarAtaFinalPDF()" style="flex:1">🖨️ PDF / Imprimir</button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalDocumentos')">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"><div class="toast" id="toast">✅ Salvo com sucesso!</div>
 
@@ -2021,7 +2258,7 @@ const ANO_ORDEM = [
 ];
 
 // ===== ESTADO EM MEMÓRIA (cache local durante a sessão) =====
-let nomeEscola      = 'Escola Municipal Manoel Guilherme (Anexo — Santa Bárbara)';
+let nomeEscola      = 'Escola Municipal Manoel Guilherme (Anexo I — Santa Bárbara)';
 let municipioEscola = 'Juruá — Amazonas';
 let configEscola    = { diretor:'Edileia Silva de Lima', secretario:'', inep:'13087401', anoLetivo:'2026' };
 let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbxyCnItVPLV4I_F__CG-zHP96R7lvfrV2-cuYXZEx7fuoNbozrWdT2B8l199x4PP6lG/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMMGUILHERME-I', ativo:true, semedAtivo:true };
@@ -2043,7 +2280,7 @@ let autoSaveTimer   = null;
 
 
 const ESCOLA_FIXA = {
-  nomeEscola:      'Escola Municipal Manoel Guilherme (Anexo — Santa Bárbara)',
+  nomeEscola:      'Escola Municipal Manoel Guilherme (Anexo I — Santa Bárbara)',
   municipioEscola: 'Juruá — Amazonas',
   configEscola:    { diretor:'Edileia Silva de Lima', secretario:'', inep:'13087401', anoLetivo:'2026' },
   cloudConfig:     { scriptUrl:'https://script.google.com/macros/s/AKfycbxyCnItVPLV4I_F__CG-zHP96R7lvfrV2-cuYXZEx7fuoNbozrWdT2B8l199x4PP6lG/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMMGUILHERME-I', ativo:true, semedAtivo:true }
@@ -3375,6 +3612,403 @@ function showToast(msg, type = 'green') {
   t.style.background = type === 'red' ? 'var(--vermelho)' : type === 'gold' ? 'var(--dourado)' : 'var(--azul-principal)';
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ===== DOCUMENTOS OFICIAIS =====
+
+const MESES_NOME = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                    'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function cabecalhoDocumento(titulo, subtitulo) {
+  return [
+    ['SECRETARIA MUNICIPAL DE EDUCAÇÃO — JURUÁ/AM'],
+    [nomeEscola.toUpperCase()],
+    [titulo],
+    [subtitulo || ''],
+    ['']
+  ];
+}
+
+function rodapeDocumento(prof, pedagogo) {
+  return [
+    [''],
+    [''],
+    ['_'.repeat(40), '', '_'.repeat(40)],
+    [prof || configEscola.diretor || 'Professor(a)', '', pedagogo || 'Pedagogo(a)'],
+    ['Assinatura', '', 'Assinatura'],
+    [''],
+    ['LEGENDA: P = Presente  |  F = Falta  |  J = Falta Justificada']
+  ];
+}
+
+// ── FREQUÊNCIA XLSX ──────────────────────────────────────────────
+function gerarFrequenciaXLSX() {
+  if (!turmaAtual) { showToast('⚠️ Selecione uma turma primeiro!', 'gold'); return; }
+  const mes      = parseInt(document.getElementById('docFreqMes').value);
+  const pedagogo = document.getElementById('docFreqPedagogo').value.trim();
+  const al       = alunos.filter(a => a.turmaId === turmaAtual.id)
+                         .sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
+
+  // Dias úteis do mês
+  const diasMes   = new Date(2026, mes, 0).getDate();
+  const diasUteis = [];
+  for (let d = 1; d <= diasMes; d++) {
+    if (new Date(2026, mes-1, d).getDay() >= 1 && new Date(2026, mes-1, d).getDay() <= 5) diasUteis.push(d);
+  }
+
+  const subtitulo = `Turma: ${turmaAtual.nome}  |  Turno: ${turmaAtual.turno}  |  Professor(a): ${turmaAtual.prof || ''}  |  Mês: ${MESES_NOME[mes]}/2026`;
+  const rows = cabecalhoDocumento('CONTROLE DE FREQUÊNCIA', subtitulo);
+
+  // Cabeçalho da tabela
+  rows.push(['Nº', 'Nome do Aluno', ...diasUteis.map(String), '% Freq.', 'Faltas']);
+
+  // Dados dos alunos
+  al.forEach((a, i) => {
+    const fa  = frequencia[a.id]?.[mes] || {};
+    const row = [i+1, a.nome, ...diasUteis.map(d => fa[d] || 'P')];
+    const { pct, faltas } = getFreqAluno(a.id);
+    row.push(pct + '%', Math.round(faltas));
+    rows.push(row);
+  });
+
+  rows.push(...rodapeDocumento(turmaAtual.prof, pedagogo));
+
+  _baixarXLSX(rows, `Frequencia_${turmaAtual.nome}_${MESES_NOME[mes]}_2026`);
+  showToast('📊 Planilha de frequência gerada!');
+}
+
+// ── FREQUÊNCIA PDF ───────────────────────────────────────────────
+function gerarFrequenciaPDF() {
+  if (!turmaAtual) { showToast('⚠️ Selecione uma turma primeiro!', 'gold'); return; }
+  const mes      = parseInt(document.getElementById('docFreqMes').value);
+  const pedagogo = document.getElementById('docFreqPedagogo').value.trim();
+  const al       = alunos.filter(a => a.turmaId === turmaAtual.id)
+                         .sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
+
+  const diasMes   = new Date(2026, mes, 0).getDate();
+  const diasUteis = [];
+  for (let d = 1; d <= diasMes; d++) {
+    if (new Date(2026, mes-1, d).getDay() >= 1 && new Date(2026, mes-1, d).getDay() <= 5) diasUteis.push(d);
+  }
+
+  let html = _htmlCabecalhoPrint('CONTROLE DE FREQUÊNCIA',
+    `Turma: <b>${turmaAtual.nome}</b> &nbsp;|&nbsp; Turno: ${turmaAtual.turno} &nbsp;|&nbsp; Professor(a): ${turmaAtual.prof||''} &nbsp;|&nbsp; Mês: ${MESES_NOME[mes]}/2026`);
+
+  html += `<table><thead><tr>
+    <th style="width:30px">Nº</th>
+    <th style="text-align:left;min-width:160px">Nome do Aluno</th>
+    ${diasUteis.map(d => `<th style="width:22px">${d}</th>`).join('')}
+    <th style="width:45px">Freq.</th>
+    <th style="width:40px">Faltas</th>
+  </tr></thead><tbody>`;
+
+  al.forEach((a, i) => {
+    const fa = frequencia[a.id]?.[mes] || {};
+    const { pct, faltas } = getFreqAluno(a.id);
+    html += `<tr>
+      <td style="text-align:center">${i+1}</td>
+      <td>${a.nome}</td>
+      ${diasUteis.map(d => {
+        const v = fa[d] || 'P';
+        const cor = v==='F'?'#c0392b':v==='J'?'#b8860b':'#2471a3';
+        return `<td style="text-align:center;font-weight:700;color:${cor}">${v}</td>`;
+      }).join('')}
+      <td style="text-align:center">${pct}%</td>
+      <td style="text-align:center">${Math.round(faltas)}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  html += _htmlRodapePrint(turmaAtual.prof, pedagogo, 'P = Presente &nbsp;|&nbsp; F = Falta &nbsp;|&nbsp; J = Falta Justificada');
+  _abrirJanelaPrint(html);
+}
+
+// ── REGISTRO BIMESTRAL XLSX ──────────────────────────────────────
+function gerarRegistroBimestralXLSX() {
+  if (!turmaAtual) { showToast('⚠️ Selecione uma turma primeiro!', 'gold'); return; }
+  const bim      = parseInt(document.getElementById('docNotaBim').value);
+  const pedagogo = document.getElementById('docNotaPedagogo').value.trim();
+  const al       = alunos.filter(a => a.turmaId === turmaAtual.id)
+                         .sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
+  const discs    = DISCIPLINAS[turmaAtual.segmento] || [];
+  const mAp      = MEDIA_APROVACAO[turmaAtual.segmento];
+  const bimLabel = ['','1º','2º','3º','4º'][bim];
+
+  const subtitulo = `Turma: ${turmaAtual.nome}  |  Turno: ${turmaAtual.turno}  |  ${bimLabel} Bimestre  |  Professor(a): ${turmaAtual.prof || ''}`;
+  const rows = cabecalhoDocumento('REGISTRO BIMESTRAL DE NOTAS', subtitulo);
+
+  // Cabeçalho: disciplinas com Avaliação e Recuperação
+  const cabDiscs = [];
+  discs.forEach(d => { cabDiscs.push(d); cabDiscs.push('Rec.'); });
+  rows.push(['Nº', 'Nome do Aluno', ...cabDiscs, 'Média', 'Situação']);
+
+  al.forEach((a, i) => {
+    const vals = [];
+    let soma = 0, cnt = 0;
+    discs.forEach(d => {
+      const reg = getNota(a.id, d, bim, 'reg');
+      const rec = getNota(a.id, d, bim, 'rec');
+      vals.push(reg !== '' ? parseFloat(reg) : '');
+      vals.push(rec !== '' ? parseFloat(rec) : '');
+      const ef = calcNotaEfetivaBim(a.id, d, bim);
+      if (ef !== null) { soma += ef; cnt++; }
+    });
+    const media = cnt ? (soma/cnt).toFixed(1) : '';
+    const sit   = !media ? '' : mAp === null ? 'Qualitativo' : parseFloat(media) >= mAp ? 'Aprovado' : parseFloat(media) >= mAp-2 ? 'Rec. Final' : 'Reprovado';
+    rows.push([i+1, a.nome, ...vals, media, sit]);
+  });
+
+  // Rodapé sem legenda de frequência para notas
+  rows.push([''], [''],
+    ['_'.repeat(40), '', '_'.repeat(40)],
+    [turmaAtual.prof || 'Professor(a)', '', pedagogo || 'Pedagogo(a)'],
+    ['Assinatura', '', 'Assinatura']
+  );
+
+  _baixarXLSX(rows, `RegistroBimestral_${turmaAtual.nome}_${bimLabel}Bim_2026`);
+  showToast('📊 Registro bimestral gerado!');
+}
+
+// ── REGISTRO BIMESTRAL PDF ───────────────────────────────────────
+function gerarRegistroBimestralPDF() {
+  if (!turmaAtual) { showToast('⚠️ Selecione uma turma primeiro!', 'gold'); return; }
+  const bim      = parseInt(document.getElementById('docNotaBim').value);
+  const pedagogo = document.getElementById('docNotaPedagogo').value.trim();
+  const al       = alunos.filter(a => a.turmaId === turmaAtual.id)
+                         .sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
+  const discs    = DISCIPLINAS[turmaAtual.segmento] || [];
+  const mAp      = MEDIA_APROVACAO[turmaAtual.segmento];
+  const bimLabel = ['','1º','2º','3º','4º'][bim];
+
+  let html = _htmlCabecalhoPrint('REGISTRO BIMESTRAL DE NOTAS',
+    `Turma: <b>${turmaAtual.nome}</b> &nbsp;|&nbsp; Turno: ${turmaAtual.turno} &nbsp;|&nbsp; ${bimLabel} Bimestre &nbsp;|&nbsp; Professor(a): ${turmaAtual.prof||''}`);
+
+  html += `<table><thead>
+    <tr>
+      <th rowspan="2" style="width:28px">Nº</th>
+      <th rowspan="2" style="text-align:left;min-width:150px">Nome do Aluno</th>
+      ${discs.map(d => `<th colspan="2" style="font-size:0.6rem">${d.length>10?d.substr(0,9)+'…':d}</th>`).join('')}
+      <th rowspan="2" style="width:40px">Média</th>
+      <th rowspan="2" style="width:55px">Situação</th>
+    </tr>
+    <tr>
+      ${discs.map(() => `<th style="font-size:0.55rem;background:#f9f9f0;width:30px">Aval.</th><th style="font-size:0.55rem;background:#fffbe6;width:30px">Rec.</th>`).join('')}
+    </tr>
+  </thead><tbody>`;
+
+  al.forEach((a, i) => {
+    let soma = 0, cnt = 0;
+    const cells = discs.map(d => {
+      const reg = getNota(a.id, d, bim, 'reg');
+      const rec = getNota(a.id, d, bim, 'rec');
+      const ef  = calcNotaEfetivaBim(a.id, d, bim);
+      if (ef !== null) { soma += ef; cnt++; }
+      return `<td style="text-align:center;background:#f9f9f0">${reg !== '' ? parseFloat(reg).toFixed(1) : ''}</td>
+              <td style="text-align:center;background:#fffbe6">${rec !== '' ? parseFloat(rec).toFixed(1) : ''}</td>`;
+    }).join('');
+    const media = cnt ? (soma/cnt).toFixed(1) : '';
+    const sit   = !media ? '' : mAp===null ? 'Qualit.' : parseFloat(media)>=mAp ? 'Aprovado' : parseFloat(media)>=mAp-2 ? 'Rec.Final' : 'Reprovado';
+    const sitCor = sit==='Aprovado'?'#2471a3':sit==='Rec.Final'?'#856404':'#c0392b';
+    html += `<tr>
+      <td style="text-align:center">${i+1}</td>
+      <td>${a.nome}</td>
+      ${cells}
+      <td style="text-align:center;font-weight:700">${media}</td>
+      <td style="text-align:center;font-weight:700;color:${sitCor};font-size:0.68rem">${sit}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  html += _htmlRodapePrint(turmaAtual.prof, pedagogo, '');
+  _abrirJanelaPrint(html);
+}
+
+// ── ATA FINAL XLSX ───────────────────────────────────────────────
+function gerarAtaFinalXLSX() {
+  if (!turmaAtual) { showToast('⚠️ Selecione uma turma primeiro!', 'gold'); return; }
+  const pedagogo = document.getElementById('docAtaPedagogo').value.trim();
+  const al       = alunos.filter(a => a.turmaId === turmaAtual.id)
+                         .sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
+  const discs    = DISCIPLINAS[turmaAtual.segmento] || [];
+  const mAp      = MEDIA_APROVACAO[turmaAtual.segmento];
+
+  const subtitulo = `Turma: ${turmaAtual.nome}  |  Turno: ${turmaAtual.turno}  |  Ano Letivo: ${configEscola.anoLetivo||'2026'}  |  Professor(a): ${turmaAtual.prof || ''}`;
+  const rows = cabecalhoDocumento('ATA FINAL DE RESULTADOS', subtitulo);
+
+  // Cabeçalho com bimestres por disciplina + média final
+  const cabDiscs = [];
+  discs.forEach(d => { [1,2,3,4].forEach(b => cabDiscs.push(`${d}\n${b}ºB`)); cabDiscs.push(`${d}\nMéd.`); });
+  rows.push(['Nº', 'Nome do Aluno', ...cabDiscs, 'Méd.\nFinal', 'Freq.', 'Resultado']);
+
+  al.forEach((a, i) => {
+    const vals = [];
+    let somaFinal = 0, cntFinal = 0;
+    discs.forEach(d => {
+      [1,2,3,4].forEach(b => {
+        const n = calcNotaEfetivaBim(a.id, d, b);
+        vals.push(n !== null ? n.toFixed(1) : '');
+      });
+      const mf = calcMediaFinal(a.id, d);
+      vals.push(mf !== null ? mf.toFixed(1) : '');
+      if (mf !== null) { somaFinal += mf; cntFinal++; }
+    });
+    const mediaFinal = cntFinal ? (somaFinal/cntFinal).toFixed(1) : '';
+    const freq       = getFreqAluno(a.id);
+    const resultado  = !mediaFinal ? '' :
+      freq.pct < 75 ? 'Rep. Faltas' :
+      mAp === null ? 'Aprovado' :
+      parseFloat(mediaFinal) >= mAp ? 'Aprovado' :
+      parseFloat(mediaFinal) >= mAp-2 ? 'Rec. Final' : 'Reprovado';
+    rows.push([i+1, a.nome, ...vals, mediaFinal, freq.pct+'%', resultado]);
+  });
+
+  rows.push([''], [''],
+    ['_'.repeat(40), '', '_'.repeat(40), '', '_'.repeat(40)],
+    [turmaAtual.prof||'Professor(a)', '', pedagogo||'Pedagogo(a)', '', configEscola.diretor||'Diretor(a)'],
+    ['Assinatura', '', 'Assinatura', '', 'Assinatura']
+  );
+
+  _baixarXLSX(rows, `AtaFinal_${turmaAtual.nome}_2026`);
+  showToast('📊 Ata Final gerada!');
+}
+
+// ── ATA FINAL PDF ────────────────────────────────────────────────
+function gerarAtaFinalPDF() {
+  if (!turmaAtual) { showToast('⚠️ Selecione uma turma primeiro!', 'gold'); return; }
+  const pedagogo = document.getElementById('docAtaPedagogo').value.trim();
+  const al       = alunos.filter(a => a.turmaId === turmaAtual.id)
+                         .sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'));
+  const discs    = DISCIPLINAS[turmaAtual.segmento] || [];
+  const mAp      = MEDIA_APROVACAO[turmaAtual.segmento];
+
+  let html = _htmlCabecalhoPrint('ATA FINAL DE RESULTADOS',
+    `Turma: <b>${turmaAtual.nome}</b> &nbsp;|&nbsp; Turno: ${turmaAtual.turno} &nbsp;|&nbsp; Ano Letivo: ${configEscola.anoLetivo||'2026'} &nbsp;|&nbsp; Professor(a): ${turmaAtual.prof||''}`);
+
+  html += `<table><thead>
+    <tr>
+      <th rowspan="2" style="width:25px">Nº</th>
+      <th rowspan="2" style="text-align:left;min-width:140px">Nome do Aluno</th>
+      ${discs.map(d => `<th colspan="5" style="font-size:0.6rem">${d.length>10?d.substr(0,9)+'…':d}</th>`).join('')}
+      <th rowspan="2" style="width:38px;font-size:0.6rem">Méd. Final</th>
+      <th rowspan="2" style="width:35px;font-size:0.6rem">Freq.</th>
+      <th rowspan="2" style="width:50px;font-size:0.6rem">Resultado</th>
+    </tr>
+    <tr>
+      ${discs.map(() => [1,2,3,4].map(b => `<th style="font-size:0.55rem;width:24px">${b}ºB</th>`).join('') + '<th style="font-size:0.55rem;width:28px;background:#ebf5fb">Méd.</th>').join('')}
+    </tr>
+  </thead><tbody>`;
+
+  al.forEach((a, i) => {
+    let somaFinal = 0, cntFinal = 0;
+    const cells = discs.map(d => {
+      const bimCells = [1,2,3,4].map(b => {
+        const n = calcNotaEfetivaBim(a.id, d, b);
+        return `<td style="text-align:center">${n !== null ? n.toFixed(1) : ''}</td>`;
+      }).join('');
+      const mf = calcMediaFinal(a.id, d);
+      if (mf !== null) { somaFinal += mf; cntFinal++; }
+      return bimCells + `<td style="text-align:center;font-weight:700;background:#ebf5fb">${mf !== null ? mf.toFixed(1) : ''}</td>`;
+    }).join('');
+    const mediaFinal = cntFinal ? (somaFinal/cntFinal).toFixed(1) : '';
+    const freq       = getFreqAluno(a.id);
+    const resultado  = !mediaFinal ? '' : freq.pct<75 ? 'Rep.Faltas' : mAp===null ? 'Aprovado' : parseFloat(mediaFinal)>=mAp ? 'Aprovado' : parseFloat(mediaFinal)>=mAp-2 ? 'Rec.Final' : 'Reprovado';
+    const resCor     = resultado==='Aprovado'?'#2471a3':resultado==='Rec.Final'?'#856404':'#c0392b';
+    html += `<tr>
+      <td style="text-align:center">${i+1}</td>
+      <td>${a.nome}</td>
+      ${cells}
+      <td style="text-align:center;font-weight:700">${mediaFinal}</td>
+      <td style="text-align:center">${freq.pct}%</td>
+      <td style="text-align:center;font-weight:700;color:${resCor};font-size:0.65rem">${resultado}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  html += _htmlRodapeAtaPrint(turmaAtual.prof, pedagogo, configEscola.diretor);
+  _abrirJanelaPrint(html);
+}
+
+// ── UTILITÁRIOS DE EXPORTAÇÃO ────────────────────────────────────
+function _baixarXLSX(rows, nomeArquivo) {
+  // Usa SheetJS via CDN
+  const script = document.getElementById('sheetjs-cdn');
+  if (!script) {
+    const s = document.createElement('script');
+    s.id  = 'sheetjs-cdn';
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = () => _executarDownloadXLSX(rows, nomeArquivo);
+    document.head.appendChild(s);
+  } else {
+    _executarDownloadXLSX(rows, nomeArquivo);
+  }
+}
+
+function _executarDownloadXLSX(rows, nomeArquivo) {
+  try {
+    const wb  = XLSX.utils.book_new();
+    const ws  = XLSX.utils.aoa_to_sheet(rows);
+    // Estilo básico: largura das colunas
+    ws['!cols'] = rows[0] ? rows[0].map((_, i) => ({ wch: i === 1 ? 35 : i === 0 ? 5 : 12 })) : [];
+    XLSX.utils.book_append_sheet(wb, ws, 'Dados');
+    XLSX.writeFile(wb, nomeArquivo + '.xlsx');
+  } catch(e) { showToast('❌ Erro ao gerar Excel: ' + e.message, 'red'); }
+}
+
+function _htmlCabecalhoPrint(titulo, subtitulo) {
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <title>${titulo}</title>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 9pt; margin: 10mm; color: #000; }
+    .cab { text-align: center; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+    .cab h1 { font-size: 11pt; margin: 0; text-transform: uppercase; }
+    .cab h2 { font-size: 10pt; margin: 2px 0; }
+    .cab h3 { font-size: 9pt; margin: 2px 0; font-weight: normal; }
+    .cab p  { font-size: 8pt; margin: 4px 0 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 8pt; }
+    th, td { border: 1px solid #555; padding: 3px 4px; }
+    th { background: #d6e4f0; text-align: center; font-size: 7pt; }
+    tr:nth-child(even) td { background: #f5f5f5; }
+    .rod { margin-top: 30px; }
+    .assin { display: flex; justify-content: space-around; margin-top: 40px; }
+    .assin div { text-align: center; border-top: 1px solid #000; padding-top: 4px; min-width: 180px; font-size: 8pt; }
+    .leg { margin-top: 12px; font-size: 7.5pt; border-top: 1px solid #ccc; padding-top: 6px; color: #555; }
+    @media print { body { margin: 8mm; } }
+  </style></head><body>
+  <div class="cab">
+    <h1>Secretaria Municipal de Educação — Juruá/AM</h1>
+    <h2>${nomeEscola}</h2>
+    <h3>${titulo}</h3>
+    <p>${subtitulo}</p>
+  </div>`;
+}
+
+function _htmlRodapePrint(prof, pedagogo, legenda) {
+  return `<div class="rod">
+    <div class="assin">
+      <div>${prof || 'Professor(a)'}<br><small>Assinatura</small></div>
+      <div>${pedagogo || 'Pedagogo(a)'}<br><small>Assinatura</small></div>
+    </div>
+    ${legenda ? `<div class="leg"><b>Legenda:</b> ${legenda}</div>` : ''}
+  </div></body></html>`;
+}
+
+function _htmlRodapeAtaPrint(prof, pedagogo, diretor) {
+  return `<div class="rod">
+    <div class="assin">
+      <div>${prof || 'Professor(a)'}<br><small>Assinatura</small></div>
+      <div>${pedagogo || 'Pedagogo(a)'}<br><small>Assinatura</small></div>
+      <div>${diretor || 'Diretor(a)'}<br><small>Assinatura</small></div>
+    </div>
+  </div></body></html>`;
+}
+
+function _abrirJanelaPrint(html) {
+  const win = window.open('', '_blank', 'width=1100,height=750');
+  if (!win) { showToast('⚠️ Permita popups para imprimir!', 'gold'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 600);
 }
 
 function gerarBoletim() { showSection('relatorio', null, null); renderRelatorio(); }
