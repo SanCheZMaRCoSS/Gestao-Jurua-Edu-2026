@@ -2335,14 +2335,14 @@ let autoSaveTimer   = null;
 
 // ===== CONFIGURAÇÃO (única coisa que fica no localStorage) =====
 function carregarConfig() {
+  // cloudConfig e nomeEscola já estão definidos corretamente nas variáveis let
+  // localStorage só pode personalizar secretário e anoLetivo
   try {
     const c = localStorage.getItem('gestao_config_EMMSUELY');
     if (c) {
       const parsed = JSON.parse(c);
-      cloudConfig     = parsed.cloudConfig     || cloudConfig;
-      configEscola    = parsed.configEscola    || configEscola;
-      nomeEscola      = parsed.nomeEscola      || nomeEscola;
-      municipioEscola = parsed.municipioEscola || municipioEscola;
+      if (parsed.configEscola?.secretario) configEscola.secretario = parsed.configEscola.secretario;
+      if (parsed.configEscola?.anoLetivo)  configEscola.anoLetivo  = parsed.configEscola.anoLetivo;
     }
   } catch(e) { console.warn('Erro ao carregar config:', e); }
 }
@@ -2350,7 +2350,7 @@ function carregarConfig() {
 function salvarConfig() {
   try {
     localStorage.setItem('gestao_config_EMMSUELY', JSON.stringify({
-      cloudConfig, configEscola, nomeEscola, municipioEscola
+      configEscola: { secretario: configEscola.secretario, anoLetivo: configEscola.anoLetivo }
     }));
   } catch(e) { console.warn('Erro ao salvar config:', e); }
 }
