@@ -2333,7 +2333,6 @@ let turmasDesbloqueadas = new Set(); // IDs das turmas desbloqueadas nesta sess�
 let autoSaveTimer   = null;
 
 
-
 const ESCOLA_FIXA = {
   nomeEscola:      'Escola Municipal Ducílio de Oliveira Rocha',
   municipioEscola: 'Juruá — Amazonas',
@@ -2354,6 +2353,17 @@ function carregarConfig() {
       if (parsed.configEscola?.anoLetivo)  configEscola.anoLetivo  = parsed.configEscola.anoLetivo;
     }
   } catch(err) { console.warn('Config local:', err); }
+}
+  try {
+    const c = localStorage.getItem('gestao_config');
+    if (c) {
+      const parsed = JSON.parse(c);
+      cloudConfig     = parsed.cloudConfig     || cloudConfig;
+      configEscola    = parsed.configEscola    || configEscola;
+      nomeEscola      = parsed.nomeEscola      || nomeEscola;
+      municipioEscola = parsed.municipioEscola || municipioEscola;
+    }
+  } catch(e) { console.warn('Erro ao carregar config:', e); }
 };
   configEscola    = { ...ESCOLA_FIXA.configEscola };
   try {
@@ -2372,6 +2382,12 @@ function salvarConfig() {
       configEscola: { secretario: configEscola.secretario, anoLetivo: configEscola.anoLetivo }
     }));
   } catch(err) { console.warn('Erro ao salvar config:', err); }
+}
+  try {
+    localStorage.setItem('gestao_config', JSON.stringify({
+      cloudConfig, configEscola, nomeEscola, municipioEscola
+    }));
+  } catch(e) { console.warn('Erro ao salvar config:', e); }
 }
     }));
   } catch(err) { console.warn('Erro ao salvar config:', err); }
