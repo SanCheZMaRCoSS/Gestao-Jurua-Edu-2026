@@ -1432,6 +1432,8 @@
       <div class="btn-group-sep"></div>
       <button class="btn-header" onclick="openModal('modalDocumentos')" title="Gerar documentos oficiais"
         style="background:rgba(39,174,96,0.2);border-color:rgba(39,174,96,0.4)">📋 Documentos</button>
+      <button class="btn-header" onclick="abrirGerenciarSenhas()" title="Gerenciar senhas das turmas"
+        style="background:rgba(201,151,43,0.2);border-color:rgba(201,151,43,0.4)">🔑 Senhas</button>
 
       <!-- Salvar (destaque) -->
       <button class="btn-header primary" onclick="salvarTudo()" title="Salvar todos os dados">💾 Salvar</button>
@@ -1565,6 +1567,17 @@
       <div class="turma-info-item">
         <span class="turma-info-label">Professor(a):</span>
         <span class="turma-info-value" id="tiProf">—</span>
+      </div>
+      <div class="turma-info-divider"></div>
+      <div class="turma-info-item" id="tiSenhaArea" style="display:none">
+        <button id="tiBtnSenha" onclick="pedirSenhaTurma(null)"
+          style="border:none;border-radius:6px;padding:4px 12px;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.2s">
+        </button>
+        <button id="tiBtnBloquear" onclick="bloquearTurma()" style="display:none;
+          border:none;background:rgba(192,57,43,0.12);color:var(--vermelho);border-radius:6px;
+          padding:4px 10px;font-size:0.72rem;cursor:pointer;margin-left:6px">
+          🔒 Bloquear
+        </button>
       </div>
     </div>
 
@@ -2131,6 +2144,42 @@
   </div>
 </div>
 
+<!-- ===== MODAL: PEDIR SENHA DA TURMA ===== -->
+<div class="modal-overlay" id="modalSenha">
+  <div class="modal" style="max-width:380px;text-align:center">
+    <div style="font-size:2rem;margin-bottom:8px">🔒</div>
+    <div class="modal-title" style="margin-bottom:6px">Turma Protegida</div>
+    <p style="font-size:0.82rem;color:var(--cinza-mid);margin-bottom:20px">
+      Digite a senha para editar a turma <strong id="senhaModalTurma"></strong>
+    </p>
+    <input type="password" id="senhaInput" placeholder="••••••••"
+      style="text-align:center;font-size:1.1rem;letter-spacing:0.2em;margin-bottom:8px"
+      onkeydown="if(event.key==='Enter') confirmarSenha()">
+    <div id="senhaErro" style="display:none;color:var(--vermelho);font-size:0.78rem;margin-bottom:8px">
+      ❌ Senha incorreta. Tente novamente.
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('modalSenha')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarSenha()">🔓 Desbloquear</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: GERENCIAR SENHAS ===== -->
+<div class="modal-overlay" id="modalSenhas">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">🔑 Gerenciar Senhas das Turmas</div>
+    <div style="background:var(--azul-light);border-radius:8px;padding:10px 14px;font-size:0.78rem;color:var(--azul-principal);margin-bottom:16px;line-height:1.6">
+      💡 As senhas são salvas no Google Sheets e sincronizadas automaticamente. Deixe o campo vazio para remover a proteção de uma turma.
+    </div>
+    <div id="listaSenhas" style="max-height:400px;overflow-y:auto;padding-right:4px"></div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeModal('modalSenhas')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarSenhas()">💾 Salvar Senhas no Sheets</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== MODAL: DOCUMENTOS OFICIAIS ===== -->
 <div class="modal-overlay" id="modalDocumentos">
   <div class="modal" style="max-width:480px">
@@ -2276,8 +2325,13 @@ let bimestreAtual   = 1;
 let alunosFiltrados = [];
 let secaoAtual      = 'frequencia';
 
+// ===== SISTEMA DE SENHAS =====
+let senhasMapa      = {}; // { turmaId: 'senha', 'MESTRE': 'senha' }
+let turmasDesbloqueadas = new Set(); // IDs das turmas desbloqueadas nesta sessão
+
 // Temporizador para auto-salvar frequência/notas após edição
 let autoSaveTimer   = null;
+
 
 
 const ESCOLA_FIXA = {
@@ -2300,12 +2354,25 @@ function carregarConfig() {
       if (parsed.configEscola?.anoLetivo)  configEscola.anoLetivo  = parsed.configEscola.anoLetivo;
     }
   } catch(err) { console.warn('Config local:', err); }
+};
+  configEscola    = { ...ESCOLA_FIXA.configEscola };
+  try {
+    const c = localStorage.getItem('gestao_config_EMDLITAIFF');
+    if (c) {
+      const parsed = JSON.parse(c);
+      if (parsed.configEscola?.secretario) configEscola.secretario = parsed.configEscola.secretario;
+      if (parsed.configEscola?.anoLetivo)  configEscola.anoLetivo  = parsed.configEscola.anoLetivo;
+    }
+  } catch(err) { console.warn('Config local:', err); }
 }
 
 function salvarConfig() {
   try {
     localStorage.setItem('gestao_config_EMEJACIGUARA', JSON.stringify({
       configEscola: { secretario: configEscola.secretario, anoLetivo: configEscola.anoLetivo }
+    }));
+  } catch(err) { console.warn('Erro ao salvar config:', err); }
+}
     }));
   } catch(err) { console.warn('Erro ao salvar config:', err); }
 }
@@ -2337,10 +2404,14 @@ async function carregarDoSheets() {
     frequencia  = d.frequencia  || {};
     observacoes = d.observacoes || [];
     diario      = d.diario      || {};
+    senhasMapa  = d.senhas      || {};
 
     if (d.nomeEscola)      nomeEscola      = d.nomeEscola;
     if (d.municipioEscola) municipioEscola = d.municipioEscola;
     if (d.configEscola)    Object.assign(configEscola, d.configEscola);
+
+    // Resetar desbloqueios ao recarregar
+    turmasDesbloqueadas = new Set();
 
     salvarConfig();
     setSyncStatus('online', 'Carregado · ' + new Date().toLocaleTimeString('pt-BR'));
@@ -2473,6 +2544,45 @@ function aplicarNomeEscola() {
   if (sw) sw.textContent = nomeEscola;
 }
 
+// ===== UTILITÁRIOS DE FORMATAÇÃO =====
+
+// Formata número sequencial com zero: 1 → "01", 10 → "10"
+function numSeq(n) { return n < 10 ? '0' + n : String(n); }
+
+// Formata nota com uma casa decimal e vírgula: 7.5 → "7,5"
+function fmtNota(n) {
+  if (n === null || n === undefined || n === '') return '—';
+  return parseFloat(n).toFixed(1).replace('.', ',');
+}
+
+// Ordena alunos de uma turma: multisseriada → por ano (ordem crescente) depois alfabético
+// regular → só alfabético. Retorna lista com campo _seq para numeração contínua.
+function ordenarAlunosTurma(lista, turma) {
+  if (!turma) return lista.map((a, i) => ({ ...a, _seq: i + 1 }));
+
+  const isMulti = turma.multisseriada && turma.anos && turma.anos.length > 1;
+
+  if (isMulti) {
+    // Ordenar por posição do ano na lista de anos da turma, depois alfabético
+    const ordemAnos = turma.anos || [];
+    const sorted = [...lista].sort((a, b) => {
+      const iA = ordemAnos.indexOf(a.ano);
+      const iB = ordemAnos.indexOf(b.ano);
+      const ordA = iA === -1 ? 99 : iA;
+      const ordB = iB === -1 ? 99 : iB;
+      if (ordA !== ordB) return ordA - ordB;
+      return (a.nome || '').localeCompare(b.nome || '', 'pt-BR');
+    });
+    return sorted.map((a, i) => ({ ...a, _seq: i + 1 }));
+  }
+
+  // Turma regular: apenas ordem alfabética
+  const sorted = [...lista].sort((a, b) =>
+    (a.nome || '').localeCompare(b.nome || '', 'pt-BR')
+  );
+  return sorted.map((a, i) => ({ ...a, _seq: i + 1 }));
+}
+
 function ordenarTurmas(lista) {
   return [...lista].sort((a, b) => {
     const segA = SEGMENTO_ORDEM[a.segmento] || 99;
@@ -2562,6 +2672,23 @@ function atualizarInfoBar() {
     (turmaAtual.multisseriada ? 'Multisseriada · ' : '') + (SEGMENTO_LABEL[turmaAtual.segmento] || turmaAtual.segmento);
   document.getElementById('tiTurno').textContent  = turmaAtual.turno;
   document.getElementById('tiProf').textContent   = turmaAtual.prof || '—';
+
+  // Indicador de senha
+  const area       = document.getElementById('tiSenhaArea');
+  const btnSenha   = document.getElementById('tiBtnSenha');
+  const btnBloquear = document.getElementById('tiBtnBloquear');
+  if (!area) return;
+
+  if (turmaTemSenha()) {
+    area.style.display = '';
+    const desbloqueada = turmaEstaDesbloqueada();
+    btnSenha.textContent  = desbloqueada ? '🔓 Desbloqueada' : '🔒 Bloqueada — clique para editar';
+    btnSenha.style.background = desbloqueada ? 'rgba(39,174,96,0.15)' : 'rgba(192,57,43,0.12)';
+    btnSenha.style.color       = desbloqueada ? '#1a7a40' : 'var(--vermelho)';
+    btnBloquear.style.display  = desbloqueada ? '' : 'none';
+  } else {
+    area.style.display = 'none';
+  }
 }
 
 function atualizarStats() {
@@ -2617,15 +2744,18 @@ function renderFrequencia() {
     if (dow >= 1 && dow <= 5) diasUteis.push(d);
   }
   const diasShow = diasUteis.slice(0, 22);
+  const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
 
   let html = `<table><thead><tr>
+    <th style="width:36px">Nº</th>
     <th class="left" style="min-width:180px">Aluno</th>
     <th class="left">Matrícula</th>
     ${diasShow.map(d => `<th data-tip="Dia ${d}">${d}</th>`).join('')}
     <th>% Freq.</th><th>Faltas</th><th>Ações</th>
   </tr></thead><tbody>`;
 
-  alunosFiltrados.forEach(a => {
+  let anoAtual = null;
+  listaOrdenada.forEach(a => {
     if (!frequencia[a.id]) frequencia[a.id] = {};
     if (!frequencia[a.id][mes]) frequencia[a.id][mes] = {};
     diasShow.forEach(d => { if (!frequencia[a.id][mes][d]) frequencia[a.id][mes][d] = 'P'; });
@@ -2633,7 +2763,14 @@ function renderFrequencia() {
     const { pct, faltas } = getFreqAluno(a.id);
     const cls = pct >= 75 ? 'freq-good' : pct >= 60 ? 'freq-warn' : 'freq-bad';
 
+    // Separador de ano para multisseriadas
+    if (turmaAtual.multisseriada && a.ano && a.ano !== anoAtual) {
+      anoAtual = a.ano;
+      html += `<tr><td colspan="99" class="multi-section-divider">🔀 ${a.ano}</td></tr>`;
+    }
+
     html += `<tr>
+      <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
       <td class="left"><div class="aluno-nome">${a.nome}</div></td>
       <td class="left"><span class="matricula">${a.matricula}</span></td>
       ${diasShow.map(d => {
@@ -2647,7 +2784,7 @@ function renderFrequencia() {
         <div class="freq-bar"><div class="freq-fill" style="width:${pct}%"></div></div>
         <span class="freq-pct">${pct}%</span>
       </div></td>
-      <td style="font-family:Consolas,monospace;font-size:0.78rem;color:${faltas>5?'var(--vermelho)':'var(--cinza-mid)'}">${faltas}</td>
+      <td style="font-family:Consolas,monospace;font-size:0.78rem;color:${faltas>5?'var(--vermelho)':'var(--cinza-mid)'}">${numSeq(Math.round(faltas))}</td>
       <td style="white-space:nowrap">
         <button onclick="abrirEditarAluno(${a.id})" title="Editar aluno"
           style="border:none;background:rgba(36,113,163,0.12);color:var(--azul-principal);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:0.72rem;margin-right:3px">✏️</button>
@@ -2661,6 +2798,10 @@ function renderFrequencia() {
 }
 
 function toggleFreq(alunoId, mes, dia) {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => toggleFreq(alunoId, mes, dia));
+    return;
+  }
   if (!frequencia[alunoId]) frequencia[alunoId] = {};
   if (!frequencia[alunoId][mes]) frequencia[alunoId][mes] = {};
   const ciclo = { P:'F', F:'J', J:'P' };
@@ -2718,6 +2859,10 @@ function getNota(alunoId, disc, bim, tipo='reg') {
 }
 
 function setNota(alunoId, disc, bim, val, tipo='reg') {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(null);
+    return;
+  }
   if (!notas[alunoId]) notas[alunoId] = {};
   if (!notas[alunoId][disc]) notas[alunoId][disc] = {};
   const key = tipo === 'rec' ? bim + '_rec' : bim;
@@ -2754,6 +2899,7 @@ function renderNotas() {
   const isMultiRender = (turmaAtual.multisseriada && turmaAtual.anos && turmaAtual.anos.length > 1) || seg === 'EIEF';
   const discs    = DISCIPLINAS[seg];
   const mediaMin = MEDIA_APROVACAO[seg];
+  const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
 
   if (seg === 'EI') {
     const niveisEI = ['NS','PS','S','PD'];
@@ -2763,11 +2909,13 @@ function renderNotas() {
         Campos de Experiência (BNCC) — sem notas numéricas.
       </div>
       <table><thead><tr>
+        <th style="width:36px">Nº</th>
         <th class="left" style="min-width:170px">Criança</th>
         ${discs.map(d => `<th data-tip="${d}" style="min-width:110px;font-size:0.6rem">${d.length>14?d.substr(0,13)+'…':d}</th>`).join('')}
       </tr></thead><tbody>`;
-    alunosFiltrados.forEach(a => {
+    listaOrdenada.forEach(a => {
       html += `<tr>
+        <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
         <td class="left"><div class="aluno-nome">${a.nome}</div><div class="matricula">${a.matricula}</div></td>
         ${discs.map(d => {
           const val = notas[a.id]?.[d]?.['ei_'+bim] || '';
@@ -2787,9 +2935,10 @@ function renderNotas() {
     return;
   }
 
-  const mediaLabel = mediaMin !== null ? `Média ≥ ${mediaMin.toFixed(1)}` : 'Média';
+  const mediaLabel = mediaMin !== null ? `Média ≥ ${fmtNota(mediaMin)}` : 'Média';
   let html = `<table><thead>
     <tr>
+      <th rowspan="2" style="width:36px;vertical-align:middle">Nº</th>
       <th class="left" rowspan="2" style="min-width:170px;vertical-align:middle">Aluno</th>
       ${discs.map(d => `<th colspan="2" data-tip="${d}" style="min-width:120px;border-bottom:1px solid rgba(36,113,163,0.15)">${d.length>10?d.substr(0,9)+'…':d}</th>`).join('')}
       <th rowspan="2" style="vertical-align:middle;min-width:80px">${mediaLabel}</th>
@@ -2802,68 +2951,40 @@ function renderNotas() {
     </tr>
   </thead><tbody>`;
 
-  if (isMultiRender) {
-    const anosTurma = turmaAtual.anos || [];
-    const porAno = {}; anosTurma.forEach(a => porAno[a] = []);
-    const semAno = [];
-    alunosFiltrados.forEach(al => {
-      if (al.ano && porAno[al.ano] !== undefined) porAno[al.ano].push(al);
-      else semAno.push(al);
-    });
-    const grupos = [...anosTurma.map(a => ({label:a, lista:porAno[a]})), semAno.length ? {label:'Ano não definido',lista:semAno} : null].filter(Boolean);
-    grupos.forEach(({label, lista}) => {
-      if (!lista.length) return;
-      const discGrupo = lista[0].ano ? (DISCIPLINAS[getSegmentoByAno(lista[0].ano)] || discs) : discs;
-      const mMinGrupo = lista[0].ano ? (MEDIA_APROVACAO[getSegmentoByAno(lista[0].ano)] || mediaMin) : mediaMin;
-      html += `<tr><td colspan="99" class="multi-section-divider">🔀 ${label}</td></tr>`;
-      lista.forEach(a => {
-        let soma = 0, cnt = 0;
-        const cells = discGrupo.map(d => {
-          const vReg = getNota(a.id, d, bim, 'reg');
-          const vRec = getNota(a.id, d, bim, 'rec');
-          const ef   = calcNotaEfetivaBim(a.id, d, bim);
-          if (ef !== null) { soma += ef; cnt++; }
-          const recUsada = vRec !== '' && parseFloat(vRec) > parseFloat(vReg || 0);
-          return `<td style="background:#f9fbf9"><input class="nota-input" type="number" min="0" max="10" step="0.1"
-              value="${vReg}" onchange="setNota(${a.id},'${d}',${bim},this.value,'reg');calcularMedias()" placeholder="—"></td>
-            <td style="background:#fdf9ee"><input class="nota-input" type="number" min="0" max="10" step="0.1"
-              value="${vRec}" onchange="setNota(${a.id},'${d}',${bim},this.value,'rec');calcularMedias()" placeholder="—"
-              style="border-color:${recUsada?'var(--dourado)':'transparent'};color:${recUsada?'var(--dourado)':'inherit'}"></td>`;
-        }).join('');
-        const media = cnt ? soma/cnt : null;
-        const mA = mMinGrupo || 6.0;
-        const mediaCls = media===null?'':(media>=mA?'media-ap':media>=(mA-2)?'media-rec':'media-rep');
-        html += `<tr>
-          <td class="left"><div class="aluno-nome">${a.nome}<span class="aluno-ano-badge">${a.ano||''}</span></div><div class="matricula">${a.matricula}</div></td>
-          ${cells}
-          <td><span class="media-badge ${mediaCls}">${media!==null?media.toFixed(1):'—'}</span></td>
-        </tr>`;
-      });
-    });
-  } else {
-    alunosFiltrados.forEach(a => {
-      let soma = 0, cnt = 0;
-      const cells = discs.map(d => {
-        const vReg = getNota(a.id, d, bim, 'reg');
-        const vRec = getNota(a.id, d, bim, 'rec');
-        const ef   = calcNotaEfetivaBim(a.id, d, bim);
-        if (ef !== null) { soma += ef; cnt++; }
-        const recUsada = vRec !== '' && parseFloat(vRec) > parseFloat(vReg || 0);
-        return `<td style="background:#f9fbf9"><input class="nota-input" type="number" min="0" max="10" step="0.1"
-            value="${vReg}" onchange="setNota(${a.id},'${d}',${bim},this.value,'reg');calcularMedias()" placeholder="—"></td>
-          <td style="background:#fdf9ee"><input class="nota-input" type="number" min="0" max="10" step="0.1"
-            value="${vRec}" onchange="setNota(${a.id},'${d}',${bim},this.value,'rec');calcularMedias()" placeholder="—"
-            style="border-color:${recUsada?'var(--dourado)':'transparent'};color:${recUsada?'var(--dourado)':'inherit'}"></td>`;
-      }).join('');
-      const media = cnt ? soma/cnt : null;
-      const mediaCls = media===null?'':(media>=(mediaMin||6)?'media-ap':media>=((mediaMin||6)-2)?'media-rec':'media-rep');
-      html += `<tr>
-        <td class="left"><div class="aluno-nome">${a.nome}</div><div class="matricula">${a.matricula}</div></td>
-        ${cells}
-        <td><span class="media-badge ${mediaCls}">${media!==null?media.toFixed(1):'—'}</span></td>
-      </tr>`;
-    });
-  }
+  let anoAtual = null;
+  listaOrdenada.forEach(a => {
+    const discAluno_ = (isMultiRender && a.ano) ? (DISCIPLINAS[getSegmentoByAno(a.ano)] || discs) : discs;
+    const mMinAluno  = (isMultiRender && a.ano) ? (MEDIA_APROVACAO[getSegmentoByAno(a.ano)] || mediaMin) : mediaMin;
+
+    if (isMultiRender && a.ano && a.ano !== anoAtual) {
+      anoAtual = a.ano;
+      html += `<tr><td colspan="99" class="multi-section-divider">🔀 ${a.ano}</td></tr>`;
+    }
+
+    let soma = 0, cnt = 0;
+    const cells = discAluno_.map(d => {
+      const vReg = getNota(a.id, d, bim, 'reg');
+      const vRec = getNota(a.id, d, bim, 'rec');
+      const ef   = calcNotaEfetivaBim(a.id, d, bim);
+      if (ef !== null) { soma += ef; cnt++; }
+      const recUsada = vRec !== '' && parseFloat(vRec) > parseFloat(vReg || 0);
+      return `<td style="background:#f9fbf9"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+          value="${vReg}" onchange="setNota(${a.id},'${d}',${bim},this.value,'reg');calcularMedias()" placeholder="—"></td>
+        <td style="background:#fdf9ee"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+          value="${vRec}" onchange="setNota(${a.id},'${d}',${bim},this.value,'rec');calcularMedias()" placeholder="—"
+          style="border-color:${recUsada?'var(--dourado)':'transparent'};color:${recUsada?'var(--dourado)':'inherit'}"></td>`;
+    }).join('');
+
+    const media = cnt ? soma/cnt : null;
+    const mA = mMinAluno || 6.0;
+    const mediaCls = media===null?'':(media>=mA?'media-ap':media>=(mA-2)?'media-rec':'media-rep');
+    html += `<tr>
+      <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
+      <td class="left"><div class="aluno-nome">${a.nome}${isMultiRender&&a.ano?`<span class="aluno-ano-badge">${a.ano}</span>`:''}</div><div class="matricula">${a.matricula}</div></td>
+      ${cells}
+      <td><span class="media-badge ${mediaCls}">${media!==null?fmtNota(media):'—'}</span></td>
+    </tr>`;
+  });
   html += '</tbody></table>';
   el.innerHTML = html;
 }
@@ -2887,76 +3008,7 @@ function renderMediasFinal() {
   const seg   = turmaAtual.segmento;
   const discs = DISCIPLINAS[seg];
   const mAp   = MEDIA_APROVACAO[seg];
-
-  if (mAp === null) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🌱</div><div>Educação Infantil não utiliza médias finais numéricas.</div></div>';
-    return;
-  }
-
-  function parecerFinal(alunoId, disc) {
-    const mf = calcMediaFinal(alunoId, disc);
-    if (mf === null) return { cls:'', txt:'—' };
-    if (mf >= mAp)       return { cls:'media-ap',  txt:'Aprovado' };
-    if (mf >= mAp - 2.0) return { cls:'media-rec', txt:'Rec. Final' };
-    return { cls:'media-rep', txt:'Reprovado' };
-  }
-
-  let html = `<table class="mf-table"><thead><tr>
-    <th class="left" style="min-width:170px">Aluno</th>
-    ${discs.map(d => `<th data-tip="${d}" style="font-size:0.6rem">${d.substr(0,8)}</th>`).join('')}
-    <th>Méd. Final</th><th>Freq.</th><th>Situação</th>
-  </tr></thead><tbody>`;
-
-  alunosFiltrados.forEach(a => {
-    let soma = 0, cnt = 0;
-    const cells = discs.map(d => {
-      const mf = calcMediaFinal(a.id, d);
-      if (mf !== null) { soma += mf; cnt++; }
-      const p = parecerFinal(a.id, d);
-      return `<td><span class="media-badge ${p.cls} mf-final">${mf!==null?mf.toFixed(1):'—'}</span></td>`;
-    }).join('');
-    const media = cnt ? soma/cnt : null;
-    const freq  = getFreqAluno(a.id);
-    const sit   = !cnt ? '—' : freq.pct < 75 ? 'Rep. Faltas' : media >= mAp ? 'Aprovado' : media >= mAp-2 ? 'Rec. Final' : 'Reprovado';
-    const sitCls = sit==='Aprovado'?'sit-ap':sit==='Rec. Final'?'sit-rec':'sit-rep';
-    html += `<tr>
-      <td class="left mf-destaque"><div class="aluno-nome">${a.nome}</div><div class="matricula">${a.matricula}</div></td>
-      ${cells}
-      <td class="mf-col-final"><span class="media-badge ${media!==null?(media>=mAp?'media-ap':media>=mAp-2?'media-rec':'media-rep'):''} mf-final">${media!==null?media.toFixed(1):'—'}</span></td>
-      <td>${freq.pct}%</td>
-      <td><span class="situacao-badge ${sitCls}">${sit}</span></td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  el.innerHTML = html;
-}
-
-// ===== OBSERVAÇÕES =====
-function atualizarSelectAlunos() {
-  const sel = document.getElementById('obsAluno');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">Selecione o aluno...</option>';
-  const lista = turmaAtual ? alunos.filter(a => a.turmaId === turmaAtual.id) : alunos;
-  lista.sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'))
-       .forEach(a => { sel.innerHTML += `<option value="${a.id}">${a.nome}</option>`; });
-}
-
-function salvarObservacao() {
-  const alunoId = parseInt(document.getElementById('obsAluno').value);
-  const tipo    = document.getElementById('obsTipo').value;
-  const data    = document.getElementById('obsData').value;
-  const texto   = document.getElementById('obsTexto').value.trim();
-  const resp    = document.getElementById('obsResponsavel').value.trim();
-  if (!alunoId || !tipo || !texto) { showToast('⚠️ Preencha os campos obrigatórios!', 'gold'); return; }
-  const aluno = alunos.find(a => a.id === alunoId);
-  observacoes.push({ alunoId, alunoNome: aluno?.nome || '', tipo, data, texto, resp });
-  renderObservacoes();
-  document.getElementById('badgeObs').textContent = observacoes.length;
-  closeModal('modalObs');
-  document.getElementById('obsTexto').value = '';
-  agendarAutoSave('Observação adicionada...');
-  showToast('✅ Observação registrada!');
-}
+  const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
 
 function renderObservacoes() {
   const el = document.getElementById('listaObs');
@@ -4010,6 +4062,149 @@ function _abrirJanelaPrint(html) {
   win.document.close();
   win.focus();
   setTimeout(() => win.print(), 600);
+}
+
+// ===== SISTEMA DE SENHAS =====
+
+// Verifica se a turma atual está desbloqueada
+function turmaEstaDesbloqueada() {
+  if (!turmaAtual) return false;
+  if (turmasDesbloqueadas.has('MESTRE')) return true;
+  return turmasDesbloqueadas.has(String(turmaAtual.id));
+}
+
+// Verifica se existe senha configurada para a turma
+function turmaTemSenha() {
+  if (!turmaAtual) return false;
+  return !!(senhasMapa[String(turmaAtual.id)] || senhasMapa['MESTRE']);
+}
+
+// Abre modal de desbloqueio
+function pedirSenhaTurma(callback) {
+  if (!turmaAtual) return;
+  if (!turmaTemSenha()) {
+    // Sem senha configurada — acesso livre
+    turmasDesbloqueadas.add(String(turmaAtual.id));
+    if (callback) callback();
+    return;
+  }
+  if (turmaEstaDesbloqueada()) {
+    if (callback) callback();
+    return;
+  }
+  // Guardar callback para executar após desbloqueio
+  window._senhaCallback = callback;
+  document.getElementById('senhaModalTurma').textContent = turmaAtual.nome;
+  document.getElementById('senhaInput').value = '';
+  document.getElementById('senhaErro').style.display = 'none';
+  openModal('modalSenha');
+  setTimeout(() => document.getElementById('senhaInput').focus(), 300);
+}
+
+function confirmarSenha() {
+  const digitada = document.getElementById('senhaInput').value.trim();
+  if (!digitada) return;
+
+  const senhaTurma  = senhasMapa[String(turmaAtual?.id)] || '';
+  const senhaMestre = senhasMapa['MESTRE'] || '';
+
+  if (senhaMestre && digitada === senhaMestre) {
+    turmasDesbloqueadas.add('MESTRE');
+    closeModal('modalSenha');
+    showToast('🔓 Acesso mestre ativado — todas as turmas desbloqueadas!');
+    renderSecaoAtual();
+    renderTurmasRapidas();
+    if (window._senhaCallback) { window._senhaCallback(); window._senhaCallback = null; }
+    return;
+  }
+
+  if (senhaTurma && digitada === senhaTurma) {
+    turmasDesbloqueadas.add(String(turmaAtual.id));
+    closeModal('modalSenha');
+    showToast('🔓 Turma ' + turmaAtual.nome + ' desbloqueada!');
+    renderSecaoAtual();
+    renderTurmasRapidas();
+    if (window._senhaCallback) { window._senhaCallback(); window._senhaCallback = null; }
+    return;
+  }
+
+  // Senha errada
+  const erroEl = document.getElementById('senhaErro');
+  erroEl.style.display = 'block';
+  document.getElementById('senhaInput').value = '';
+  document.getElementById('senhaInput').focus();
+}
+
+// Bloquear turma manualmente
+function bloquearTurma() {
+  if (!turmaAtual) return;
+  if (turmasDesbloqueadas.has('MESTRE')) {
+    turmasDesbloqueadas.delete('MESTRE');
+    showToast('🔒 Acesso mestre encerrado.', 'gold');
+  } else {
+    turmasDesbloqueadas.delete(String(turmaAtual.id));
+    showToast('🔒 Turma ' + turmaAtual.nome + ' bloqueada.', 'gold');
+  }
+  renderSecaoAtual();
+  renderTurmasRapidas();
+}
+
+// Abrir modal de gerenciamento de senhas
+function abrirGerenciarSenhas() {
+  renderListaSenhas();
+  openModal('modalSenhas');
+}
+
+function renderListaSenhas() {
+  const el = document.getElementById('listaSenhas');
+  if (!el) return;
+  let html = '';
+
+  // Senha mestre
+  const senhaMestre = senhasMapa['MESTRE'] || '';
+  html += `<div style="background:var(--dourado-light);border:1px solid var(--dourado);border-radius:8px;padding:12px 14px;margin-bottom:16px">
+    <div style="font-weight:700;font-size:0.82rem;color:var(--dourado);margin-bottom:8px">🗝️ Senha Mestre (desbloqueia todas as turmas)</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="text" value="${senhaMestre}" placeholder="Definir senha mestre..."
+        id="senhaMestreInput"
+        style="flex:1;font-family:monospace;letter-spacing:0.1em"
+        onchange="senhasMapa['MESTRE']=this.value.trim()">
+    </div>
+  </div>`;
+
+  // Senhas por turma
+  if (!turmas.length) {
+    html += '<div class="empty-state" style="padding:20px">Nenhuma turma cadastrada ainda.</div>';
+  } else {
+    ordenarTurmas(turmas).forEach(t => {
+      const senha = senhasMapa[String(t.id)] || '';
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--cinza-border)">
+        <span style="flex:1;font-size:0.82rem;font-weight:500">${SEGMENTO_ICON[t.segmento]||'📋'} ${t.nome}</span>
+        <input type="text" value="${senha}" placeholder="Sem senha"
+          style="width:140px;font-family:monospace;letter-spacing:0.1em;font-size:0.82rem"
+          onchange="senhasMapa['${t.id}']=this.value.trim()">
+      </div>`;
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+async function salvarSenhas() {
+  setSyncStatus('syncing', 'Salvando senhas...');
+  try {
+    const res = await chamarScript('SAVE_SENHAS', {
+      escolaCode: cloudConfig.escolaCode,
+      senhas: senhasMapa
+    });
+    if (!res.ok) throw new Error(res.msg || 'Erro');
+    closeModal('modalSenhas');
+    showToast('✅ Senhas salvas no Google Sheets!');
+    setSyncStatus('online', 'Salvo · ' + new Date().toLocaleTimeString('pt-BR'));
+  } catch(e) {
+    showToast('❌ Erro ao salvar senhas: ' + e.message, 'red');
+    setSyncStatus('offline', 'Erro ao salvar');
+  }
 }
 
 function gerarBoletim() { showSection('relatorio', null, null); renderRelatorio(); }
