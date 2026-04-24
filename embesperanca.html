@@ -2262,6 +2262,17 @@
 
 
 <script>
+// ══════ CONFIGURAÇÃO DESTA ESCOLA ══════
+// Gerado automaticamente — não editar manualmente
+const _ESCOLA_CODE  = 'EMBESPERANCA';
+const _ESCOLA_NOME  = 'Escola Municipal Boa Esperança';
+const _ESCOLA_INEP  = '13012304';
+const _ESCOLA_GEST  = 'Nailer Maia Pinheiro';
+const _SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbz3H7G1Oof4o2KQ6vyPGa-O9CtK7efCqJQBzlLXWZCIdLl3j-SLX9r4QMEaK44Xp7v7/exec';
+const _SEMED_URL    = 'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec';
+// ═══════════════════════════════════════
+</script>
+<script>
 // ================================================================
 // SISTEMA DE GESTÃO ESCOLAR — Rede Municipal de Juruá/AM · 2026
 // Arquitetura: Google Sheets como fonte única de dados (Opção 4)
@@ -2308,10 +2319,10 @@ const ANO_ORDEM = [
 ];
 
 // ===== ESTADO EM MEMÓRIA (cache local durante a sessão) =====
-let nomeEscola      = 'Escola Municipal Boa Esperança';
+let nomeEscola      = _ESCOLA_NOME;
 let municipioEscola = 'Juruá — Amazonas';
-let configEscola    = { diretor:'Nailer Maia Pinheiro', secretario:'', inep:'13012304', anoLetivo:'2026' };
-let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbz3H7G1Oof4o2KQ6vyPGa-O9CtK7efCqJQBzlLXWZCIdLl3j-SLX9r4QMEaK44Xp7v7/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMBESPERANCA', ativo:true, semedAtivo:true };
+let configEscola    = { diretor:_ESCOLA_GEST, secretario:'', inep:_ESCOLA_INEP, anoLetivo:'2026' };
+let cloudConfig     = { scriptUrl:_SCRIPT_URL, semedScriptUrl:_SEMED_URL, escolaCode:_ESCOLA_CODE, ativo:true, semedAtivo:true };
 
 let turmas          = [];
 let alunos          = [];
@@ -2333,48 +2344,26 @@ let turmasDesbloqueadas = new Set(); // IDs das turmas desbloqueadas nesta sess�
 let autoSaveTimer   = null;
 
 
-
-const ESCOLA_FIXA = {
-  nomeEscola:      'Escola Municipal Boa Esperança',
-  municipioEscola: 'Juruá — Amazonas',
-  configEscola:    { diretor:'Nailer Maia Pinheiro', secretario:'', inep:'13012304', anoLetivo:'2026' },
-  cloudConfig:     { scriptUrl:'https://script.google.com/macros/s/AKfycbz3H7G1Oof4o2KQ6vyPGa-O9CtK7efCqJQBzlLXWZCIdLl3j-SLX9r4QMEaK44Xp7v7/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMBESPERANCA', ativo:true, semedAtivo:true }
-};
 // ===== CONFIGURAÇÃO (única coisa que fica no localStorage) =====
 function carregarConfig() {
-  nomeEscola      = ESCOLA_FIXA.nomeEscola;
-  municipioEscola = ESCOLA_FIXA.municipioEscola;
-  cloudConfig     = { ...ESCOLA_FIXA.cloudConfig };
-  configEscola    = { ...ESCOLA_FIXA.configEscola };
   try {
     const c = localStorage.getItem('gestao_config_EMBESPERANCA');
     if (c) {
       const parsed = JSON.parse(c);
-      if (parsed.configEscola?.secretario) configEscola.secretario = parsed.configEscola.secretario;
-      if (parsed.configEscola?.anoLetivo)  configEscola.anoLetivo  = parsed.configEscola.anoLetivo;
+      cloudConfig     = parsed.cloudConfig     || cloudConfig;
+      configEscola    = parsed.configEscola    || configEscola;
+      nomeEscola      = parsed.nomeEscola      || nomeEscola;
+      municipioEscola = parsed.municipioEscola || municipioEscola;
     }
-  } catch(err) { console.warn('Config local:', err); }
-};
-  configEscola    = { ...ESCOLA_FIXA.configEscola };
-  try {
-    const c = localStorage.getItem('gestao_config_EMDLITAIFF');
-    if (c) {
-      const parsed = JSON.parse(c);
-      if (parsed.configEscola?.secretario) configEscola.secretario = parsed.configEscola.secretario;
-      if (parsed.configEscola?.anoLetivo)  configEscola.anoLetivo  = parsed.configEscola.anoLetivo;
-    }
-  } catch(err) { console.warn('Config local:', err); }
+  } catch(e) { console.warn('Erro ao carregar config:', e); }
 }
 
 function salvarConfig() {
   try {
     localStorage.setItem('gestao_config_EMBESPERANCA', JSON.stringify({
-      configEscola: { secretario: configEscola.secretario, anoLetivo: configEscola.anoLetivo }
+      cloudConfig, configEscola, nomeEscola, municipioEscola
     }));
-  } catch(err) { console.warn('Erro ao salvar config:', err); }
-}
-    }));
-  } catch(err) { console.warn('Erro ao salvar config:', err); }
+  } catch(e) { console.warn('Erro ao salvar config:', e); }
 }
 
 // ===== API: COMUNICAÇÃO COM GOOGLE SHEETS =====
@@ -3010,6 +2999,55 @@ function renderMediasFinal() {
   const mAp   = MEDIA_APROVACAO[seg];
   const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
 
+  if (mAp === null) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🌱</div><div>Educação Infantil não utiliza médias finais numéricas.</div></div>';
+    return;
+  }
+
+  function parecerFinal(alunoId, disc) {
+    const mf = calcMediaFinal(alunoId, disc);
+    if (mf === null) return { cls:'', txt:'—' };
+    if (mf >= mAp)       return { cls:'media-ap',  txt:'Aprovado' };
+    if (mf >= mAp - 2.0) return { cls:'media-rec', txt:'Rec. Final' };
+    return { cls:'media-rep', txt:'Reprovado' };
+  }
+
+  let html = `<table class="mf-table"><thead><tr>
+    <th style="width:36px">Nº</th>
+    <th class="left" style="min-width:170px">Aluno</th>
+    ${discs.map(d => `<th data-tip="${d}" style="font-size:0.6rem">${d.substr(0,8)}</th>`).join('')}
+    <th>Méd. Final</th><th>Freq.</th><th>Situação</th>
+  </tr></thead><tbody>`;
+
+  let anoAtual = null;
+  listaOrdenada.forEach(a => {
+    if (turmaAtual.multisseriada && a.ano && a.ano !== anoAtual) {
+      anoAtual = a.ano;
+      html += `<tr><td colspan="99" class="multi-section-divider">🔀 ${a.ano}</td></tr>`;
+    }
+    let soma = 0, cnt = 0;
+    const cells = discs.map(d => {
+      const mf = calcMediaFinal(a.id, d);
+      if (mf !== null) { soma += mf; cnt++; }
+      const p = parecerFinal(a.id, d);
+      return `<td><span class="media-badge ${p.cls} mf-final">${mf!==null?fmtNota(mf):'—'}</span></td>`;
+    }).join('');
+    const media = cnt ? soma/cnt : null;
+    const freq  = getFreqAluno(a.id);
+    const sit   = !cnt ? '—' : freq.pct < 75 ? 'Rep. Faltas' : media >= mAp ? 'Aprovado' : media >= mAp-2 ? 'Rec. Final' : 'Reprovado';
+    const sitCls = sit==='Aprovado'?'sit-ap':sit==='Rec. Final'?'sit-rec':'sit-rep';
+    html += `<tr>
+      <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
+      <td class="left mf-destaque"><div class="aluno-nome">${a.nome}</div><div class="matricula">${a.matricula}</div></td>
+      ${cells}
+      <td class="mf-col-final"><span class="media-badge ${media!==null?(media>=mAp?'media-ap':media>=mAp-2?'media-rec':'media-rep'):''} mf-final">${media!==null?fmtNota(media):'—'}</span></td>
+      <td>${freq.pct}%</td>
+      <td><span class="situacao-badge ${sitCls}">${sit}</span></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
 function renderObservacoes() {
   const el = document.getElementById('listaObs');
   if (!observacoes.length) {
