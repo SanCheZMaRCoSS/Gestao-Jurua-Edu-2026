@@ -3037,6 +3037,33 @@ function renderMediasFinal() {
   html += '</tbody></table>';
   el.innerHTML = html;
 }
+// ===== OBSERVAÇÕES =====
+function atualizarSelectAlunos() {
+  const sel = document.getElementById('obsAluno');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Selecione o aluno...</option>';
+  const lista = turmaAtual ? alunos.filter(a => a.turmaId === turmaAtual.id) : alunos;
+  lista.sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR'))
+       .forEach(a => { sel.innerHTML += `<option value="${a.id}">${a.nome}</option>`; });
+}
+
+function salvarObservacao() {
+  const alunoId = parseInt(document.getElementById('obsAluno').value);
+  const tipo    = document.getElementById('obsTipo').value;
+  const data    = document.getElementById('obsData').value;
+  const texto   = document.getElementById('obsTexto').value.trim();
+  const resp    = document.getElementById('obsResponsavel').value.trim();
+  if (!alunoId || !tipo || !texto) { showToast('⚠️ Preencha os campos obrigatórios!', 'gold'); return; }
+  const aluno = alunos.find(a => a.id === alunoId);
+  observacoes.push({ alunoId, alunoNome: aluno?.nome || '', tipo, data, texto, resp });
+  renderObservacoes();
+  document.getElementById('badgeObs').textContent = observacoes.length;
+  closeModal('modalObs');
+  document.getElementById('obsTexto').value = '';
+  agendarAutoSave('Observação adicionada...');
+  showToast('✅ Observação registrada!');
+}
+
 function renderObservacoes() {
   const el = document.getElementById('listaObs');
   if (!observacoes.length) {
