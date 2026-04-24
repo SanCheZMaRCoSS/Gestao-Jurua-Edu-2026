@@ -2262,17 +2262,6 @@
 
 
 <script>
-// ══════ CONFIGURAÇÃO DESTA ESCOLA ══════
-// Gerado automaticamente — não editar manualmente
-const _ESCOLA_CODE  = 'EMMSUELY';
-const _ESCOLA_NOME  = 'Escola Municipal Maria Suely de Lima Cabral';
-const _ESCOLA_INEP  = '13142216';
-const _ESCOLA_GEST  = 'Sarah Barros Martins';
-const _SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzMEHpJ_clJhAZhPaAAJF3hpkzHLv2FQO0lVk7p-zJaa0fO8kcpQlcOLM3sVAlFKkE-/exec';
-const _SEMED_URL    = 'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec';
-// ═══════════════════════════════════════
-</script>
-<script>
 // ================================================================
 // SISTEMA DE GESTÃO ESCOLAR — Rede Municipal de Juruá/AM · 2026
 // Arquitetura: Google Sheets como fonte única de dados (Opção 4)
@@ -2319,10 +2308,10 @@ const ANO_ORDEM = [
 ];
 
 // ===== ESTADO EM MEMÓRIA (cache local durante a sessão) =====
-let nomeEscola      = _ESCOLA_NOME;
+let nomeEscola      = 'Escola Municipal Maria Suely de Lima Cabral';
 let municipioEscola = 'Juruá — Amazonas';
-let configEscola    = { diretor:_ESCOLA_GEST, secretario:'', inep:_ESCOLA_INEP, anoLetivo:'2026' };
-let cloudConfig     = { scriptUrl:_SCRIPT_URL, semedScriptUrl:_SEMED_URL, escolaCode:_ESCOLA_CODE, ativo:true, semedAtivo:true };
+let configEscola    = { diretor:'Sarah Barros Martins', secretario:'', inep:'13142216', anoLetivo:'2026' };
+let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbzMEHpJ_clJhAZhPaAAJF3hpkzHLv2FQO0lVk7p-zJaa0fO8kcpQlcOLM3sVAlFKkE-/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMMSUELY', ativo:true, semedAtivo:true };
 
 let turmas          = [];
 let alunos          = [];

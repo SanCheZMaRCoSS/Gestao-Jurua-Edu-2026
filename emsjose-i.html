@@ -2262,17 +2262,6 @@
 
 
 <script>
-// ══════ CONFIGURAÇÃO DESTA ESCOLA ══════
-// Gerado automaticamente — não editar manualmente
-const _ESCOLA_CODE  = 'EMSJOSE-I';
-const _ESCOLA_NOME  = 'Escola Municipal São José (Anexo I — Portelinha)';
-const _ESCOLA_INEP  = '13012410';
-const _ESCOLA_GEST  = 'Sebastião Fábio Torres de Carvalho';
-const _SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbxXj96zA4exUz3OEdpg445750GHZFRTvQwVTY_LjY-a-HW0BZLefxv4_L9dR468LzDV4w/exec';
-const _SEMED_URL    = 'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec';
-// ═══════════════════════════════════════
-</script>
-<script>
 // ================================================================
 // SISTEMA DE GESTÃO ESCOLAR — Rede Municipal de Juruá/AM · 2026
 // Arquitetura: Google Sheets como fonte única de dados (Opção 4)
@@ -2319,10 +2308,10 @@ const ANO_ORDEM = [
 ];
 
 // ===== ESTADO EM MEMÓRIA (cache local durante a sessão) =====
-let nomeEscola      = _ESCOLA_NOME;
+let nomeEscola      = 'Escola Municipal São José (Anexo I — Portelinha)';
 let municipioEscola = 'Juruá — Amazonas';
-let configEscola    = { diretor:_ESCOLA_GEST, secretario:'', inep:_ESCOLA_INEP, anoLetivo:'2026' };
-let cloudConfig     = { scriptUrl:_SCRIPT_URL, semedScriptUrl:_SEMED_URL, escolaCode:_ESCOLA_CODE, ativo:true, semedAtivo:true };
+let configEscola    = { diretor:'Sebastião Fábio Torres de Carvalho', secretario:'', inep:'13012410', anoLetivo:'2026' };
+let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbxXj96zA4exUz3OEdpg445750GHZFRTvQwVTY_LjY-a-HW0BZLefxv4_L9dR468LzDV4w/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMSJOSE-I', ativo:true, semedAtivo:true };
 
 let turmas          = [];
 let alunos          = [];

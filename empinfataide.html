@@ -2262,17 +2262,6 @@
 
 
 <script>
-// ══════ CONFIGURAÇÃO DESTA ESCOLA ══════
-// Gerado automaticamente — não editar manualmente
-const _ESCOLA_CODE  = 'EMPINFATAÍDE';
-const _ESCOLA_NOME  = 'Escola Municipal de Pró Infância Ataíde Nobre Dias Ferreira';
-const _ESCOLA_INEP  = '13100246';
-const _ESCOLA_GEST  = 'Maria de Guadalupe Lima';
-const _SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzf7EtzzpOuawz8grcdPitUpVPUbrcFxkGb76deZEe_HxA9YP3flJX_2PVM0T5U1F7i/exec';
-const _SEMED_URL    = 'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec';
-// ═══════════════════════════════════════
-</script>
-<script>
 // ================================================================
 // SISTEMA DE GESTÃO ESCOLAR — Rede Municipal de Juruá/AM · 2026
 // Arquitetura: Google Sheets como fonte única de dados (Opção 4)
@@ -2319,10 +2308,10 @@ const ANO_ORDEM = [
 ];
 
 // ===== ESTADO EM MEMÓRIA (cache local durante a sessão) =====
-let nomeEscola      = _ESCOLA_NOME;
+let nomeEscola      = 'Escola Municipal de Pró Infância Ataíde Nobre Dias Ferreira';
 let municipioEscola = 'Juruá — Amazonas';
-let configEscola    = { diretor:_ESCOLA_GEST, secretario:'', inep:_ESCOLA_INEP, anoLetivo:'2026' };
-let cloudConfig     = { scriptUrl:_SCRIPT_URL, semedScriptUrl:_SEMED_URL, escolaCode:_ESCOLA_CODE, ativo:true, semedAtivo:true };
+let configEscola    = { diretor:'Maria de Guadalupe Lima', secretario:'', inep:'13100246', anoLetivo:'2026' };
+let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbzf7EtzzpOuawz8grcdPitUpVPUbrcFxkGb76deZEe_HxA9YP3flJX_2PVM0T5U1F7i/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMPINFATAÍDE', ativo:true, semedAtivo:true };
 
 let turmas          = [];
 let alunos          = [];

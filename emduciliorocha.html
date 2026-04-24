@@ -2262,17 +2262,6 @@
 
 
 <script>
-// ══════ CONFIGURAÇÃO DESTA ESCOLA ══════
-// Gerado automaticamente — não editar manualmente
-const _ESCOLA_CODE  = 'EMDUCILIOROCHA';
-const _ESCOLA_NOME  = 'Escola Municipal Ducílio de Oliveira Rocha';
-const _ESCOLA_INEP  = '13142216';
-const _ESCOLA_GEST  = 'Elcinor Pereira da Silva';
-const _SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbwe5CyX1ZemK34SveUCUcVEl6XTW2oxho_OEiq3otnfxoLfvN3YQsTbb_pV5j3Z7f9k/exec';
-const _SEMED_URL    = 'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec';
-// ═══════════════════════════════════════
-</script>
-<script>
 // ================================================================
 // SISTEMA DE GESTÃO ESCOLAR — Rede Municipal de Juruá/AM · 2026
 // Arquitetura: Google Sheets como fonte única de dados (Opção 4)
@@ -2319,10 +2308,10 @@ const ANO_ORDEM = [
 ];
 
 // ===== ESTADO EM MEMÓRIA (cache local durante a sessão) =====
-let nomeEscola      = _ESCOLA_NOME;
+let nomeEscola      = 'Escola Municipal Ducílio de Oliveira Rocha';
 let municipioEscola = 'Juruá — Amazonas';
-let configEscola    = { diretor:_ESCOLA_GEST, secretario:'', inep:_ESCOLA_INEP, anoLetivo:'2026' };
-let cloudConfig     = { scriptUrl:_SCRIPT_URL, semedScriptUrl:_SEMED_URL, escolaCode:_ESCOLA_CODE, ativo:true, semedAtivo:true };
+let configEscola    = { diretor:'Elcinor Pereira da Silva', secretario:'', inep:'13142216', anoLetivo:'2026' };
+let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbwe5CyX1ZemK34SveUCUcVEl6XTW2oxho_OEiq3otnfxoLfvN3YQsTbb_pV5j3Z7f9k/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMDUCILIOROCHA', ativo:true, semedAtivo:true };
 
 let turmas          = [];
 let alunos          = [];

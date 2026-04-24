@@ -2262,17 +2262,6 @@
 
 
 <script>
-// ══════ CONFIGURAÇÃO DESTA ESCOLA ══════
-// Gerado automaticamente — não editar manualmente
-const _ESCOLA_CODE  = 'EMMGUILHERME';
-const _ESCOLA_NOME  = 'Escola Municipal Manoel Guilherme';
-const _ESCOLA_INEP  = '13087401';
-const _ESCOLA_GEST  = 'Edileia Silva de Lima';
-const _SCRIPT_URL   = 'https://script.google.com/macros/s/AKfycbzt7z4znheIiaTfcA8TtuL8MUCCYEypGG5Ku0-UXaQMHUD63zg-EQLKGsTo11-11fJq/exec';
-const _SEMED_URL    = 'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec';
-// ═══════════════════════════════════════
-</script>
-<script>
 // ================================================================
 // SISTEMA DE GESTÃO ESCOLAR — Rede Municipal de Juruá/AM · 2026
 // Arquitetura: Google Sheets como fonte única de dados (Opção 4)
@@ -2319,10 +2308,10 @@ const ANO_ORDEM = [
 ];
 
 // ===== ESTADO EM MEMÓRIA (cache local durante a sessão) =====
-let nomeEscola      = _ESCOLA_NOME;
+let nomeEscola      = 'Escola Municipal Manoel Guilherme';
 let municipioEscola = 'Juruá — Amazonas';
-let configEscola    = { diretor:_ESCOLA_GEST, secretario:'', inep:_ESCOLA_INEP, anoLetivo:'2026' };
-let cloudConfig     = { scriptUrl:_SCRIPT_URL, semedScriptUrl:_SEMED_URL, escolaCode:_ESCOLA_CODE, ativo:true, semedAtivo:true };
+let configEscola    = { diretor:'Edileia Silva de Lima', secretario:'', inep:'13087401', anoLetivo:'2026' };
+let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbzt7z4znheIiaTfcA8TtuL8MUCCYEypGG5Ku0-UXaQMHUD63zg-EQLKGsTo11-11fJq/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMMGUILHERME', ativo:true, semedAtivo:true };
 
 let turmas          = [];
 let alunos          = [];
