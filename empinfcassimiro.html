@@ -1939,11 +1939,8 @@
         <label class="field-label">Ano/Fase</label>
         <select id="turmaAno">
           <optgroup label="Educação Infantil">
-            <option value="Berçário">Berçário</option>
-            <option value="Maternal I">Maternal I</option>
-            <option value="Maternal II">Maternal II</option>
-            <option value="Pré I">Pré I</option>
-            <option value="Pré II">Pré II</option>
+            <option value="Creche">Creche (0 a 3 anos)</option>
+            <option value="Pré">Pré (4 a 5 anos)</option>
           </optgroup>
           <optgroup label="Ens. Fundamental I">
             <option value="1º Ano">1º Ano</option>
@@ -1953,11 +1950,9 @@
             <option value="5º Ano">5º Ano</option>
           </optgroup>
           <optgroup label="🌿 Misto EI + Anos Iniciais">
-            <option value="EI+EF1 (Berçário ao 5º Ano)">EI + EF1 (Berçário ao 5º Ano)</option>
-            <option value="EI+EF1 (Maternal ao 5º Ano)">EI + EF1 (Maternal ao 5º Ano)</option>
+            <option value="EI+EF1 (Creche ao 5º Ano)">EI + EF1 (Creche ao 5º Ano)</option>
             <option value="EI+EF1 (Pré ao 5º Ano)">EI + EF1 (Pré ao 5º Ano)</option>
-            <option value="EI+EF1 (Pré I e Pré II ao 3º Ano)">EI + EF1 (Pré ao 3º Ano)</option>
-            <option value="EI+EF1 (1º ao 5º Ano com Pré)">EI + EF1 (1º ao 5º Ano com Pré)</option>
+            <option value="EI+EF1 (Pré ao 3º Ano)">EI + EF1 (Pré ao 3º Ano)</option>
           </optgroup>
           <optgroup label="Ens. Fundamental II">
             <option value="6º Ano">6º Ano</option>
@@ -2271,10 +2266,10 @@
 
 // ===== CONSTANTES =====
 const ANOS_POR_SEGMENTO = {
-  EI:   ['Berçário','Maternal I','Maternal II','Pré I','Pré II'],
+  EI:   ['Creche','Pré'],
   EF1:  ['1º Ano','2º Ano','3º Ano','4º Ano','5º Ano'],
   EF2:  ['6º Ano','7º Ano','8º Ano','9º Ano'],
-  EIEF: ['Berçário','Maternal I','Maternal II','Pré I','Pré II',
+  EIEF: ['Creche','Pré',
          '1º Ano','2º Ano','3º Ano','4º Ano','5º Ano'],
   EJA1: ['EJA 1ª Etapa (1º ano)','EJA 2ª Etapa (2º e 3º anos)','EJA 3ª Etapa (4º e 5º anos)'],
   EJA2: ['EJA 1ª Etapa (6º e 7º anos)','EJA 2ª Etapa (8º e 9º anos)']
@@ -2300,7 +2295,7 @@ const SEGMENTO_LABEL = {
 const SEGMENTO_ICON  = { EI:'🌱', EF1:'📗', EF2:'📘', EIEF:'🌿', EJA1:'🌙', EJA2:'🌙' };
 const SEGMENTO_ORDEM = { EI:1, EF1:2, EF2:3, EIEF:4, EJA1:5, EJA2:6 };
 const ANO_ORDEM = [
-  'Berçário','Maternal I','Maternal II','Pré I','Pré II',
+  'Creche','Pré',
   '1º Ano','2º Ano','3º Ano','4º Ano','5º Ano',
   '6º Ano','7º Ano','8º Ano','9º Ano',
   'EJA 1ª Etapa (1º ano)','EJA 2ª Etapa (2º e 3º anos)','EJA 3ª Etapa (4º e 5º anos)',
@@ -2533,15 +2528,20 @@ function fmtNota(n) {
   return parseFloat(n).toFixed(1).replace('.', ',');
 }
 
-// Ordena alunos de uma turma: multisseriada → por ano (ordem crescente) depois alfabético
-// regular → só alfabético. Retorna lista com campo _seq para numeração contínua.
+// Ordena alunos pela matrícula numérica (crescente)
+// Para multisseriadas: agrupa por ano (ordem dos anos da turma), dentro de cada grupo ordena por matrícula
 function ordenarAlunosTurma(lista, turma) {
   if (!turma) return lista.map((a, i) => ({ ...a, _seq: i + 1 }));
+
+  // Função auxiliar: extrair número da matrícula para ordenação
+  const numMatricula = (mat) => {
+    const n = parseInt(String(mat || '').replace(/\D/g, ''));
+    return isNaN(n) ? 9999 : n;
+  };
 
   const isMulti = turma.multisseriada && turma.anos && turma.anos.length > 1;
 
   if (isMulti) {
-    // Ordenar por posição do ano na lista de anos da turma, depois alfabético
     const ordemAnos = turma.anos || [];
     const sorted = [...lista].sort((a, b) => {
       const iA = ordemAnos.indexOf(a.ano);
@@ -2549,14 +2549,15 @@ function ordenarAlunosTurma(lista, turma) {
       const ordA = iA === -1 ? 99 : iA;
       const ordB = iB === -1 ? 99 : iB;
       if (ordA !== ordB) return ordA - ordB;
-      return (a.nome || '').localeCompare(b.nome || '', 'pt-BR');
+      // Dentro do mesmo ano: ordenar por matrícula
+      return numMatricula(a.matricula) - numMatricula(b.matricula);
     });
     return sorted.map((a, i) => ({ ...a, _seq: i + 1 }));
   }
 
-  // Turma regular: apenas ordem alfabética
+  // Turma regular: ordenar por matrícula numérica
   const sorted = [...lista].sort((a, b) =>
-    (a.nome || '').localeCompare(b.nome || '', 'pt-BR')
+    numMatricula(a.matricula) - numMatricula(b.matricula)
   );
   return sorted.map((a, i) => ({ ...a, _seq: i + 1 }));
 }
