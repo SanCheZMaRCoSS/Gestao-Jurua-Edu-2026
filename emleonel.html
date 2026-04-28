@@ -64,35 +64,27 @@
     gap: 12px;
     box-sizing: border-box;
     flex-wrap: nowrap;
-    /* SEM overflow:hidden aqui — deixar o texto do nome respirar */
   }
 
-  /* Header-actions fica à direita, encolhe mas nunca some */
+  /* Header organizado em duas linhas */
   .header-actions {
     display: flex;
-    gap: 5px;
-    align-items: center;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
     flex-shrink: 0;
-    min-width: 0;
   }
-
-  /* Linha 1: botões de ação */
-  .header-btns-row1,
-  .header-btns-row2 {
+  .header-row {
     display: flex;
-    gap: 5px;
     align-items: center;
+    gap: 5px;
     flex-wrap: nowrap;
-    width: 100%;
-    justify-content: flex-end;
   }
 
-  /* Indicador de status com largura fixa para não deslocar layout */
-  #syncStatus {
-    min-width: 120px;
-    text-align: center;
+  /* Indicador de status com largura fixa */
+  .sync-status {
+    min-width: 130px;
+    justify-content: center;
     white-space: nowrap;
   }
 
@@ -110,17 +102,17 @@
   /* Área de nome+subtítulo — cresce mas deixa espaço para os botões */
   .escola-info {
     flex: 1 1 auto;
-    min-width: 180px;    /* nunca some completamente */
+    min-width: 0;
   }
   .escola-nome {
     font-family: Georgia, serif;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 700;
     letter-spacing: 0.01em;
     line-height: 1.25;
-    /* Permite quebrar em duas linhas se necessário — não trunca */
     white-space: normal;
     word-break: break-word;
+  } break-word;
     overflow: visible;
   }
   .escola-sub {
@@ -1410,54 +1402,43 @@
     </div>
     <div class="header-actions">
 
-      <!-- Seletor de escola (removido na v21 — arquitetura Sheets-first) -->
-      <div class="escola-switcher" onclick="openModal('modalSeletor')" title="Trocar de escola" style="flex-shrink:1;min-width:0">
-        <span class="escola-switcher-icon">🏫</span>
-        <div class="escola-switcher-info" style="min-width:0">
-          <div class="escola-switcher-nome" id="switcherNome">Escola Municipal</div>
-          <div class="escola-switcher-hint">Trocar de escola</div>
+      <!-- ── LINHA 1: Switcher + Cadastro + Backup ── -->
+      <div class="header-row">
+        <div class="escola-switcher" onclick="openModal('modalSeletor')" title="Trocar de escola">
+          <span class="escola-switcher-icon">🏫</span>
+          <div class="escola-switcher-info">
+            <div class="escola-switcher-nome" id="switcherNome">Escola Municipal</div>
+            <div class="escola-switcher-hint">Trocar de escola</div>
+          </div>
+          <span class="escola-switcher-arrow">▼</span>
         </div>
-        <span class="escola-switcher-arrow">▼</span>
+        <div class="btn-group-sep"></div>
+        <button class="btn-header cadastro" onclick="abrirCadastroAluno()"        title="Cadastrar novo aluno">➕ Aluno</button>
+        <button class="btn-header cadastro" onclick="openModal('modalObs')"        title="Registrar observação">📝 Observação</button>
+        <button class="btn-header cadastro" onclick="openModal('modalEscola')"     title="Configurar dados da escola">⚙️ Escola</button>
+        <div class="btn-group-sep"></div>
+        <button class="btn-header backup"   onclick="exportarDados()"             title="Exportar backup desta escola">📤 Exportar</button>
+        <button class="btn-header backup"   onclick="exportarTodasEscolas()"      title="Exportar todas as escolas">📦 Todas</button>
+        <button class="btn-header backup"   onclick="document.getElementById('inputImportar').click()" title="Importar backup JSON">📥 Importar</button>
+        <input type="file" id="inputImportar" accept=".json" style="display:none" onchange="importarDados(event)">
       </div>
 
-      <div class="btn-group-sep"></div>
-
-      <!-- Grupo 1: Cadastro -->
-      <button class="btn-header cadastro" onclick="abrirCadastroAluno()" title="Cadastrar novo aluno">➕ Aluno</button>
-      <button class="btn-header cadastro" onclick="openModal('modalObs')"   title="Registrar observação">📝 Observação</button>
-      <button class="btn-header cadastro" onclick="openModal('modalEscola')" title="Configurar dados da escola">⚙️ Escola</button>
-
-      <div class="btn-group-sep"></div>
-
-      <!-- Grupo 2: Backup -->
-      <button class="btn-header backup" onclick="exportarDados()"            title="Exportar backup desta escola">📤 Exportar</button>
-      <button class="btn-header backup" onclick="exportarTodasEscolas()"     title="Exportar todas as escolas">📦 Todas</button>
-      <button class="btn-header backup" onclick="document.getElementById('inputImportar').click()" title="Importar backup JSON">📥 Importar</button>
-      <input type="file" id="inputImportar" accept=".json" style="display:none" onchange="importarDados(event)">
-
-      <div class="btn-group-sep"></div>
-
-      <!-- Grupo 3: Nuvem -->
-      <button class="btn-header nuvem" onclick="openModal('modalCarregarNuvem')" title="Carregar dados do Google Sheets">☁️ Carregar</button>
-      <button class="btn-header nuvem" onclick="sincronizarAgora()" id="btnSync"  title="Sincronizar com Google Sheets">🔄 Sincronizar</button>
-
-      <div class="btn-group-sep"></div>
-
-      <!-- Status de sincronização -->
-      <div id="syncStatus" class="sync-status" title="Status de conexão com o Google Sheets">
-        <span id="syncDot" class="sync-dot offline"></span>
-        <span id="syncEstado">Offline</span><span id="syncTempo" style="opacity:0.7;margin-left:2px"></span>
+      <!-- ── LINHA 2: Nuvem + Status + Documentos + Senhas + Salvar ── -->
+      <div class="header-row">
+        <button class="btn-header nuvem" onclick="openModal('modalCarregarNuvem')" title="Carregar dados do Google Sheets">☁️ Carregar</button>
+        <button class="btn-header nuvem" onclick="sincronizarAgora()" id="btnSync" title="Sincronizar com Google Sheets">🔄 Sincronizar</button>
+        <div class="btn-group-sep"></div>
+        <div id="syncStatus" class="sync-status" title="Status de conexão com o Google Sheets">
+          <span id="syncDot" class="sync-dot offline"></span>
+          <span id="syncEstado">Offline</span><span id="syncTempo" style="opacity:0.7;margin-left:2px"></span>
+        </div>
+        <div class="btn-group-sep"></div>
+        <button class="btn-header" onclick="openModal('modalDocumentos')" title="Gerar documentos oficiais"
+          style="background:rgba(39,174,96,0.2);border-color:rgba(39,174,96,0.4)">📋 Documentos</button>
+        <button class="btn-header" onclick="abrirGerenciarSenhas()" title="Gerenciar senhas das turmas"
+          style="background:rgba(201,151,43,0.2);border-color:rgba(201,151,43,0.4)">🔑 Senhas</button>
+        <button class="btn-header primary" onclick="salvarTudo()" title="Salvar todos os dados">💾 Salvar</button>
       </div>
-
-      <!-- Grupo 4: Documentos -->
-      <div class="btn-group-sep"></div>
-      <button class="btn-header" onclick="openModal('modalDocumentos')" title="Gerar documentos oficiais"
-        style="background:rgba(39,174,96,0.2);border-color:rgba(39,174,96,0.4)">📋 Documentos</button>
-      <button class="btn-header" onclick="abrirGerenciarSenhas()" title="Gerenciar senhas das turmas"
-        style="background:rgba(201,151,43,0.2);border-color:rgba(201,151,43,0.4)">🔑 Senhas</button>
-
-      <!-- Salvar (destaque) -->
-      <button class="btn-header primary" onclick="salvarTudo()" title="Salvar todos os dados">💾 Salvar</button>
 
     </div>
   </div>
