@@ -1800,15 +1800,15 @@
     <div class="form-grid">
       <div class="form-group">
         <label class="field-label">Nome Completo *</label>
-        <input type="text" id="alunoNome" placeholder="Nome do aluno">
+        <input type="text" id="alunoNome" placeholder="Nome do aluno" autocomplete="off">
       </div>
       <div class="form-group">
         <label class="field-label">Matrícula *</label>
-        <input type="text" id="alunoMatricula" placeholder="Ex: 2026001">
+        <input type="text" id="alunoMatricula" placeholder="Ex: 2026001" autocomplete="off">
       </div>
       <div class="form-group">
         <label class="field-label">Data de Nascimento</label>
-        <input type="date" id="alunoNasc">
+        <input type="date" id="alunoNasc" autocomplete="off">
       </div>
       <div class="form-group">
         <label class="field-label">Turma *</label>
@@ -1822,15 +1822,15 @@
       </div>
       <div class="form-group">
         <label class="field-label">Responsável</label>
-        <input type="text" id="alunoResp" placeholder="Nome do responsável">
+        <input type="text" id="alunoResp" placeholder="Nome do responsável" autocomplete="off">
       </div>
       <div class="form-group">
         <label class="field-label">Contato</label>
-        <input type="text" id="alunoContato" placeholder="(97) 9 9999-9999">
+        <input type="text" id="alunoContato" placeholder="(97) 9 9999-9999" autocomplete="off">
       </div>
       <div class="form-group full">
         <label class="field-label">Endereço</label>
-        <input type="text" id="alunoEndereco" placeholder="Rua, nº, bairro">
+        <input type="text" id="alunoEndereco" placeholder="Rua, nº, bairro" autocomplete="off">
       </div>
       <div class="form-group full">
         <label class="field-label">Necessidades Especiais / Observações iniciais</label>
@@ -2622,9 +2622,57 @@ const BNCC = {
 };
 
 function getBnccOpcoes(disciplina, ano) {
+  // Educação Infantil usa Campos de Experiência — não tem disciplinas convencionais
+  if (ano === 'Creche' || ano === 'Pré') {
+    const camposEI = {
+      'O Eu, o Outro e o Nós': [
+        'Reconhecimento de si mesmo e dos outros','Interações e vínculos afetivos',
+        'Respeito às diferenças e diversidade','Identidade pessoal e coletiva',
+        'Regras de convivência e combinados','Brincadeiras e interações sociais',
+        'Sentimentos e emoções','Família e comunidade',
+        'Pertencimento ao grupo','Direitos e responsabilidades das crianças',
+      ],
+      'Corpo, Gestos e Movimentos': [
+        'Exploração do corpo e movimento','Coordenação motora grossa e fina',
+        'Expressão corporal e gestual','Dança e ritmo','Jogos e brincadeiras corporais',
+        'Equilíbrio e lateralidade','Espaço e tempo no movimento',
+        'Cuidados com o próprio corpo','Saúde e higiene pessoal',
+        'Atividades físicas e bem-estar',
+      ],
+      'Traços, Sons, Cores e Formas': [
+        'Exploração de materiais plásticos e visuais','Desenho e pintura livres',
+        'Música: sons, ritmo e melodia','Apreciação de obras de arte',
+        'Modelagem e escultura com massinha','Colagem e recorte',
+        'Cores primárias e secundárias','Formas geométricas',
+        'Instrumentos musicais e sons','Dança e movimento expressivo',
+      ],
+      'Escuta, Fala, Pensamento e Imaginação': [
+        'Linguagem oral: conversas e narrativas','Escuta de histórias e poemas',
+        'Cantingas, parlendas e trava-línguas','Contação de histórias',
+        'Ampliação do vocabulário','Imaginação e faz-de-conta',
+        'Leitura de imagens e livros ilustrados','Noções de escrita e letras',
+        'Produção de texto oral coletivo','Jogos de linguagem e rimas',
+      ],
+      'Espaços, Tempos, Quantidades, Relações e Transformações': [
+        'Noções de espaço: perto, longe, dentro, fora','Sequência e seriação',
+        'Noções de quantidade e contagem','Comparação: maior, menor, igual',
+        'Formas e figuras no ambiente','Noções de tempo: ontem, hoje, amanhã',
+        'Transformações da natureza e materiais','Classificação de objetos',
+        'Medidas: alto, baixo, pesado, leve','Curiosidade científica e investigação',
+      ],
+    };
+    return camposEI[disciplina] || [];
+  }
+
   const disc = BNCC[disciplina];
   if (!disc) return [];
-  return disc[ano] || disc[Object.keys(disc)[0]] || [];
+  // Buscar pelo ano exato, senão pelo primeiro ano disponível como fallback
+  if (disc[ano]) return disc[ano];
+  // Para Maternal I, II, etc (nomes antigos) — mapear para o mais próximo
+  if (ano && ano.includes('Maternal')) return disc[Object.keys(disc)[0]] || [];
+  if (ano && ano.includes('Pré I')) return disc[Object.keys(disc)[0]] || [];
+  if (ano && ano.includes('Pré II')) return disc[Object.keys(disc)[0]] || [];
+  return disc[Object.keys(disc)[0]] || [];
 }
 
 // ===== UTILITÁRIOS DE FORMATAÇÃO =====
