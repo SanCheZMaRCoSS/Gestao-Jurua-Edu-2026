@@ -74,8 +74,26 @@
     align-items: center;
     flex-wrap: wrap;
     justify-content: flex-end;
-    flex-shrink: 1;
+    flex-shrink: 0;
     min-width: 0;
+  }
+
+  /* Linha 1: botões de ação */
+  .header-btns-row1,
+  .header-btns-row2 {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    flex-wrap: nowrap;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  /* Indicador de status com largura fixa para não deslocar layout */
+  #syncStatus {
+    min-width: 120px;
+    text-align: center;
+    white-space: nowrap;
   }
 
   .escola-logo {
@@ -789,6 +807,9 @@
     padding: 0 12px;
     height: 34px;                  /* mesma altura dos btn-header */
     font-size: 0.72rem;
+    min-width: 130px;              /* largura fixa — evita deslocamento do layout */
+    justify-content: center;
+    white-space: nowrap;
     font-weight: 500;
     color: white;
     cursor: default;
