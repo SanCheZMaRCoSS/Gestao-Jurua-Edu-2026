@@ -2517,6 +2517,114 @@ function aplicarNomeEscola() {
   if (sw) sw.textContent = nomeEscola;
 }
 
+// ================================================================
+// CONTEÚDOS DA BNCC — Objetos de Conhecimento por Ano e Disciplina
+// ================================================================
+const BNCC = {
+  'Língua Portuguesa': {
+    '1º Ano': ['Distinção entre escrita e outras formas gráficas','Sistema de escrita alfabética','Conhecimento das letras do alfabeto','Relação grafema-fonema','Leitura de palavras e frases simples','Produção de escrita espontânea','Escuta de textos lidos pelo professor','Compreensão de textos orais','Parlendas, cantigas e poemas','Textos narrativos: conto, fábula','Pontuação: ponto final e interrogação','Vogais e consoantes','Sílaba: separação silábica','Ordem alfabética','Produção de listas e legendas'],
+    '2º Ano': ['Consolidação do sistema de escrita alfabética','Leitura com fluência de textos curtos','Segmentação de palavras','Ortografia: M antes de P e B','Uso do dígrafo NH, LH, CH','Substantivos: comum e próprio','Artigos definidos e indefinidos','Textos instrucionais: receitas e regras de jogo','Textos poéticos: rima e ritmo','Produção de textos narrativos simples','Calendário e textos de circulação social','Bilhetes, cartas e convites','Pontuação: vírgula e exclamação','Parágrafo e organização textual','Reescrita de textos conhecidos'],
+    '3º Ano': ['Leitura autônoma de textos variados','Estratégias de leitura: inferência e antecipação','Ortografia: uso do S, SS, Ç, C','Uso do X e CH','Adjetivos e locuções adjetivas','Verbos: noção de tempo (passado, presente, futuro)','Pontuação no discurso direto','Textos jornalísticos: notícia e manchete','Textos de opinião: carta do leitor','Lendas e mitos regionais','Produção de narrativas com início, meio e fim','Coesão textual: uso de conectivos','Dicionário: ordem alfabética e significado','Singular e plural: casos especiais','Gênero dos substantivos'],
+    '4º Ano': ['Leitura e compreensão de textos complexos','Ortografia: uso do G e J','Uso do Z e S (entre vogais)','Pronomes pessoais do caso reto','Advérbios de tempo, lugar e modo','Tipos de frases: afirmativa, negativa, interrogativa','Texto dramático e teatro','Reportagem e entrevista','Cordel e literatura de tradição oral','Produção de textos argumentativos simples','Parágrafo: ideia principal e secundária','Acentuação gráfica: regras básicas','Formação de palavras: prefixo e sufixo','Sinônimos e antônimos','Concordância nominal básica'],
+    '5º Ano': ['Leitura crítica e posicionamento do leitor','Ortografia: casos complexos','Acentuação: oxítonas, paroxítonas e proparoxítonas','Concordância verbal básica','Sujeito e predicado','Complementos verbais: objeto direto e indireto','Crônica e conto moderno','Textos publicitários e propaganda','Charge e tirinha: leitura de imagens','Produção de dissertação simples','Coerência e coesão textual','Variedades linguísticas: formal e informal','Discurso direto e indireto','Figuras de linguagem: metáfora e comparação','Revisão e reescrita de textos'],
+    '6º Ano': ['Leitura e análise de gêneros do cotidiano','Fonologia: encontros vocálicos e consonantais','Morfologia: classes de palavras','Substantivo: flexão e classificação','Adjetivo: grau comparativo e superlativo','Verbos regulares: conjugação','Conto de terror e suspense','Fábulas e parábolas','Texto de divulgação científica','Produção de contos e narrativas','Período simples: sujeito e predicado','Tipos de sujeito','Pontuação: dois-pontos e ponto-e-vírgula','Variedades linguísticas','Semântica: polissemia e ambiguidade'],
+    '7º Ano': ['Análise de textos argumentativos','Verbos irregulares: conjugação','Pronomes: classificação e emprego','Período composto por coordenação','Orações coordenadas: classificação','Romance e novela','Poesia moderna: verso livre','Editorial e artigo de opinião','Produção de artigos de opinião','Coesão: pronomes e elipses','Regência verbal e nominal básica','Crase: noções básicas','Figuras de linguagem: ironia e eufemismo','Intertextualidade','Recursos expressivos do texto literário'],
+    '8º Ano': ['Análise linguística em textos complexos','Período composto por subordinação','Orações subordinadas substantivas','Orações subordinadas adjetivas','Verbos: voz ativa e passiva','Concordância verbal: casos especiais','Concordância nominal: casos especiais','Crônica literária e jornalística','Memórias e autobiografia','Texto de campanha e manifesto','Produção de seminário e debate','Argumentação: tese e argumentos','Modalização','Figuras de linguagem: hipérbole e antítese','Referenciação e progressão textual'],
+    '9º Ano': ['Produção e análise do texto dissertativo-argumentativo','Orações subordinadas adverbiais','Regência verbal: casos complexos','Crase: todos os casos','Acentuação: revisão completa','Pontuação avançada','Literatura brasileira: períodos literários','Romantismo, Realismo e Modernismo','Poesia concreta e visual','Produção de redação ENEM','Análise de propagandas e discursos midiáticos','Variação linguística','Semântica: denotação e conotação','Recursos argumentativos avançados','Revisão gramatical para o Ensino Médio'],
+  },
+  'Matemática': {
+    '1º Ano': ['Números naturais: contagem até 10','Sequência numérica até 99','Comparação de quantidades: maior, menor e igual','Adição com resultados até 10','Subtração com resultados positivos até 10','Noção de dezena','Leitura e escrita de numerais','Medidas de comprimento: maior e menor','Noções de tempo: antes, depois, ontem, hoje, amanhã','Figuras geométricas planas: círculo, quadrado, triângulo, retângulo','Sólidos geométricos: esfera, cubo, cilindro','Organização de dados em tabelas simples','Classificação de objetos por atributos','Sequências e padrões','Noção de metade'],
+    '2º Ano': ['Números naturais até 1000','Valor posicional: unidade, dezena, centena','Adição com reagrupamento','Subtração com reagrupamento','Multiplicação como adição de parcelas iguais','Tabuada do 2, 3, 4 e 5','Medidas de comprimento: metro e centímetro','Medidas de massa: quilo e grama','Medidas de capacidade: litro','Dinheiro: cédulas e moedas','Figuras geométricas: lados e vértices','Simetria: eixo de simetria','Gráfico de barras simples','Noções de fração: metade, terça e quarta parte','Problemas de adição e subtração'],
+    '3º Ano': ['Números naturais até 9.999','Adição e subtração de números de 4 algarismos','Multiplicação: tabuada completa (até 9)','Divisão exata e com resto','Propriedades da multiplicação e divisão','Fração: numerador e denominador','Comparação de frações','Medidas de tempo: hora, minuto e segundo','Perímetro de figuras planas','Ângulos: reto, agudo e obtuso','Coordenadas em malha quadriculada','Gráfico de barras e pictograma','Estimativa e arredondamento','Sequências numéricas: critério de formação','Problemas com as quatro operações'],
+    '4º Ano': ['Números naturais até 1.000.000','Operações com números grandes','Múltiplos e divisores','Números primos','Frações equivalentes','Adição e subtração de frações','Números decimais: décimos e centésimos','Área de figuras planas','Ângulos: medição com transferidor','Retas: paralelas, perpendiculares e transversais','Sistema monetário: operações com dinheiro','Média aritmética simples','Tabelas e gráficos: interpretação e construção','Noção de probabilidade','Problemas com frações e decimais'],
+    '5º Ano': ['Números naturais: operações e propriedades','Números decimais: milésimos','Porcentagem: noções básicas','Frações: multiplicação e divisão','Mínimo múltiplo comum (MMC)','Máximo divisor comum (MDC)','Potenciação e raiz quadrada','Plano cartesiano: coordenadas','Polígonos: classificação e propriedades','Volume de sólidos (cubo e paralelepípedo)','Transformações geométricas','Estatística: média, moda e mediana','Gráfico de linhas e setor circular','Razão e proporção','Regra de três simples'],
+    '6º Ano': ['Números naturais: propriedades e operações','Números inteiros: negativos e positivos','Adição e subtração de inteiros','Multiplicação e divisão de inteiros','Números racionais: frações e decimais','Porcentagem e desconto','Razão, proporção e regra de três','Expressões algébricas','Equações do 1º grau','Ângulos: bissetriz e operações','Triângulos: classificação e propriedades','Quadriláteros: tipos e propriedades','Área e perímetro de figuras compostas','Estatística: organização de dados','Probabilidade: espaço amostral'],
+    '7º Ano': ['Números racionais: operações','Números irracionais: noção','Potências: propriedades','Raiz quadrada e cúbica','Expressões algébricas: simplificação','Equações do 1º grau com uma incógnita','Inequações do 1º grau','Sistema de equações do 1º grau','Semelhança de figuras','Triângulos: congruência e semelhança','Teorema de Tales','Círculo e circunferência: área e comprimento','Sólidos geométricos: área e volume','Gráficos e tabelas: análise crítica','Probabilidade: eventos compostos'],
+    '8º Ano': ['Números reais: classificação','Potências de expoente negativo e fracionário','Produtos notáveis','Fatoração algébrica','Equações do 2º grau: Bhaskara','Funções: noção e representação','Função do 1º grau: gráfico e coeficientes','Teorema de Pitágoras','Trigonometria no triângulo retângulo','Seno, cosseno e tangente','Prismas e pirâmides: área e volume','Cilindro, cone e esfera: área e volume','Estatística: desvio padrão','Análise combinatória: princípio fundamental','Probabilidade: regras de adição e multiplicação'],
+    '9º Ano': ['Revisão de números reais','Equações do 2º grau: discriminante','Sistemas de equações','Função do 2º grau: gráfico e vértice','Progressão aritmética (PA)','Progressão geométrica (PG)','Geometria analítica: plano cartesiano','Distância entre dois pontos','Equação da reta','Trigonometria: lei dos senos e cossenos','Círculo e polígonos inscritos','Estatística: amostragem','Combinações e permutações','Probabilidade condicional','Revisão para o Ensino Médio'],
+  },
+  'Ciências': {
+    '1º Ano': ['Corpo humano: partes e sentidos','Higiene pessoal e saúde','Animais: características e habitat','Plantas: partes e função','Dia e noite: movimento da Terra','Tempo: sol, chuva, nuvem e vento','Água: importância e uso','Materiais e objetos do cotidiano','Meio ambiente: preservação','Seres vivos e não vivos'],
+    '2º Ano': ['Alimentação saudável','Ciclo de vida dos animais','Cadeia alimentar simples','Solo: tipos e importância','Água: estados físicos','Ar: composição e importância','Luz e sombra','Som: produção e propagação','Reciclagem e lixo','Plantas: fotossíntese (noção)'],
+    '3º Ano': ['Sistema digestório','Sistema respiratório','Doenças: prevenção e vacinas','Animais vertebrados e invertebrados','Ecossistemas: floresta, rio, savana','Ciclo da água','Rochas e minerais','Formas de energia: luz, calor, som','Misturas: homogêneas e heterogêneas','Poluição ambiental'],
+    '4º Ano': ['Sistema circulatório','Sistema nervoso (noção)','Reprodução humana (básico)','Fotossíntese e respiração das plantas','Cadeias e teias alimentares','Biomas brasileiros','Solo: erosão e preservação','Calor e temperatura','Condutores e isolantes','Fontes de energia: renováveis e não renováveis'],
+    '5º Ano': ['Sistema reprodutor humano','Puberdade e adolescência','Micro-organismos: vírus e bactérias','Doenças infecciosas e parasitárias','Classificação dos seres vivos','Ecologia: relações entre seres vivos','Transformações químicas do cotidiano','Misturas e soluções','Astronomia: Terra, Lua e Sol','Sistema Solar'],
+    '6º Ano': ['Célula: estrutura e função','Seres unicelulares e pluricelulares','Vírus: estrutura e doenças','Bactérias: importância e doenças','Protistas e fungos','Ecologia: populações e comunidades','Biosfera e ecossistemas','Matéria e energia: estados físicos','Substâncias puras e misturas','Fenômenos físicos e químicos'],
+    '7º Ano': ['Reino Plantae: briófitas, pteridófitas, gimnospermas e angiospermas','Fotossíntese e respiração celular','Reino Animalia: invertebrados','Reino Animalia: vertebrados','Sistemática e taxonomia','Ecologia: fluxo de energia','Biomas brasileiros: Amazônia, Cerrado, Caatinga','Ciclos biogeoquímicos','Átomos e moléculas','Tabela periódica: noção'],
+    '8º Ano': ['Corpo humano: sistemas integrados','Sistema endócrino e hormônios','Sistema imunológico','Reprodução humana: fecundação e desenvolvimento','Hereditariedade: genética básica','DNA e RNA: noção','Evolução: seleção natural','Reações químicas: equações','Ácidos, bases e sais','Eletricidade: circuitos simples'],
+    '9º Ano': ['Evolução humana','Biotecnologia e transgênicos','Ecologia: sustentabilidade','Mudanças climáticas','Física: movimento e velocidade','Força e inércia: Leis de Newton','Energia mecânica: cinética e potencial','Ondas: som e luz','Radioatividade: noção','Química orgânica: carbono e combustíveis'],
+  },
+  'História': {
+    '1º Ano': ['Identidade e história pessoal','Família: estrutura e história','Escola: espaço de aprendizagem','Cotidiano: rotinas e hábitos','Tempo: passado e presente','Memória e fotografia familiar','Brinquedos e brincadeiras: ontem e hoje','Festas e tradições da comunidade','Trabalho na comunidade','Diversidade cultural'],
+    '2º Ano': ['História do município e comunidade','Patrimônio cultural local','Trabalho e transformações sociais','Migrações e origens da comunidade','Tempo histórico: gerações','Fontes históricas: documentos e fotografias','Indígenas: povos originários','Africanos: contribuições culturais','Festas populares e folclore','Espaço urbano e rural: diferenças'],
+    '3º Ano': ['Formação do povo brasileiro','Povos indígenas: diversidade','Africanos e afrodescendentes','Imigração europeia e asiática','Escravidão no Brasil: resistência','Quilombos e liberdade','Cultura popular: literatura de cordel','Patrimônio histórico e arqueológico','Linha do tempo histórica','Fontes históricas: museus e monumentos'],
+    '4º Ano': ['Brasil colonial: chegada dos portugueses','Exploração e resistência indígena','Escravidão africana no Brasil','Economia colonial: ciclos econômicos','Capitanias hereditárias','Missões jesuíticas','Quilombo dos Palmares','Inconfidência Mineira','Conjuração Baiana','Amazônia: ocupação e exploração'],
+    '5º Ano': ['Independência do Brasil','Brasil Império: Pedro I e Pedro II','Abolição da escravatura: Lei Áurea','Proclamação da República','República Velha: coronelismo e oligarquias','Revolução de 1930 e Era Vargas','Segunda Guerra Mundial e o Brasil','Amazônia: borracha e ciclo econômico','Movimentos sociais no Brasil','Brasil contemporâneo'],
+    '6º Ano': ['Pré-história: hominídeos e evolução','Mesopotâmia: primeiras civilizações','Egito Antigo: faraós e pirâmides','Grécia Antiga: democracia e cultura','Roma Antiga: república e império','Persas, fenícios e hebreus','Surgimento das religiões monoteístas','América pré-colombiana: maias, astecas e incas','África: reinos e civilizações','Feudalismo medieval'],
+    '7º Ano': ['Renascimento cultural e científico','Reforma e Contrarreforma','Expansão marítima europeia','Colonização da América','Mercantilismo e capitalismo comercial','Iluminismo','Revolução Francesa','Revolução Industrial','Formação dos Estados nacionais','África e tráfico negreiro'],
+    '8º Ano': ['Brasil no século XIX','Abolicionismo e republicanismo','Imperialismo e neocolonialismo','Primeira Guerra Mundial','Revolução Russa','Crise de 1929','Fascismo e nazismo','Segunda Guerra Mundial','Holocausto','Guerra Fria'],
+    '9º Ano': ['Brasil República: 1945-1964','Ditadura militar no Brasil (1964-1985)','Redemocratização e Constituição de 1988','Descolonização da África e Ásia','Movimentos de direitos civis','Globalização','Conflitos contemporâneos','Meio ambiente e desenvolvimento sustentável','Brasil no século XXI','Amazônia: desafios contemporâneos'],
+  },
+  'Geografia': {
+    '1º Ano': ['Localização: perto e longe, dentro e fora','Pontos de referência no espaço','Espaço da escola e da casa','Mapa: noção básica','Paisagem natural e cultural','Campo e cidade: diferenças','Tempo e clima: estações do ano','Água: rios, lagos e mares','Relevo: montanha, planície e vale','Comunidade e vizinhança'],
+    '2º Ano': ['Orientação: pontos cardeais','Mapas e plantas: legenda e escala','Município e bairro','Campo e cidade: trabalho e moradia','Recursos naturais: solo, água e ar','Clima: temperatura e precipitação','Vegetação: tipos e importância','Rios da região','Atividades econômicas locais','Patrimônio natural e cultural local'],
+    '3º Ano': ['Estado do Amazonas: localização','Municípios do Amazonas','Amazônia: características físicas','Floresta Amazônica: biodiversidade','Rios amazônicos: importância','Povos da Amazônia: indígenas e ribeirinhos','Extrativismo: borracha e castanha','Clima equatorial e tropical','Desmatamento e queimadas','Preservação ambiental'],
+    '4º Ano': ['Brasil: localização e extensão territorial','Regiões brasileiras: características','Biomas brasileiros','Relevo brasileiro: planícies, planaltos e depressões','Hidrografia brasileira: bacias hidrográficas','Clima brasileiro: tipos','População brasileira: distribuição','Urbanização: crescimento das cidades','Industrialização no Brasil','Agropecuária: principais produtos'],
+    '5º Ano': ['América do Sul: localização e países','América do Sul: relevo e hidrografia','América do Sul: clima e vegetação','Globalização: comércio internacional','Blocos econômicos: Mercosul','Desenvolvimento e desigualdade','Questões ambientais globais','Energia: fontes renováveis e não renováveis','Transportes e comunicações','Brasil no contexto mundial'],
+    '6º Ano': ['Cartografia: mapas e projeções','Coordenadas geográficas: latitude e longitude','Fusos horários','Estrutura interna da Terra','Placas tectônicas: terremotos e vulcões','Relevo: agentes internos e externos','Hidrografia: ciclo hidrológico','Clima: fatores e tipos','Vegetação: biomas mundiais','Solos: formação e importância'],
+    '7º Ano': ['População mundial: crescimento e distribuição','Migrações internacionais','Urbanização mundial','Industrialização: primeira, segunda e terceira revoluções','Globalização econômica','Blocos econômicos mundiais','Desenvolvimento desigual: IDH','África: características físicas e humanas','América Latina: características','Oriente Médio: petróleo e conflitos'],
+    '8º Ano': ['Brasil: formação territorial','Divisão regional do Brasil','Região Norte: Amazônia','Região Nordeste: características','Região Centro-Oeste: cerrado','Região Sudeste: industrialização','Região Sul: colonização europeia','Urbanização brasileira','Indústria brasileira','Agronegócio e agricultura familiar'],
+    '9º Ano': ['Geopolítica mundial','Conflitos territoriais','Recursos naturais e disputas','Energia no mundo','Questões ambientais globais: aquecimento','Desenvolvimento sustentável','Tecnologia e sociedade da informação','Desigualdades sociais no Brasil','Amazônia: desafios e perspectivas','Brasil no século XXI'],
+  },
+  'Arte': {
+    '1º Ano': ['Artes visuais: cores primárias e secundárias','Desenho livre e expressivo','Colagem e recorte','Música: sons do ambiente','Ritmo e pulsação','Teatro: jogos dramáticos','Dança: movimentos corporais','Arte indígena local','Folclore: lendas e histórias','Apreciação de obras de arte'],
+    '2º Ano': ['Artes visuais: formas geométricas','Pintura: técnicas diversas','Escultura com massa de modelar','Música: voz e instrumentos','Cantigas de roda e folclore','Teatro: fantoche e máscaras','Dança regional amazônica','Artesanato local','Patrimônio cultural','Apreciação estética'],
+    '3º Ano': ['Artes visuais: perspectiva e proporção','Fotografia: composição básica','Grafite e arte urbana','Música: notação e leitura','Ritmos brasileiros: forró, samba','Teatro: improvisação','Dança: bumba-meu-boi, carimbó','Arte afro-brasileira','Arte indígena amazônica','Museus e galerias virtuais'],
+    '4º Ano': ['Artes visuais: releitura de obras','Animação e história em quadrinhos','Cerâmica e argila','Música: instrumentos musicais','Composição musical simples','Teatro: texto dramático','Dança: elementos do movimento','Arte popular nordestina','Patrimônio imaterial brasileiro','Produção artística autoral'],
+    '5º Ano': ['Artes visuais: movimentos artísticos','Design gráfico básico','Vídeo e fotografia digital','Música: harmonia e melodia','Gêneros musicais brasileiros','Teatro: encenação e cenografia','Dança: coreografia','Arte contemporânea','Arte e tecnologia','Projeto artístico integrado'],
+    '6º Ano': ['Artes visuais: história da arte','Arte rupestre e pré-histórica','Arte egípcia e greco-romana','Música: escalas e modos','Instrumentos musicais do mundo','Teatro grego e romano','Dança folclórica brasileira','Arte medieval e renascentista','Produção artística: técnicas mistas','Apreciação crítica'],
+    '7º Ano': ['Barroco e Rococó','Romantismo nas artes','Impressionismo','Música erudita: compositores','MPB: história e compositores','Teatro moderno','Dança: ballet e contemporâneo','Arte indígena: diversidade','Arte africana: influências','Produção artística autoral'],
+    '8º Ano': ['Modernismo nas artes visuais','Arte brasileira moderna: Semana de 22','Música popular brasileira','Rock e música eletrônica','Teatro do oprimido','Dança urbana: hip-hop','Arte e mídias digitais','Fotografia e cinema','Instalação e performance','Curadoria e crítica de arte'],
+    '9º Ano': ['Arte contemporânea: movimentos','Arte conceitual','Música: produção digital','Indústria cultural','Teatro experimental','Dança contemporânea','Arte e ativismo','Patrimônio cultural e preservação','Projeto artístico integrado','Portfólio artístico'],
+  },
+  'Ed. Física': {
+    '1º Ano': ['Psicomotricidade: esquema corporal','Lateralidade: direita e esquerda','Equilíbrio e coordenação','Jogos e brincadeiras tradicionais','Brincadeiras indígenas e regionais','Atividades rítmicas','Expressão corporal','Regras de convivência no jogo','Higiene e saúde no esporte','Ludicidade e prazer no movimento'],
+    '2º Ano': ['Jogos cooperativos','Atletismo: corrida e salto','Ginástica: rolamentos e estrela','Dança folclórica','Natação: noções básicas','Handebol: introdução','Futebol: regras básicas','Respeito às diferenças','Corpo e saúde: alimentação','Atividade física e bem-estar'],
+    '3º Ano': ['Esportes coletivos: regras','Futsal: fundamentos','Basquete: introdução','Vôlei: introdução','Atletismo: revezamento','Ginástica artística: elementos','Lutas: noções de capoeira','Jogos indígenas','Dança: ritmos regionais','Saúde: postura e flexibilidade'],
+    '4º Ano': ['Futsal: táticas básicas','Basquete: arremesso e drible','Vôlei: saque e manchete','Atletismo: corrida de resistência','Ginástica rítmica','Capoeira: ginga e golpes','Jogos olímpicos: história','Dança: axé e forró','Saúde: frequência cardíaca','Esporte e cidadania'],
+    '5º Ano': ['Esportes de quadra: táticas','Atletismo: provas de campo','Natação: estilos','Ginástica: solo e aparelhos','Lutas: judô e wrestling (noção)','Jogos paralímpicos','Dança: street dance','Esporte e inclusão','Saúde: IMC e condicionamento','Projeto esportivo'],
+    '6º Ano': ['Esportes coletivos: sistemas táticos','Voleibol: fundamentos','Basquetebol: fundamentos','Futsal: posições e funções','Atletismo: técnicas de corrida','Ginástica: sequências','Capoeira: história e ritmos','Dança: hip-hop','Atividade física e saúde','Esporte e mídia'],
+    '7º Ano': ['Handebol: fundamentos e táticas','Tênis de mesa: fundamentos','Badminton: fundamentos','Atletismo: lançamentos','Ginástica acrobática','Lutas: capoeira angola','Dança: samba e axé','Esporte adaptado','Saúde: doenças hipocinéticas','Lazer e tempo livre'],
+    '8º Ano': ['Esportes radicais: noções','Rugby: introdução','Esportes com raquete','Atletismo: saltos','Ginástica laboral','Lutas: defesa pessoal básica','Dança: contemporânea','Esporte e violência','Saúde: uso de drogas e esporte','Olimpíadas e paraolimpíadas'],
+    '9º Ano': ['Elaboração de projetos esportivos','Árbitro e regras avançadas','Atletismo: competições','Ginástica: apresentações','Lutas: noções de judô','Dança: coreografia autoral','Esporte e profissão','Saúde e qualidade de vida','Sedentarismo e prevenção','Esporte como fenômeno cultural'],
+  },
+  'Ensino Religioso': {
+    '1º Ano': ['O sagrado na natureza','Símbolos religiosos','Festas e celebrações','Orações e rezas','Diversidade religiosa','Família e espiritualidade','Histórias sagradas','Arte e religião','Respeito às diferenças','Paz e convivência'],
+    '2º Ano': ['Tradições religiosas locais','Religiões indígenas','Religiões afro-brasileiras','Catolicismo popular','Evangelismo','Símbolos e rituais','Festas religiosas do Amazonas','Valores: bondade e respeito','Natureza sagrada na Amazônia','Interculturalidade'],
+    '3º Ano': ['Grandes religiões mundiais: noção','Judaísmo','Cristianismo','Islamismo','Budismo','Hinduísmo','Religiões africanas','Textos sagrados','Líderes religiosos','Espiritualidade e bem-estar'],
+    '4º Ano': ['Cosmovisão indígena amazônica','Pajé e saberes tradicionais','Mitos de criação','Ritos de passagem','Festas do Divino e do Boi','Peregrinações e romarias','Arte sacra','Música religiosa','Oração e meditação','Ética e religião'],
+    '5º Ano': ['Identidade religiosa','Tolerância e respeito','Laicidade do Estado','Sincretismo religioso','Religião e meio ambiente','Espiritualidade e saúde','Religião e arte','Religião e ciência','Diversidade e convivência','Projeto de vida e espiritualidade'],
+  },
+  'Língua Inglesa': {
+    '6º Ano': ['Alfabeto e sons em inglês','Saudações e apresentações','Números e cores','Família e descrição de pessoas','Animais e objetos','Verbo to be: presente','Artigos a/an/the','Plural dos substantivos','Datas e calendário','Músicas e rimas em inglês'],
+    '7º Ano': ['Rotina diária: Simple Present','Verbos regulares e irregulares','Advérbios de frequência','There is / There are','Preposições de lugar','Describing places','Simple Past: was/were','Past tense: verbos regulares','Leitura de textos simples','Escrita de e-mails simples'],
+    '8º Ano': ['Present Continuous','Future: will e going to','Comparativos e superlativos','Modal verbs: can, could, should','Present Perfect: noção','Leitura de textos jornalísticos','Gêneros textuais em inglês','Escrita de parágrafos','Cultura dos países anglófonos','Inglês para viagens'],
+    '9º Ano': ['Passive Voice','Conditional sentences','Reported speech','Phrasal verbs','Leitura crítica em inglês','Produção textual em inglês','Inglês e tecnologia','Inglês para o mercado de trabalho','Variedades do inglês','Preparação para certificações'],
+  },
+  'L.E.M.': {
+    '6º Ano': ['Introdução à língua estrangeira moderna','Saudações e expressões básicas','Vocabulário: família e objetos','Números e cores','Diálogos simples','Canções e rimas','Cultura dos países falantes','Comparação com o português','Escrita básica','Leitura de textos simples'],
+    '7º Ano': ['Rotina e atividades diárias','Verbos no presente','Descrição de lugares','Vocabulário temático','Leitura e compreensão','Produção escrita básica','Cultura e tradições','Diálogos situacionais','Gramática básica','Projetos multiculturais'],
+    '8º Ano': ['Tempos verbais: passado','Vocabulário avançado','Leitura de textos autênticos','Produção de textos','Gramática: intermediário','Cultura e arte','Projetos de pesquisa','Apresentações orais','Recursos digitais em LE','Interculturalidade'],
+    '9º Ano': ['Fluência comunicativa','Leitura crítica','Produção textual avançada','Gramática: revisão','Cultura e sociedade','Projetos integrados','Avaliação comunicativa','LE e mercado de trabalho','Variedades linguísticas','Projeto final integrado'],
+  },
+};
+
+function getBnccOpcoes(disciplina, ano) {
+  const disc = BNCC[disciplina];
+  if (!disc) return [];
+  return disc[ano] || disc[Object.keys(disc)[0]] || [];
+}
+
 // ===== UTILITÁRIOS DE FORMATAÇÃO =====
 
 // Formata número sequencial com zero: 1 → "01", 10 → "10"
@@ -3477,12 +3585,23 @@ function renderDiario() {
           </div>
           <div class="diario-entry-body" id="deb_${eid}" style="display:none">
             <div class="form-group full" style="padding:12px 16px 0">
-              <label class="field-label">Conteúdo Ministrado *</label>
-              <textarea id="dc_${eid}" placeholder="Descreva o conteúdo ministrado..." style="min-height:80px"
+              <label class="field-label">📚 Conteúdo BNCC</label>
+              <select id="db_${eid}"
+                onchange="diarioBnccHandler(this,'${turmaAtual.id}','${grupoKey}','${dataSel}','${disc}')"
+                style="width:100%;border:1.5px solid var(--cinza-border);border-radius:8px;padding:8px 12px;font-size:0.82rem;font-family:inherit;background:white;color:var(--cinza-text);cursor:pointer">
+                <option value="">— Selecione um conteúdo da BNCC —</option>
+                ${getBnccOpcoes(disc, grupoKey).map(op =>
+                  `<option value="${escHtml(op)}" ${(entry.bncc||'')===op?'selected':''}>${escHtml(op)}</option>`
+                ).join('')}
+              </select>
+            </div>
+            <div class="form-group full" style="padding:8px 16px 0">
+              <label class="field-label">✏️ Conteúdo específico / Currículo local</label>
+              <textarea id="dc_${eid}" placeholder="Descreva conteúdos específicos do currículo local ou complementares..." style="min-height:70px"
                 oninput="diarioInputHandler(this,'${turmaAtual.id}','${grupoKey}','${dataSel}','${disc}','conteudo')">${escHtml(entry.conteudo)}</textarea>
             </div>
             <div class="form-group full" style="padding:8px 16px 0">
-              <label class="field-label">Objetivos / Habilidades BNCC</label>
+              <label class="field-label">Objetivos / Habilidades</label>
               <textarea id="do_${eid}" placeholder="Objetivos de aprendizagem..." style="min-height:60px"
                 oninput="diarioInputHandler(this,'${turmaAtual.id}','${grupoKey}','${dataSel}','${disc}','objetivo')">${escHtml(entry.objetivo)}</textarea>
             </div>
@@ -3500,6 +3619,16 @@ function renderDiario() {
 }
 
 function escHtml(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function diarioBnccHandler(sel, turmaId, grupo, data, disc) {
+  if (!diario[turmaId]) diario[turmaId] = {};
+  if (!diario[turmaId][grupo]) diario[turmaId][grupo] = {};
+  if (!diario[turmaId][grupo][data]) diario[turmaId][grupo][data] = {};
+  if (!diario[turmaId][grupo][data][disc]) diario[turmaId][grupo][data][disc] = { bncc:'', conteudo:'', objetivo:'', recursos:'' };
+  diario[turmaId][grupo][data][disc].bncc = sel.value;
+  agendarAutoSave('Diário alterado...');
+  atualizarBadgeDiario();
+}
 
 function diarioInputHandler(ta, turmaId, grupo, data, disc, campo) {
   setDiarioField(parseInt(turmaId), grupo, data, disc, campo, ta.value);
