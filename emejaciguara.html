@@ -3596,7 +3596,11 @@ function renderSecaoAtual() {
 
 // ===== DIÁRIO DE CLASSE =====
 function getDiarioEntry(turmaId, grupo, data, disc) {
-  return diario[turmaId]?.[grupo]?.[data]?.[disc] || { bncc:'', conteudo:'', objetivo:'', recursos:'' };
+  // Normalizar: tentar como string e como número
+  const id = String(turmaId);
+  return diario[id]?.[grupo]?.[data]?.[disc]
+      || diario[turmaId]?.[grupo]?.[data]?.[disc]
+      || { bncc:'', conteudo:'', objetivo:'', recursos:'' };
 }
 
 function setDiarioField(turmaId, grupo, data, disc, campo, valor) {
@@ -3610,7 +3614,9 @@ function setDiarioField(turmaId, grupo, data, disc, campo, valor) {
 
 function atualizarBadgeDiario() {
   let cnt = 0;
-  Object.values(diario).forEach(grupos => Object.values(grupos).forEach(datas => Object.values(datas).forEach(discs => Object.values(discs).forEach(e => { if (e.conteudo?.trim()) cnt++; }))));
+  Object.values(diario).forEach(grupos => Object.values(grupos).forEach(datas => Object.values(datas).forEach(discs => Object.values(discs).forEach(e => {
+    if (e.bncc?.trim() || e.conteudo?.trim()) cnt++;
+  }))));
   document.getElementById('badgeDiario').textContent = cnt;
 }
 
@@ -3640,6 +3646,14 @@ function renderDiario() {
     html += grupoLabel;
     discs.forEach(disc => {
       const entry = getDiarioEntry(turmaAtual.id, grupoKey, dataSel, disc);
+      // Diagnóstico: logar chaves do diário vs chave atual
+      if (disc === discs[0]) {
+        console.log('Diário keys:', Object.keys(diario));
+        console.log('turmaAtual.id:', turmaAtual.id, typeof turmaAtual.id);
+        console.log('dataSel:', dataSel);
+        console.log('grupoKey:', grupoKey);
+        console.log('entry:', JSON.stringify(entry));
+      }
       const eid   = `${turmaAtual.id}_${grupoKey}_${dataSel}_${disc}`.replace(/[^a-zA-Z0-9_]/g,'_');
       html += `
         <div class="diario-entry" id="de_${eid}">
