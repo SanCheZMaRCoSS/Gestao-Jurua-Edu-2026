@@ -3916,13 +3916,20 @@ async function sincronizarAgora() {
     senhasMapa  = d.senhas      || {};
     turmasDesbloqueadas = new Set();
 
+    // Diagnóstico: contar registros do diário recebidos
+    const nTurmasDiario = Object.keys(diario).length;
+    const nRegistros = Object.values(diario).reduce((t, g) =>
+      t + Object.values(g).reduce((t2, dt) =>
+        t2 + Object.values(dt).reduce((t3, d) => t3 + Object.keys(d).length, 0), 0), 0);
+    console.log('Diário recebido:', JSON.stringify(diario).substring(0, 500));
+
     if (d.nomeEscola)      nomeEscola      = d.nomeEscola;
     if (d.municipioEscola) municipioEscola = d.municipioEscola;
     if (d.configEscola)    Object.assign(configEscola, d.configEscola);
 
     const hora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
     setSyncStatus('online', `Carregado · ${hora}`);
-    showToast('✅ Sincronizado com Google Sheets!');
+    showToast(`✅ Sincronizado! Diário: ${nTurmasDiario} turma(s), ${nRegistros} registro(s)`);
 
     populaTurmaSelects();
     renderTurmasRapidas();
