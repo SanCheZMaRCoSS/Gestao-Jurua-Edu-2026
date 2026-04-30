@@ -3596,7 +3596,7 @@ function renderSecaoAtual() {
 
 // ===== DIÁRIO DE CLASSE =====
 function getDiarioEntry(turmaId, grupo, data, disc) {
-  return diario[turmaId]?.[grupo]?.[data]?.[disc] || { conteudo:'', objetivo:'', recursos:'' };
+  return diario[turmaId]?.[grupo]?.[data]?.[disc] || { bncc:'', conteudo:'', objetivo:'', recursos:'' };
 }
 
 function setDiarioField(turmaId, grupo, data, disc, campo, valor) {
