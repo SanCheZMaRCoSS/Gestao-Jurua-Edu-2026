@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Escola Municipal São Luiz Gonzaga — Sistema de Gestão Escolar · 2026</title>
+<title>Escola Municipal Manoel Guilherme — Sistema de Gestão Escolar · 2026</title>
 <style>
   :root {
     --azul-principal: #2471a3;
@@ -2320,10 +2320,10 @@ const ANO_ORDEM = [
 ];
 
 // ===== ESTADO EM MEMÓRIA (cache local durante a sessão) =====
-let nomeEscola      = 'Escola Municipal São Luiz Gonzaga';
+let nomeEscola      = 'Escola Municipal Manoel Guilherme';
 let municipioEscola = 'Juruá — Amazonas';
-let configEscola    = { diretor:'Mirian de Oliveira Lima', secretario:'', inep:'13012436', anoLetivo:'2026' };
-let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbwLaViueY_m2pQvWdowWPFXRjlhS52RFoMk9K5kuHUNUG0bIUP71aRE0RTXGBXDH148Xg/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMSLUIZGONZAGA', ativo:true, semedAtivo:true };
+let configEscola    = { diretor:'Edileia Silva de Lima', secretario:'', inep:'13087401', anoLetivo:'2026' };
+let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbzt7z4znheIiaTfcA8TtuL8MUCCYEypGG5Ku0-UXaQMHUD63zg-EQLKGsTo11-11fJq/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMMGUILHERME', ativo:true, semedAtivo:true };
 
 let turmas          = [];
 let alunos          = [];
@@ -2350,7 +2350,7 @@ function carregarConfig() {
   // cloudConfig e nomeEscola já estão definidos corretamente nas variáveis let
   // localStorage só pode personalizar secretário e anoLetivo
   try {
-    const c = localStorage.getItem('gestao_config_EMSLUIZGONZAGA');
+    const c = localStorage.getItem('gestao_config_EMMGUILHERME');
     if (c) {
       const parsed = JSON.parse(c);
       if (parsed.configEscola?.secretario) configEscola.secretario = parsed.configEscola.secretario;
@@ -2361,7 +2361,7 @@ function carregarConfig() {
 
 function salvarConfig() {
   try {
-    localStorage.setItem('gestao_config_EMSLUIZGONZAGA', JSON.stringify({
+    localStorage.setItem('gestao_config_EMMGUILHERME', JSON.stringify({
       configEscola: { secretario: configEscola.secretario, anoLetivo: configEscola.anoLetivo }
     }));
   } catch(e) { console.warn('Erro ao salvar config:', e); }

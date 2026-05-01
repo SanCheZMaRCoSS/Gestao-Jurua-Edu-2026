@@ -3596,7 +3596,11 @@ function renderSecaoAtual() {
 
 // ===== DIÁRIO DE CLASSE =====
 function getDiarioEntry(turmaId, grupo, data, disc) {
-  return diario[turmaId]?.[grupo]?.[data]?.[disc] || { conteudo:'', objetivo:'', recursos:'' };
+  // Normalizar: tentar como string e como número
+  const id = String(turmaId);
+  return diario[id]?.[grupo]?.[data]?.[disc]
+      || diario[turmaId]?.[grupo]?.[data]?.[disc]
+      || { bncc:'', conteudo:'', objetivo:'', recursos:'' };
 }
 
 function setDiarioField(turmaId, grupo, data, disc, campo, valor) {
@@ -3610,7 +3614,9 @@ function setDiarioField(turmaId, grupo, data, disc, campo, valor) {
 
 function atualizarBadgeDiario() {
   let cnt = 0;
-  Object.values(diario).forEach(grupos => Object.values(grupos).forEach(datas => Object.values(datas).forEach(discs => Object.values(discs).forEach(e => { if (e.conteudo?.trim()) cnt++; }))));
+  Object.values(diario).forEach(grupos => Object.values(grupos).forEach(datas => Object.values(datas).forEach(discs => Object.values(discs).forEach(e => {
+    if (e.bncc?.trim() || e.conteudo?.trim()) cnt++;
+  }))));
   document.getElementById('badgeDiario').textContent = cnt;
 }
 
@@ -3890,6 +3896,55 @@ function confirmarImportacao() {
 }
 
 // ===== SALVAR (botão principal) =====
+async function sincronizarAgora() {
+  if (!cloudConfig.ativo || !cloudConfig.scriptUrl) {
+    showToast('⚠️ Configure o script em ⚙️ Escola antes de sincronizar.', 'gold');
+    return;
+  }
+  setSyncStatus('syncing', 'Sincronizando...');
+  try {
+    // 1. Salvar dados locais no Sheets
+    const payload = montarPayload();
+    const resSave = await chamarScript('SAVE', { data: payload });
+    if (!resSave.ok) throw new Error(resSave.msg || 'Erro ao salvar');
+
+    // 2. Carregar dados atualizados do Sheets
+    const resLoad = await chamarScript('LOAD', { escolaCode: cloudConfig.escolaCode });
+    if (!resLoad.ok) throw new Error(resLoad.msg || 'Erro ao carregar');
+
+    const d = resLoad.dados;
+    turmas      = d.turmas      || [];
+    alunos      = d.alunos      || [];
+    notas       = d.notas       || {};
+    frequencia  = d.frequencia  || {};
+    observacoes = d.observacoes || [];
+    diario      = d.diario      || {};
+    senhasMapa  = d.senhas      || {};
+    turmasDesbloqueadas = new Set();
+
+    const hora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    setSyncStatus('online', `Carregado · ${hora}`);
+    showToast('✅ Sincronizado com Google Sheets!');
+    if (d.nomeEscola)      nomeEscola      = d.nomeEscola;
+    if (d.municipioEscola) municipioEscola = d.municipioEscola;
+    if (d.configEscola)    Object.assign(configEscola, d.configEscola);
+
+    const hora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    setSyncStatus('online', `Carregado · ${hora}`);
+    showToast('✅ Sincronizado com Google Sheets!');
+
+    populaTurmaSelects();
+    renderTurmasRapidas();
+    atualizarSelectAlunos();
+    renderSecaoAtual();
+    atualizarStats();
+    aplicarNomeEscola();
+  } catch(e) {
+    setSyncStatus('offline', 'Erro: ' + e.message.substring(0, 30));
+    showToast('❌ Erro: ' + e.message, 'red');
+  }
+}
+
 async function salvarTudo() { await salvarNoSheets(); }
 
 // ===== MODAL =====

@@ -3646,14 +3646,6 @@ function renderDiario() {
     html += grupoLabel;
     discs.forEach(disc => {
       const entry = getDiarioEntry(turmaAtual.id, grupoKey, dataSel, disc);
-      // Diagnóstico: logar chaves do diário vs chave atual
-      if (disc === discs[0]) {
-        console.log('Diário keys:', Object.keys(diario));
-        console.log('turmaAtual.id:', turmaAtual.id, typeof turmaAtual.id);
-        console.log('dataSel:', dataSel);
-        console.log('grupoKey:', grupoKey);
-        console.log('entry:', JSON.stringify(entry));
-      }
       const eid   = `${turmaAtual.id}_${grupoKey}_${dataSel}_${disc}`.replace(/[^a-zA-Z0-9_]/g,'_');
       html += `
         <div class="diario-entry" id="de_${eid}">
@@ -3930,20 +3922,16 @@ async function sincronizarAgora() {
     senhasMapa  = d.senhas      || {};
     turmasDesbloqueadas = new Set();
 
-    // Diagnóstico: contar registros do diário recebidos
-    const nTurmasDiario = Object.keys(diario).length;
-    const nRegistros = Object.values(diario).reduce((t, g) =>
-      t + Object.values(g).reduce((t2, dt) =>
-        t2 + Object.values(dt).reduce((t3, d) => t3 + Object.keys(d).length, 0), 0), 0);
-    console.log('Diário recebido:', JSON.stringify(diario).substring(0, 500));
-
+    const hora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    setSyncStatus('online', `Carregado · ${hora}`);
+    showToast('✅ Sincronizado com Google Sheets!');
     if (d.nomeEscola)      nomeEscola      = d.nomeEscola;
     if (d.municipioEscola) municipioEscola = d.municipioEscola;
     if (d.configEscola)    Object.assign(configEscola, d.configEscola);
 
     const hora = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
     setSyncStatus('online', `Carregado · ${hora}`);
-    showToast(`✅ Sincronizado! Diário: ${nTurmasDiario} turma(s), ${nRegistros} registro(s)`);
+    showToast('✅ Sincronizado com Google Sheets!');
 
     populaTurmaSelects();
     renderTurmasRapidas();
