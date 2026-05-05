@@ -2393,7 +2393,7 @@ async function carregarDoSheets() {
     notas       = d.notas       || {};
     frequencia  = d.frequencia  || {};
     observacoes = d.observacoes || [];
-    diario      = d.diario      || {};
+    diario      = normalizarChavesDiario(d.diario || {});
     senhasMapa  = d.senhas      || {};
 
     if (d.nomeEscola)      nomeEscola      = d.nomeEscola;
@@ -3889,7 +3889,7 @@ function confirmarImportacao() {
   notas       = d.notas       || {};
   frequencia  = d.frequencia  || {};
   observacoes = d.observacoes || [];
-  diario      = d.diario      || {};
+  diario      = normalizarChavesDiario(d.diario || {});
   atualizarInterfaceCompleta();
   showToast('✅ Dados importados! Clique em 💾 Salvar para enviar ao Sheets.', 'gold');
   dadosParaImportar = null;
@@ -3918,7 +3918,7 @@ async function sincronizarAgora() {
     notas       = d.notas       || {};
     frequencia  = d.frequencia  || {};
     observacoes = d.observacoes || [];
-    diario      = d.diario      || {};
+    diario      = normalizarChavesDiario(d.diario || {});
     senhasMapa  = d.senhas      || {};
     turmasDesbloqueadas = new Set();
 
@@ -4514,6 +4514,24 @@ async function salvarSenhas() {
 }
 
 function gerarBoletim() { showSection('relatorio', null, null); renderRelatorio(); }
+
+
+// Normaliza chaves de data do diário: converte 2026_03_10 → 2026-03-10
+function normalizarChavesDiario(diarioRaw) {
+  const resultado = {};
+  Object.keys(diarioRaw).forEach(turmaId => {
+    resultado[turmaId] = {};
+    Object.keys(diarioRaw[turmaId]).forEach(grupo => {
+      resultado[turmaId][grupo] = {};
+      Object.keys(diarioRaw[turmaId][grupo]).forEach(data => {
+        // Converter underscore para hífen se necessário
+        const dataNorm = data.replace(/_/g, '-');
+        resultado[turmaId][grupo][dataNorm] = diarioRaw[turmaId][grupo][data];
+      });
+    });
+  });
+  return resultado;
+}
 
 // ===== INIT =====
 init();
