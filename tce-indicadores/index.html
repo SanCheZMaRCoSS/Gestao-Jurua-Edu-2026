@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCE pela Educação — Juruá/AM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface2: #1c2430;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --text3: #484f58;
+  --gold: #d4a843;
+  --gold2: #f0c96a;
+  --gold-dim: rgba(212,168,67,0.12);
+  --green: #3fb950;
+  --green-dim: rgba(63,185,80,0.12);
+  --amber: #e3b341;
+  --amber-dim: rgba(227,179,65,0.12);
+  --red: #f85149;
+  --red-dim: rgba(248,81,73,0.12);
+  --blue: #58a6ff;
+  --blue-dim: rgba(88,166,255,0.10);
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* TOPBAR */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-badge {
+  background: var(--gold);
+  color: #0d1117;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: .04em;
+}
+.brand-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+}
+.brand-sub {
+  font-size: 12px;
+  color: var(--text2);
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text2);
+}
+.sync-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--text3);
+  transition: background .3s;
+}
+.sync-dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.sync-dot.loading { background: var(--amber); animation: pulse 1s infinite; }
+.sync-dot.error { background: var(--red); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* LAYOUT */
+.layout { display: flex; min-height: calc(100vh - 56px); }
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 1.5rem 0;
+  position: sticky;
+  top: 56px;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+}
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  color: var(--text3);
+  padding: 0 1.25rem;
+  margin-bottom: .5rem;
+  margin-top: 1.25rem;
+  text-transform: uppercase;
+}
+.nav-section-label:first-child { margin-top: 0; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 1.25rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--text2);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  width: 100%;
+  text-align: left;
+  border-left: 2px solid transparent;
+  transition: all .15s;
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,.03); }
+.nav-item.active {
+  color: var(--gold2);
+  background: var(--gold-dim);
+  border-left-color: var(--gold);
+}
+.nav-icon { font-size: 15px; opacity: .8; }
+
+/* MAIN */
+.main { flex: 1; padding: 2rem; overflow-x: hidden; min-width: 0; }
+
+/* PANELS */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* PAGE HEADER */
+.page-header {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.page-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+.page-sub { font-size: 13px; color: var(--text2); }
+
+/* CONFIG BANNER */
+.config-banner {
+  background: var(--amber-dim);
+  border: 1px solid rgba(227,179,65,.25);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.config-banner.hidden { display: none; }
+.config-banner-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.config-banner p { font-size: 13px; color: var(--amber); line-height: 1.5; }
+.config-banner a { color: var(--gold2); text-decoration: underline; cursor: pointer; }
+
+/* METRICS GRID */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+.metric-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  position: relative;
+  overflow: hidden;
+}
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent, var(--gold));
+  opacity: .6;
+}
+.metric-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; letter-spacing: .02em; }
+.metric-value { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; color: var(--text); line-height: 1; }
+.metric-sub { font-size: 11px; color: var(--text2); margin-top: 5px; }
+.metric-bar-wrap { background: rgba(255,255,255,.06); border-radius: 3px; height: 3px; margin-top: 8px; overflow: hidden; }
+.metric-bar { height: 100%; border-radius: 3px; transition: width .5s; }
+
+/* CHART CARDS */
+.chart-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+.chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.chart-card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.chart-card-sub { font-size: 12px; color: var(--text2); }
+.chart-wrap { position: relative; }
+
+/* TABLE */
+.table-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+.table-card-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text2);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+td {
+  padding: 10px 14px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,.02); }
+
+/* BADGES */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.badge-green { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,.2); }
+.badge-amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(227,179,65,.2); }
+.badge-red { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,81,73,.2); }
+.badge-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(88,166,255,.15); }
+.badge-gray { background: rgba(255,255,255,.05); color: var(--text2); border: 1px solid var(--border); }
+
+/* SCHOOL DOTS ROW */
+.school-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.school-row:last-child { border-bottom: none; }
+.school-name { flex: 1; color: var(--text); }
+.school-zona { font-size: 11px; color: var(--text2); }
+.dots-row { display: flex; gap: 5px; }
+.dot {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+}
+.dot::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 130%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-size: 10px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s;
+  z-index: 10;
+}
+.dot:hover::after { opacity: 1; }
+.dot-green { background: var(--green); }
+.dot-amber { background: var(--amber); }
+.dot-red { background: var(--red); }
+.dot-gray { background: var(--text3); }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text2);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.btn:hover { color: var(--text); border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.04); }
+.btn-gold {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #0d1117;
+  font-weight: 500;
+}
+.btn-gold:hover { background: var(--gold2); border-color: var(--gold2); }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+/* FORMS */
+.form-section {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.form-section-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold2);
+  letter-spacing: .04em;
+  margin-bottom: 1rem;
+  padding-bottom: .75rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 12px; color: var(--text2); }
+.form-group input,
+.form-group select {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 8px 11px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  transition: border-color .15s;
+}
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+.form-group select option { background: #1c2430; }
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+/* CONFIG FORM */
+.config-field {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.config-field-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: .35rem;
+}
+.config-field-desc { font-size: 12px; color: var(--text2); margin-bottom: .9rem; line-height: 1.5; }
+.config-field input {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'DM Mono', 'Courier New', monospace;
+}
+.config-field input:focus { outline: none; border-color: var(--gold); }
+.code-block {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 1rem;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  color: var(--text2);
+  overflow-x: auto;
+  white-space: pre;
+  line-height: 1.7;
+  margin-top: .75rem;
+}
+.code-comment { color: var(--text3); }
+.code-key { color: var(--gold2); }
+.code-val { color: var(--green); }
+
+/* ALERT */
+.alert {
+  padding: .85rem 1.1rem;
+  border-radius: var(--radius);
+  font-size: 13px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.alert-success { background: var(--green-dim); color: var(--green); border: 1px solid rgba(63,185,80,.2); }
+.alert-error { background: var(--red-dim); color: var(--red); border: 1px solid rgba(248,81,73,.2); }
+.alert-info { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(88,166,255,.15); }
+.alert.hidden { display: none; }
+
+/* PERIOD SELECTOR */
+.period-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.period-bar label { font-size: 12px; color: var(--text2); }
+.period-bar select {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+}
+.period-bar select:focus { outline: none; border-color: var(--gold); }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text2);
+}
+.empty-state-icon { font-size: 36px; margin-bottom: 1rem; opacity: .4; }
+.empty-state-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 600; color: var(--text2); margin-bottom: .5rem; }
+.empty-state-sub { font-size: 13px; color: var(--text3); }
+
+/* INDICATOR HEADER STRIPE */
+.indicator-stripe {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: .85rem 1.25rem;
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  border: 1px solid;
+}
+.indicator-stripe-icon { font-size: 22px; }
+.indicator-stripe-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+.indicator-stripe-desc { font-size: 12px; margin-top: 1px; }
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { padding: 1rem; }
+  .topbar { padding: 0 1rem; }
+  .brand-sub { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="brand-badge">TCE/AM</div>
+    <div>
+      <div class="brand-title">Programa TCE pela Educação</div>
+      <div class="brand-sub">Secretaria Municipal de Educação — Juruá/AM</div>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <div class="sync-status">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncLabel">Não sincronizado</span>
+    </div>
+    <button class="btn" onclick="sincronizar()">↻ Sincronizar</button>
+    <button class="btn" onclick="exportarCSV()">↓ Exportar CSV</button>
+  </div>
+</div>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="nav-section-label">Painel</div>
+  <button class="nav-item active" onclick="showPanel('visao-geral', this)">
+    <span class="nav-icon">◉</span> Visão geral
+  </button>
+
+  <div class="nav-section-label">Indicadores TCE</div>
+  <button class="nav-item" onclick="showPanel('alfab', this)">
+    <span class="nav-icon">📖</span> Alfabetização
+  </button>
+  <button class="nav-item" onclick="showPanel('aprendiz', this)">
+    <span class="nav-icon">📈</span> Avanço na Aprendizagem
+  </button>
+  <button class="nav-item" onclick="showPanel('equidade', this)">
+    <span class="nav-icon">⚖</span> Equidade
+  </button>
+  <button class="nav-item" onclick="showPanel('permanencia', this)">
+    <span class="nav-icon">🏫</span> Permanência Escolar
+  </button>
+  <button class="nav-item" onclick="showPanel('gestao', this)">
+    <span class="nav-icon">📋</span> Maturidade em Gestão
+  </button>
+
+  <div class="nav-section-label">Análise</div>
+  <button class="nav-item" onclick="showPanel('por-escola', this)">
+    <span class="nav-icon">🏛</span> Por escola
+  </button>
+  <button class="nav-item" onclick="showPanel('inserir', this)">
+    <span class="nav-icon">✎</span> Inserção manual
+  </button>
+
+  <div class="nav-section-label">Sistema</div>
+  <button class="nav-item" onclick="showPanel('configurar', this)">
+    <span class="nav-icon">⚙</span> Configurar integração
+  </button>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ====== VISÃO GERAL ====== -->
+<div id="panel-visao-geral" class="panel active">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Visão Geral da Rede</div>
+      <div class="page-sub">Médias consolidadas de todas as escolas com dados</div>
+    </div>
+    <div class="period-bar" style="margin:0">
+      <label>Período:</label>
+      <select id="periodo-geral" onchange="renderAll()">
+        <option value="todos">Todos os períodos</option>
+        <option value="2026-B1">2026 – 1º Bimestre</option>
+        <option value="2026-B2">2026 – 2º Bimestre</option>
+        <option value="2026-B3">2026 – 3º Bimestre</option>
+        <option value="2026-B4">2026 – 4º Bimestre</option>
+        <option value="2025-B4">2025 – 4º Bimestre</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="config-banner" class="config-banner">
+    <span class="config-banner-icon">⚠</span>
+    <p>A integração com o Google Sheets ainda não está configurada. Os dados exibidos são locais.
+    <a onclick="showPanel('configurar', document.querySelector('[onclick*=configurar]'))">Configure a integração →</a></p>
+  </div>
+
+  <div class="metrics-grid" id="metrics-geral"></div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem">
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div class="chart-card-title">Radar dos indicadores — rede</div>
+        <div class="chart-card-sub">Média de todas as escolas</div>
+      </div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartRadar" role="img" aria-label="Radar dos 5 indicadores TCE da rede municipal">Radar dos indicadores.</canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div class="chart-card-title">Comparativo entre escolas</div>
+        <div class="chart-card-sub">Percentual geral por escola</div>
+      </div>
+      <div class="chart-wrap" style="height:260px"><canvas id="chartGeral" role="img" aria-label="Comparativo de indicadores entre escolas">Comparativo.</canvas></div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-card-header">
+      Situação das escolas
+      <span id="escola-count" class="badge badge-blue">0 escolas</span>
+    </div>
+    <div id="school-list-overview"></div>
+  </div>
+</div>
+
+<!-- ====== ALFABETIZAÇÃO ====== -->
+<div id="panel-alfab" class="panel">
+  <div class="indicator-stripe" style="background:rgba(88,166,255,.06);border-color:rgba(88,166,255,.2);color:var(--blue)">
+    <span class="indicator-stripe-icon">📖</span>
+    <div>
+      <div class="indicator-stripe-title">Alfabetização na Idade Certa</div>
+      <div class="indicator-stripe-desc">% alunos 2º ano no nível esperado · % professores com formação continuada</div>
+    </div>
+  </div>
+  <div class="metrics-grid" id="metrics-alf"></div>
+  <div class="chart-card">
+    <div class="chart-card-header"><div class="chart-card-title">% Alfabetizados por escola</div></div>
+    <div class="chart-wrap" style="height:280px"><canvas id="chartAlf" role="img" aria-label="Percentual de alfabetizados por escola">Dados por escola.</canvas></div>
+  </div>
+  <div class="table-card">
+    <div class="table-card-header">Detalhamento por escola</div>
+    <div class="table-wrap" id="table-alf"></div>
+  </div>
+</div>
+
+<!-- ====== APRENDIZAGEM ====== -->
+<div id="panel-aprendiz" class="panel">
+  <div class="indicator-stripe" style="background:rgba(63,185,80,.06);border-color:rgba(63,185,80,.2);color:var(--green)">
+    <span class="indicator-stripe-icon">📈</span>
+    <div>
+      <div class="indicator-stripe-title">Avanço na Aprendizagem</div>
+      <div class="indicator-stripe-desc">Cobertura de recomposição · desempenho em avaliações · simulados aplicados</div>
+    </div>
+  </div>
+  <div class="metrics-grid" id="metrics-apr"></div>
+  <div class="chart-card">
+    <div class="chart-card-header"><div class="chart-card-title">Cobertura de recomposição × média de notas</div></div>
+    <div class="chart-wrap" style="height:280px"><canvas id="chartApr" role="img" aria-label="Cobertura e notas por escola">Dados por escola.</canvas></div>
+  </div>
+  <div class="table-card">
+    <div class="table-card-header">Detalhamento por escola</div>
+    <div class="table-wrap" id="table-apr"></div>
+  </div>
+</div>
+
+<!-- ====== EQUIDADE ====== -->
+<div id="panel-equidade" class="panel">
+  <div class="indicator-stripe" style="background:rgba(212,168,67,.06);border-color:rgba(212,168,67,.2);color:var(--gold2)">
+    <span class="indicator-stripe-icon">⚖</span>
+    <div>
+      <div class="indicator-stripe-title">Equidade Educacional</div>
+      <div class="indicator-stripe-desc">Cobertura AEE para alunos PAEE · formação docente inclusiva · contextos diferenciados</div>
+    </div>
+  </div>
+  <div class="metrics-grid" id="metrics-eq"></div>
+  <div class="chart-card">
+    <div class="chart-card-header"><div class="chart-card-title">Cobertura AEE por escola</div></div>
+    <div class="chart-wrap" style="height:280px"><canvas id="chartEq" role="img" aria-label="AEE por escola">Dados por escola.</canvas></div>
+  </div>
+  <div class="table-card">
+    <div class="table-card-header">Detalhamento por escola</div>
+    <div class="table-wrap" id="table-eq"></div>
+  </div>
+</div>
+
+<!-- ====== PERMANÊNCIA ====== -->
+<div id="panel-permanencia" class="panel">
+  <div class="indicator-stripe" style="background:rgba(227,179,65,.06);border-color:rgba(227,179,65,.2);color:var(--amber)">
+    <span class="indicator-stripe-icon">🏫</span>
+    <div>
+      <div class="indicator-stripe-title">Permanência Escolar</div>
+      <div class="indicator-stripe-desc">Frequência média diária (SGE) · taxa de permanência · evasões · busca ativa</div>
+    </div>
+  </div>
+  <div class="metrics-grid" id="metrics-perm"></div>
+  <div class="chart-card">
+    <div class="chart-card-header"><div class="chart-card-title">Frequência média por escola — via SGE</div></div>
+    <div class="chart-wrap" style="height:280px"><canvas id="chartPerm" role="img" aria-label="Frequência e permanência por escola">Dados por escola.</canvas></div>
+  </div>
+  <div class="table-card">
+    <div class="table-card-header">Detalhamento por escola</div>
+    <div class="table-wrap" id="table-perm"></div>
+  </div>
+</div>
+
+<!-- ====== GESTÃO ====== -->
+<div id="panel-gestao" class="panel">
+  <div class="indicator-stripe" style="background:rgba(248,81,73,.06);border-color:rgba(248,81,73,.2);color:var(--red)">
+    <span class="indicator-stripe-icon">📋</span>
+    <div>
+      <div class="indicator-stripe-title">Maturidade em Gestão</div>
+      <div class="indicator-stripe-desc">Execução do plano TCE · reuniões de monitoramento · uso de dados na gestão</div>
+    </div>
+  </div>
+  <div class="metrics-grid" id="metrics-gest"></div>
+  <div class="chart-card">
+    <div class="chart-card-header"><div class="chart-card-title">% Execução do plano de ação por escola</div></div>
+    <div class="chart-wrap" style="height:280px"><canvas id="chartGest" role="img" aria-label="Execução do plano por escola">Dados por escola.</canvas></div>
+  </div>
+  <div class="table-card">
+    <div class="table-card-header">Detalhamento por escola</div>
+    <div class="table-wrap" id="table-gest"></div>
+  </div>
+</div>
+
+<!-- ====== POR ESCOLA ====== -->
+<div id="panel-por-escola" class="panel">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Análise por escola</div>
+      <div class="page-sub">Evolução temporal dos indicadores de uma escola específica</div>
+    </div>
+  </div>
+  <div class="form-section" style="margin-bottom:1.5rem">
+    <div class="form-grid" style="grid-template-columns:2fr 1fr">
+      <div class="form-group">
+        <label>Escola</label>
+        <select id="escola-detail-select" onchange="renderEscolaDetail()">
+          <option value="">Selecione uma escola...</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div id="escola-detail">
+    <div class="empty-state">
+      <div class="empty-state-icon">🏛</div>
+      <div class="empty-state-title">Selecione uma escola acima</div>
+      <div class="empty-state-sub">O histórico bimestral de todos os indicadores será exibido aqui</div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== INSERÇÃO MANUAL ====== -->
+<div id="panel-inserir" class="panel">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Inserção manual de dados</div>
+      <div class="page-sub">Para campos que não são calculados automaticamente pelo SGE</div>
+    </div>
+  </div>
+
+  <div id="alert-insert" class="alert hidden"></div>
+
+  <div class="form-section">
+    <div class="form-section-title">◈ Identificação</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Escola *</label>
+        <select id="inp-escola">
+          <option value="">Selecione a escola</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Período *</label>
+        <select id="inp-periodo">
+          <option value="2026-B1">2026 – 1º Bimestre</option>
+          <option value="2026-B2">2026 – 2º Bimestre</option>
+          <option value="2026-B3">2026 – 3º Bimestre</option>
+          <option value="2026-B4">2026 – 4º Bimestre</option>
+          <option value="2025-B4">2025 – 4º Bimestre</option>
+          <option value="2025-B3">2025 – 3º Bimestre</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section-title">📖 Alfabetização na Idade Certa <span style="font-size:11px;opacity:.5;font-weight:400">(complementa SGE)</span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Alunos 2º ano avaliados</label>
+        <input type="number" id="alf-avaliados" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Alunos no nível esperado</label>
+        <input type="number" id="alf-alfabetizados" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Professores com formação continuada</label>
+        <input type="number" id="alf-formados" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Total de professores alfabetizadores</label>
+        <input type="number" id="alf-total-prof" min="0" placeholder="0">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section-title">📈 Avanço na Aprendizagem <span style="font-size:11px;opacity:.5;font-weight:400">(notas via SGE)</span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Alunos com defasagem identificados</label>
+        <input type="number" id="apr-defasagem" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Alunos em recomposição/reforço</label>
+        <input type="number" id="apr-recomposicao" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Simulados diagnósticos aplicados</label>
+        <input type="number" id="apr-simulados" min="0" placeholder="0">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section-title">⚖ Equidade Educacional</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Alunos PAEE matriculados</label>
+        <input type="number" id="eq-paee" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Alunos PAEE com AEE garantido</label>
+        <input type="number" id="eq-aee" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Professores com formação inclusiva</label>
+        <input type="number" id="eq-form-inc" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Total de professores</label>
+        <input type="number" id="eq-total-prof" min="0" placeholder="0">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section-title">🏫 Permanência Escolar <span style="font-size:11px;opacity:.5;font-weight:400">(frequência via SGE)</span></div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Evasões confirmadas no período</label>
+        <input type="number" id="perm-evasao" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Recuperados por busca ativa</label>
+        <input type="number" id="perm-busca-ativa" min="0" placeholder="0">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="form-section-title">📋 Maturidade em Gestão</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Plano de ação na plataforma TCE</label>
+        <select id="gest-plano">
+          <option value="">Selecione</option>
+          <option value="100">Concluído e publicado</option>
+          <option value="50">Em elaboração</option>
+          <option value="0">Não iniciado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Ações com status "Aplicada"</label>
+        <input type="number" id="gest-aplicadas" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Total de ações no plano</label>
+        <input type="number" id="gest-total-acoes" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Reuniões de monitoramento realizadas</label>
+        <input type="number" id="gest-reunioes" min="0" placeholder="0">
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn" onclick="limparForm()">Limpar</button>
+    <button class="btn btn-gold" onclick="salvarManual()">Salvar registro</button>
+  </div>
+</div>
+
+<!-- ====== CONFIGURAR ====== -->
+<div id="panel-configurar" class="panel">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Configurar integração</div>
+      <div class="page-sub">Conecte o painel TCE ao Google Sheets do SGE</div>
+    </div>
+  </div>
+
+  <div class="config-field">
+    <div class="config-field-title">URL do Web App (Apps Script)</div>
+    <div class="config-field-desc">Cole aqui a URL gerada ao publicar o Apps Script do SGE como Web App.
+    Formato: <code style="color:var(--gold2);font-size:11px">https://script.google.com/macros/s/SEU_ID/exec</code></div>
+    <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec"
+      value="" oninput="salvarConfig()">
+  </div>
+
+  <div class="config-field">
+    <div class="config-field-title">Adicionar escolas da rede</div>
+    <div class="config-field-desc">Cadastre as escolas municipais de Juruá. O nome deve ser idêntico ao usado no SGE.</div>
+    <div style="display:flex;gap:8px;margin-bottom:.75rem">
+      <input type="text" id="nova-escola" placeholder="Nome exato da escola" style="flex:1">
+      <select id="zona-escola" style="width:130px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:8px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
+        <option value="urbana">Urbana</option>
+        <option value="rural">Rural</option>
+        <option value="ribeirinha">Ribeirinha</option>
+      </select>
+      <button class="btn btn-gold" onclick="adicionarEscola()">Adicionar</button>
+    </div>
+    <div id="lista-escolas"></div>
+  </div>
+
+  <div class="config-field">
+    <div class="config-field-title">Como publicar o Apps Script</div>
+    <div class="config-field-desc">Siga os passos abaixo para configurar o Apps Script do SGE para expor os dados necessários ao painel TCE.</div>
+    <div class="code-block"><span class="code-comment">// 1. Abra o Google Sheets do SGE
+// 2. Extensões → Apps Script
+// 3. Adicione a função abaixo ao seu script existente
+// 4. Implante → Nova implantação → Web app
+//    Executar como: Eu mesmo
+//    Quem tem acesso: Qualquer pessoa
+// 5. Cole a URL gerada no campo acima</span>
+
+<span class="code-key">function</span> <span class="code-val">doGet</span>(e) {
+  <span class="code-key">var</span> aba = e.parameter.aba || <span class="code-val">'Frequencia'</span>;
+  <span class="code-key">var</span> ss = SpreadsheetApp.getActiveSpreadsheet();
+  <span class="code-key">var</span> sheet = ss.getSheetByName(aba);
+  <span class="code-key">if</span> (!sheet) <span class="code-key">return</span> resposta({error: <span class="code-val">'Aba não encontrada: '</span> + aba});
+  <span class="code-key">var</span> dados = sheet.getDataRange().getValues();
+  <span class="code-key">var</span> cabecalho = dados[<span class="code-val">0</span>];
+  <span class="code-key">var</span> linhas = dados.slice(<span class="code-val">1</span>).map(<span class="code-key">function</span>(row) {
+    <span class="code-key">var</span> obj = {};
+    cabecalho.forEach(<span class="code-key">function</span>(h, i) { obj[h] = row[i]; });
+    <span class="code-key">return</span> obj;
+  });
+  <span class="code-key">return</span> resposta({aba: aba, dados: linhas});
+}
+
+<span class="code-key">function</span> <span class="code-val">resposta</span>(obj) {
+  <span class="code-key">return</span> ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}</div>
+  </div>
+
+  <div class="config-field">
+    <div class="config-field-title">Estrutura esperada nas abas do SGE</div>
+    <div class="config-field-desc">O Apps Script lerá as seguintes abas do seu Google Sheets. Verifique se os nomes das colunas correspondem:</div>
+    <div class="code-block"><span class="code-comment">Aba "Frequencia":</span>
+  <span class="code-key">data</span>, <span class="code-val">escola</span>, turma, aluno_id, aluno_nome, presente (S/N)
+
+<span class="code-comment">Aba "Notas":</span>
+  <span class="code-key">escola</span>, <span class="code-val">turma</span>, aluno_id, aluno_nome, bimestre, disciplina, nota
+
+<span class="code-comment">Aba "Alunos":</span>
+  <span class="code-key">escola</span>, <span class="code-val">aluno_id</span>, aluno_nome, turma, segmento, ativo (S/N), data_saida
+
+<span class="code-comment">Aba "Diagnostico":</span>
+  <span class="code-key">escola</span>, <span class="code-val">aluno_id</span>, bimestre, nivel_leitura (1-4), nivel_escrita (1-4)</div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:.5rem">
+    <button class="btn btn-gold" onclick="testarConexao()">Testar conexão</button>
+    <div id="teste-resultado" style="display:flex;align-items:center;font-size:13px;color:var(--text2)"></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+// ============================
+// ESTADO GLOBAL
+// ============================
+let CONFIG = {
+  webAppUrl: localStorage.getItem('tce_url') || '',
+  escolas: JSON.parse(localStorage.getItem('tce_escolas') || '[]')
+};
+let DADOS = JSON.parse(localStorage.getItem('tce_dados') || '[]');
+let SHEETS = {}; // cache dos dados do SGE
+let chartInst = {};
+
+// ============================
+// INIT
+// ============================
+document.addEventListener('DOMContentLoaded', () => {
+  if (CONFIG.webAppUrl) {
+    document.getElementById('cfg-url').value = CONFIG.webAppUrl;
+    document.getElementById('config-banner').classList.add('hidden');
+  }
+  popularSelects();
+  renderAll();
+});
+
+// ============================
+// NAVEGAÇÃO
+// ============================
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  setTimeout(renderAll, 60);
+}
+
+// ============================
+// CONFIGURAÇÃO
+// ============================
+function salvarConfig() {
+  CONFIG.webAppUrl = document.getElementById('cfg-url').value.trim();
+  localStorage.setItem('tce_url', CONFIG.webAppUrl);
+  if (CONFIG.webAppUrl) {
+    document.getElementById('config-banner').classList.add('hidden');
+  }
+}
+
+function adicionarEscola() {
+  const nome = document.getElementById('nova-escola').value.trim();
+  const zona = document.getElementById('zona-escola').value;
+  if (!nome) return;
+  if (CONFIG.escolas.find(e => e.nome === nome)) { alert('Escola já cadastrada.'); return; }
+  CONFIG.escolas.push({ nome, zona });
+  salvarEscolas();
+}
+
+function removerEscola(i) {
+  if (!confirm('Remover escola?')) return;
+  CONFIG.escolas.splice(i, 1);
+  salvarEscolas();
+}
+
+function salvarEscolas() {
+  localStorage.setItem('tce_escolas', JSON.stringify(CONFIG.escolas));
+  popularSelects();
+  renderListaEscolas();
+}
+
+function renderListaEscolas() {
+  const el = document.getElementById('lista-escolas');
+  if (!el) return;
+  el.innerHTML = CONFIG.escolas.length ? CONFIG.escolas.map((e, i) => `
+    <div class="school-row">
+      <div class="school-name">${e.nome}</div>
+      <span class="badge badge-${e.zona==='urbana'?'blue':e.zona==='rural'?'green':'amber'}">${e.zona}</span>
+      <button class="btn btn-sm" onclick="removerEscola(${i})">Remover</button>
+    </div>`).join('') :
+    '<div style="padding:.5rem 0;font-size:13px;color:var(--text2)">Nenhuma escola cadastrada.</div>';
+}
+
+function popularSelects() {
+  const sels = ['inp-escola', 'escola-detail-select'];
+  sels.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const prev = el.value;
+    el.innerHTML = '<option value="">Selecione...</option>' +
+      CONFIG.escolas.map(e => `<option value="${e.nome}">${e.nome} (${e.zona})</option>`).join('');
+    if (prev) el.value = prev;
+  });
+  renderListaEscolas();
+}
+
+// ============================
+// SINCRONIZAÇÃO COM SGE
+// ============================
+async function sincronizar() {
+  if (!CONFIG.webAppUrl) {
+    setSync('error', 'URL não configurada');
+    showPanel('configurar', document.querySelector('[onclick*=configurar]'));
+    return;
+  }
+  setSync('loading', 'Sincronizando...');
+  try {
+    const abas = ['Frequencia', 'Notas', 'Alunos', 'Diagnostico'];
+    for (const aba of abas) {
+      const url = CONFIG.webAppUrl + '?aba=' + aba;
+      const r = await fetch(url);
+      const json = await r.json();
+      if (json.dados) SHEETS[aba] = json.dados;
+    }
+    processarDadosSGE();
+    localStorage.setItem('tce_sheets_cache', JSON.stringify(SHEETS));
+    setSync('ok', 'Sincronizado: ' + new Date().toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}));
+    renderAll();
+  } catch(e) {
+    setSync('error', 'Erro na sincronização');
+    console.error(e);
+  }
+}
+
+function setSync(estado, msg) {
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  dot.className = 'sync-dot ' + estado;
+  lbl.textContent = msg;
+}
+
+// ============================
+// PROCESSAMENTO DOS DADOS SGE
+// ============================
+function processarDadosSGE() {
+  const periodo = detectarPeriodoAtual();
+
+  // Para cada escola, calcula frequência, notas e diagnóstico do SGE
+  CONFIG.escolas.forEach(escola => {
+    const dadoExistente = DADOS.find(d => d.escola === escola.nome && d.periodo === periodo && d.fonte === 'sge');
+    if (dadoExistente) return; // já processado
+
+    const regSGE = { escola: escola.nome, periodo, fonte: 'sge', ts: Date.now() };
+
+    // FREQUÊNCIA
+    if (SHEETS['Frequencia']) {
+      const freqEscola = SHEETS['Frequencia'].filter(r => normalizar(r.escola) === normalizar(escola.nome));
+      if (freqEscola.length) {
+        const alunos = [...new Set(freqEscola.map(r => r.aluno_id))];
+        const presencas = freqEscola.filter(r => String(r.presente).toUpperCase() === 'S').length;
+        regSGE.freq_total_registros = freqEscola.length;
+        regSGE.freq_presencas = presencas;
+        regSGE.perm_frequencia = Math.round(presencas / freqEscola.length * 100);
+      }
+    }
+
+    // MATRÍCULAS / EVASÃO
+    if (SHEETS['Alunos']) {
+      const alunosEscola = SHEETS['Alunos'].filter(r => normalizar(r.escola) === normalizar(escola.nome));
+      regSGE.perm_matriculas = alunosEscola.filter(r => String(r.ativo).toUpperCase() === 'S').length;
+      regSGE.perm_evasao_sge = alunosEscola.filter(r => String(r.ativo).toUpperCase() === 'N' && r.data_saida).length;
+    }
+
+    // NOTAS
+    if (SHEETS['Notas']) {
+      const notasEscola = SHEETS['Notas'].filter(r =>
+        normalizar(r.escola) === normalizar(escola.nome) &&
+        mapBimestre(r.bimestre) === periodo
+      );
+      if (notasEscola.length) {
+        const vals = notasEscola.map(r => parseFloat(r.nota)).filter(v => !isNaN(v));
+        if (vals.length) regSGE.apr_media_sge = Math.round(vals.reduce((a,b)=>a+b,0) / vals.length * 10) / 10;
+        // Conta alunos com nota abaixo de 5 como defasagem
+        const porAluno = {};
+        notasEscola.forEach(r => {
+          if (!porAluno[r.aluno_id]) porAluno[r.aluno_id] = [];
+          porAluno[r.aluno_id].push(parseFloat(r.nota));
+        });
+        const defasados = Object.values(porAluno).filter(notas => {
+          const media = notas.reduce((a,b)=>a+b,0)/notas.length;
+          return media < 5;
+        }).length;
+        regSGE.apr_defasagem_sge = defasados;
+      }
+    }
+
+    // DIAGNÓSTICO ALFABETIZAÇÃO
+    if (SHEETS['Diagnostico']) {
+      const diagEscola = SHEETS['Diagnostico'].filter(r =>
+        normalizar(r.escola) === normalizar(escola.nome) &&
+        mapBimestre(r.bimestre) === periodo
+      );
+      if (diagEscola.length) {
+        regSGE.alf_avaliados_sge = diagEscola.length;
+        // Nível 3 e 4 = alfabetizado
+        regSGE.alf_alfabetizados_sge = diagEscola.filter(r => parseInt(r.nivel_leitura) >= 3).length;
+      }
+    }
+
+    DADOS.push(regSGE);
+    localStorage.setItem('tce_dados', JSON.stringify(DADOS));
+  });
+}
+
+function normalizar(s) {
+  return String(s || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+function detectarPeriodoAtual() {
+  const m = new Date().getMonth() + 1;
+  const a = new Date().getFullYear();
+  const b = m <= 3 ? 'B1' : m <= 6 ? 'B2' : m <= 9 ? 'B3' : 'B4';
+  return `${a}-${b}`;
+}
+
+function mapBimestre(val) {
+  const s = String(val || '').toLowerCase();
+  const a = new Date().getFullYear();
+  if (s.includes('1') || s === '1b' || s === 'b1') return `${a}-B1`;
+  if (s.includes('2') || s === '2b' || s === 'b2') return `${a}-B2`;
+  if (s.includes('3') || s === '3b' || s === 'b3') return `${a}-B3`;
+  if (s.includes('4') || s === '4b' || s === 'b4') return `${a}-B4`;
+  return `${a}-B1`;
+}
+
+async function testarConexao() {
+  const url = document.getElementById('cfg-url').value.trim();
+  const el = document.getElementById('teste-resultado');
+  if (!url) { el.textContent = '⚠ Digite a URL primeiro'; el.style.color = 'var(--amber)'; return; }
+  el.textContent = '...testando';
+  el.style.color = 'var(--text2)';
+  try {
+    const r = await fetch(url + '?aba=Alunos');
+    const j = await r.json();
+    if (j.dados) {
+      el.textContent = '✓ Conexão OK — ' + j.dados.length + ' alunos encontrados';
+      el.style.color = 'var(--green)';
+      CONFIG.webAppUrl = url;
+      localStorage.setItem('tce_url', url);
+      document.getElementById('config-banner').classList.add('hidden');
+    } else {
+      el.textContent = '⚠ Conectou mas aba "Alunos" não encontrada';
+      el.style.color = 'var(--amber)';
+    }
+  } catch(e) {
+    el.textContent = '✗ Falha — verifique a URL e as permissões do Web App';
+    el.style.color = 'var(--red)';
+  }
+}
+
+// ============================
+// CÁLCULO DE INDICADORES
+// ============================
+function calcIndicadores(reg) {
+  const alf = reg.alf_avaliados || reg.alf_avaliados_sge;
+  const alfOk = reg.alf_alfabetizados || reg.alf_alfabetizados_sge;
+  const alfProfT = reg.alf_total_prof;
+  const alfProfF = reg.alf_formados;
+
+  const eqPaee = reg.eq_paee;
+  const eqAee = reg.eq_aee;
+  const eqProfT = reg.eq_total_prof;
+  const eqProfF = reg.eq_form_inc;
+
+  const permMat = reg.perm_matriculas;
+  const permEv = (reg.perm_evasao || 0) + (reg.perm_evasao_sge || 0);
+  const freq = reg.perm_frequencia;
+
+  const gestApl = reg.gest_aplicadas;
+  const gestTot = reg.gest_total_acoes;
+
+  const aprDef = reg.apr_defasagem || reg.apr_defasagem_sge;
+  const aprRec = reg.apr_recomposicao;
+  const aprMedia = reg.apr_media || reg.apr_media_sge;
+
+  return {
+    alf: alf > 0 ? Math.round(alfOk / alf * 1000) / 10 : null,
+    alfProf: alfProfT > 0 ? Math.round(alfProfF / alfProfT * 1000) / 10 : null,
+    apr: aprDef > 0 ? Math.round(aprRec / aprDef * 1000) / 10 : null,
+    aprMedia: aprMedia || null,
+    eq: eqPaee > 0 ? Math.round(eqAee / eqPaee * 1000) / 10 : null,
+    eqProf: eqProfT > 0 ? Math.round(eqProfF / eqProfT * 1000) / 10 : null,
+    perm: permMat > 0 ? Math.round((permMat - permEv) / permMat * 1000) / 10 : null,
+    freq: freq || null,
+    gestExec: gestTot > 0 ? Math.round(gestApl / gestTot * 1000) / 10 : null,
+    gestPlano: parseFloat(reg.gest_plano || 0),
+    evasoes: permEv
+  };
+}
+
+function getUltimosRegistros(periodo) {
+  let fonte = DADOS;
+  if (periodo && periodo !== 'todos') {
+    fonte = DADOS.filter(d => d.periodo === periodo);
+  }
+  const map = {};
+  fonte.forEach(r => {
+    const k = r.escola + '||' + r.periodo;
+    // Merge: manual sobrescreve SGE nos campos preenchidos
+    if (!map[k]) { map[k] = { ...r }; return; }
+    // Funde registros da mesma escola/período (SGE + manual)
+    Object.keys(r).forEach(key => {
+      if (r[key] !== undefined && r[key] !== null && r[key] !== 0 && r[key] !== '') {
+        map[k][key] = r[key];
+      }
+    });
+  });
+  // Se todos os períodos, pega o mais recente de cada escola
+  if (!periodo || periodo === 'todos') {
+    const byEscola = {};
+    Object.values(map).forEach(r => {
+      if (!byEscola[r.escola] || r.periodo > byEscola[r.escola].periodo) byEscola[r.escola] = r;
+    });
+    return Object.values(byEscola);
+  }
+  return Object.values(map);
+}
+
+// ============================
+// RENDER GERAL
+// ============================
+function renderAll() {
+  const periodo = (document.getElementById('periodo-geral') || {}).value || 'todos';
+  const ultimos = getUltimosRegistros(periodo);
+  renderVisaoGeral(ultimos);
+  renderAlf(ultimos);
+  renderApr(ultimos);
+  renderEq(ultimos);
+  renderPerm(ultimos);
+  renderGest(ultimos);
+  popularSelects();
+}
+
+// ============================
+// HELPERS RENDER
+// ============================
+function fmt(v, suffix) {
+  if (v === null || v === undefined) return '—';
+  return v.toFixed(1) + (suffix || '%');
+}
+
+function badgeV(v) {
+  if (v === null || v === undefined) return '<span class="badge badge-gray">—</span>';
+  const cls = v >= 80 ? 'green' : v >= 60 ? 'amber' : 'red';
+  return `<span class="badge badge-${cls}">${v.toFixed(1)}%</span>`;
+}
+
+function dotV(v) {
+  if (v === null || v === undefined) return 'dot-gray';
+  return v >= 80 ? 'dot-green' : v >= 60 ? 'dot-amber' : 'dot-red';
+}
+
+function avg(arr) {
+  const v = arr.filter(x => x !== null && x !== undefined && !isNaN(x));
+  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+}
+
+function destroyChart(id) {
+  if (chartInst[id]) { chartInst[id].destroy(); delete chartInst[id]; }
+}
+
+function barChart(id, labels, datasets, maxY) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  chartInst[id] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: datasets.length > 1, labels: { color: '#8b949e', font: { size: 11 }, boxWidth: 10, boxHeight: 10 } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.parsed.y.toFixed(1) + '%' } }
+      },
+      scales: {
+        y: { beginAtZero: true, max: maxY || 100, grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#8b949e', callback: v => v + '%', font: { size: 11 } } },
+        x: { grid: { display: false }, ticks: { color: '#8b949e', maxRotation: 35, font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function renderMetrics(id, items) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = items.map(m => `
+    <div class="metric-card" style="--accent:${m.color || 'var(--gold)'}">
+      <div class="metric-label">${m.label}</div>
+      <div class="metric-value">${m.value}</div>
+      ${m.sub ? `<div class="metric-sub">${m.sub}</div>` : ''}
+      ${m.bar !== undefined && m.bar !== null ? `
+        <div class="metric-bar-wrap">
+          <div class="metric-bar" style="width:${Math.min(m.bar,100)}%;background:${m.bar>=80?'var(--green)':m.bar>=60?'var(--amber)':'var(--red)'}"></div>
+        </div>` : ''}
+    </div>`).join('');
+}
+
+function renderTableGeneric(id, cols, rows) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!rows.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-sub">Nenhum dado disponível para o período selecionado.</div></div>'; return; }
+  el.innerHTML = `<table>
+    <thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table>`;
+}
+
+// ============================
+// VISÃO GERAL
+// ============================
+function renderVisaoGeral(ultimos) {
+  document.getElementById('escola-count').textContent = ultimos.length + ' escolas';
+
+  if (!ultimos.length) {
+    renderMetrics('metrics-geral', [
+      {label:'Escolas cadastradas',value:CONFIG.escolas.length,sub:'aguardando dados'},
+      {label:'Registros totais',value:DADOS.length},
+    ]);
+    renderSchoolList(ultimos);
+    return;
+  }
+
+  const calcs = ultimos.map(r => calcIndicadores(r));
+  const mAlf = avg(calcs.map(c => c.alf));
+  const mApr = avg(calcs.map(c => c.apr));
+  const mEq = avg(calcs.map(c => c.eq));
+  const mPerm = avg(calcs.map(c => c.freq || c.perm));
+  const mGest = avg(calcs.map(c => c.gestExec));
+
+  renderMetrics('metrics-geral', [
+    {label:'Escolas com dados',value:ultimos.length,sub:'de '+CONFIG.escolas.length+' na rede'},
+    {label:'Alfabetização',value:fmt(mAlf),bar:mAlf,color:'var(--blue)'},
+    {label:'Aprendizagem',value:fmt(mApr),bar:mApr,color:'var(--green)'},
+    {label:'Equidade (AEE)',value:fmt(mEq),bar:mEq,color:'var(--gold)'},
+    {label:'Permanência / Freq.',value:fmt(mPerm),bar:mPerm,color:'var(--amber)'},
+    {label:'Execução do plano',value:fmt(mGest),bar:mGest,color:'var(--red)'},
+  ]);
+
+  // Radar
+  destroyChart('chartRadar');
+  const ctxR = document.getElementById('chartRadar');
+  if (ctxR) {
+    chartInst['chartRadar'] = new Chart(ctxR, {
+      type: 'radar',
+      data: {
+        labels: ['Alfabetização','Aprendizagem','Equidade','Permanência','Gestão'],
+        datasets: [{
+          label: 'Média da rede',
+          data: [mAlf||0, mApr||0, mEq||0, mPerm||0, mGest||0],
+          backgroundColor: 'rgba(212,168,67,0.12)',
+          borderColor: 'rgba(212,168,67,0.8)',
+          pointBackgroundColor: '#d4a843',
+          borderWidth: 2,
+          pointRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          r: {
+            beginAtZero: true, max: 100,
+            grid: { color: 'rgba(255,255,255,.06)' },
+            angleLines: { color: 'rgba(255,255,255,.06)' },
+            pointLabels: { color: '#8b949e', font: { size: 11 } },
+            ticks: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // Bar geral
+  const labels = ultimos.map(r => r.escola.length > 14 ? r.escola.substr(0,14)+'…' : r.escola);
+  barChart('chartGeral', labels, [
+    {label:'Alfabetização',data:calcs.map(c=>c.alf||0),backgroundColor:'rgba(88,166,255,.6)',borderColor:'#58a6ff',borderWidth:1},
+    {label:'Permanência',data:calcs.map(c=>c.freq||c.perm||0),backgroundColor:'rgba(227,179,65,.6)',borderColor:'#e3b341',borderWidth:1},
+    {label:'Gestão',data:calcs.map(c=>c.gestExec||0),backgroundColor:'rgba(248,81,73,.6)',borderColor:'#f85149',borderWidth:1},
+  ]);
+
+  renderSchoolList(ultimos);
+}
+
+function renderSchoolList(ultimos) {
+  const el = document.getElementById('school-list-overview');
+  if (!el) return;
+  if (!ultimos.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🏫</div><div class="empty-state-title">Nenhuma escola com dados</div><div class="empty-state-sub">Sincronize o SGE ou insira dados manualmente</div></div>';
+    return;
+  }
+  const legenda = '<div style="display:flex;gap:12px;padding:.75rem 1rem;border-bottom:1px solid var(--border);font-size:11px;color:var(--text2)">' +
+    ['Alf','Apr','Eq','Perm','Gestão'].map((l,i)=>`<span style="display:flex;align-items:center;gap:4px"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0"></span>${l}</span>`).join('') +
+    '</div>';
+  el.innerHTML = legenda + ultimos.map(r => {
+    const c = calcIndicadores(r);
+    const zona = CONFIG.escolas.find(e => e.nome === r.escola);
+    return `<div class="school-row" style="padding:9px 1rem">
+      <div class="school-name">${r.escola}</div>
+      <span class="badge badge-${zona?.zona==='urbana'?'blue':zona?.zona==='rural'?'green':'amber'}" style="font-size:10px">${zona?.zona||'—'}</span>
+      <div class="dots-row">
+        <div class="dot ${dotV(c.alf)}" data-tip="Alfab: ${fmt(c.alf)}"></div>
+        <div class="dot ${dotV(c.apr)}" data-tip="Aprendiz: ${fmt(c.apr)}"></div>
+        <div class="dot ${dotV(c.eq)}" data-tip="Equidade: ${fmt(c.eq)}"></div>
+        <div class="dot ${dotV(c.freq||c.perm)}" data-tip="Perm/Freq: ${fmt(c.freq||c.perm)}"></div>
+        <div class="dot ${dotV(c.gestExec)}" data-tip="Gestão: ${fmt(c.gestExec)}"></div>
+      </div>
+      <span style="font-size:11px;color:var(--text2)">${r.periodo}</span>
+    </div>`;
+  }).join('');
+}
+
+// ============================
+// ALFABETIZAÇÃO
+// ============================
+function renderAlf(ultimos) {
+  const calcs = ultimos.map(r => calcIndicadores(r));
+  const mAlf = avg(calcs.map(c => c.alf));
+  const mProf = avg(calcs.map(c => c.alfProf));
+  renderMetrics('metrics-alf', [
+    {label:'% Alfabetizados (média rede)',value:fmt(mAlf),bar:mAlf,color:'var(--blue)'},
+    {label:'% Formação docente',value:fmt(mProf),bar:mProf,color:'var(--blue)'},
+    {label:'Total avaliados',value:ultimos.reduce((s,r)=>s+(r.alf_avaliados||r.alf_avaliados_sge||0),0)},
+    {label:'Total alfabetizados',value:ultimos.reduce((s,r)=>s+(r.alf_alfabetizados||r.alf_alfabetizados_sge||0),0)},
+  ]);
+  const labels = ultimos.map(r => r.escola.length>13?r.escola.substr(0,13)+'…':r.escola);
+  barChart('chartAlf', labels, [
+    {label:'% Alfabetizados',data:calcs.map(c=>c.alf||0),backgroundColor:'rgba(88,166,255,.55)',borderColor:'#58a6ff',borderWidth:1},
+    {label:'% Prof. formados',data:calcs.map(c=>c.alfProf||0),backgroundColor:'rgba(88,166,255,.2)',borderColor:'rgba(88,166,255,.6)',borderWidth:1},
+  ]);
+  renderTableGeneric('table-alf',
+    ['Escola','Período','Avaliados','Alfab.','% Alfab.','% Prof. formados','Fonte'],
+    ultimos.map(r=>{
+      const c=calcIndicadores(r);
+      return [r.escola,r.periodo,
+        (r.alf_avaliados||r.alf_avaliados_sge||'—'),
+        (r.alf_alfabetizados||r.alf_alfabetizados_sge||'—'),
+        badgeV(c.alf),badgeV(c.alfProf),
+        r.fonte==='sge'?'<span class="badge badge-green">SGE</span>':'<span class="badge badge-gray">Manual</span>'
+      ];
+    })
+  );
+}
+
+// ============================
+// APRENDIZAGEM
+// ============================
+function renderApr(ultimos) {
+  const calcs = ultimos.map(r => calcIndicadores(r));
+  const mApr = avg(calcs.map(c => c.apr));
+  const mMedia = avg(calcs.map(c => c.aprMedia));
+  renderMetrics('metrics-apr', [
+    {label:'Cobertura recomposição',value:fmt(mApr),bar:mApr,color:'var(--green)'},
+    {label:'Média das notas (SGE)',value:mMedia!==null?mMedia.toFixed(1):'—',sub:'Escala 0–10'},
+    {label:'Simulados aplicados',value:ultimos.reduce((s,r)=>s+(r.apr_simulados||0),0)},
+    {label:'Alunos em reforço',value:ultimos.reduce((s,r)=>s+(r.apr_recomposicao||0),0)},
+  ]);
+  const labels = ultimos.map(r => r.escola.length>13?r.escola.substr(0,13)+'…':r.escola);
+  barChart('chartApr', labels, [
+    {label:'% Cobertura recomposição',data:calcs.map(c=>c.apr||0),backgroundColor:'rgba(63,185,80,.55)',borderColor:'#3fb950',borderWidth:1},
+    {label:'Média notas ×10',data:ultimos.map(r=>(r.apr_media||r.apr_media_sge||0)*10),backgroundColor:'rgba(63,185,80,.2)',borderColor:'rgba(63,185,80,.6)',borderWidth:1},
+  ]);
+  renderTableGeneric('table-apr',
+    ['Escola','Período','Defasagem','Em reforço','% Cobertura','Média notas','Simulados','Fonte'],
+    ultimos.map(r=>{
+      const c=calcIndicadores(r);
+      return [r.escola,r.periodo,
+        r.apr_defasagem||r.apr_defasagem_sge||'—',
+        r.apr_recomposicao||'—',
+        badgeV(c.apr),
+        c.aprMedia!==null?c.aprMedia.toFixed(1):'—',
+        r.apr_simulados||'—',
+        r.fonte==='sge'?'<span class="badge badge-green">SGE</span>':'<span class="badge badge-gray">Manual</span>'
+      ];
+    })
+  );
+}
+
+// ============================
+// EQUIDADE
+// ============================
+function renderEq(ultimos) {
+  const calcs = ultimos.map(r => calcIndicadores(r));
+  const mEq = avg(calcs.map(c => c.eq));
+  const mProf = avg(calcs.map(c => c.eqProf));
+  renderMetrics('metrics-eq', [
+    {label:'Cobertura AEE (média)',value:fmt(mEq),bar:mEq,color:'var(--gold)'},
+    {label:'Formação inclusiva',value:fmt(mProf),bar:mProf,color:'var(--gold)'},
+    {label:'Total PAEE',value:ultimos.reduce((s,r)=>s+(r.eq_paee||0),0)},
+    {label:'Com AEE garantido',value:ultimos.reduce((s,r)=>s+(r.eq_aee||0),0)},
+  ]);
+  const labels = ultimos.map(r => r.escola.length>13?r.escola.substr(0,13)+'…':r.escola);
+  barChart('chartEq', labels, [
+    {label:'% Cobertura AEE',data:calcs.map(c=>c.eq||0),backgroundColor:'rgba(212,168,67,.55)',borderColor:'#d4a843',borderWidth:1},
+    {label:'% Prof. inclusivos',data:calcs.map(c=>c.eqProf||0),backgroundColor:'rgba(212,168,67,.2)',borderColor:'rgba(212,168,67,.6)',borderWidth:1},
+  ]);
+  renderTableGeneric('table-eq',
+    ['Escola','Período','PAEE total','Com AEE','% AEE','% Prof. incl.'],
+    ultimos.map(r=>{
+      const c=calcIndicadores(r);
+      return [r.escola,r.periodo,r.eq_paee||'—',r.eq_aee||'—',badgeV(c.eq),badgeV(c.eqProf)];
+    })
+  );
+}
+
+// ============================
+// PERMANÊNCIA
+// ============================
+function renderPerm(ultimos) {
+  const calcs = ultimos.map(r => calcIndicadores(r));
+  const mFreq = avg(calcs.map(c => c.freq));
+  const mPerm = avg(calcs.map(c => c.perm));
+  const totalEvasoes = ultimos.reduce((s,r)=>s+(r.perm_evasao||0)+(r.perm_evasao_sge||0),0);
+  renderMetrics('metrics-perm', [
+    {label:'Frequência média (SGE)',value:fmt(mFreq),bar:mFreq,color:'var(--amber)'},
+    {label:'Taxa de permanência',value:fmt(mPerm),bar:mPerm,color:'var(--amber)'},
+    {label:'Total evasões',value:totalEvasoes,sub:'na rede'},
+    {label:'Recuperados (busca ativa)',value:ultimos.reduce((s,r)=>s+(r.perm_busca_ativa||0),0)},
+  ]);
+  const labels = ultimos.map(r => r.escola.length>13?r.escola.substr(0,13)+'…':r.escola);
+  barChart('chartPerm', labels, [
+    {label:'Frequência % (SGE)',data:calcs.map(c=>c.freq||0),backgroundColor:'rgba(227,179,65,.55)',borderColor:'#e3b341',borderWidth:1},
+    {label:'Permanência %',data:calcs.map(c=>c.perm||0),backgroundColor:'rgba(227,179,65,.2)',borderColor:'rgba(227,179,65,.6)',borderWidth:1},
+  ]);
+  renderTableGeneric('table-perm',
+    ['Escola','Período','Matrículas','Evasões','Busca ativa','Freq. % (SGE)','Permanência'],
+    ultimos.map(r=>{
+      const c=calcIndicadores(r);
+      const ev=(r.perm_evasao||0)+(r.perm_evasao_sge||0);
+      return [r.escola,r.periodo,
+        r.perm_matriculas||'—',ev||'—',r.perm_busca_ativa||'—',
+        badgeV(c.freq),badgeV(c.perm)
+      ];
+    })
+  );
+}
+
+// ============================
+// GESTÃO
+// ============================
+function renderGest(ultimos) {
+  const calcs = ultimos.map(r => calcIndicadores(r));
+  const mGest = avg(calcs.map(c => c.gestExec));
+  renderMetrics('metrics-gest', [
+    {label:'Execução do plano (média)',value:fmt(mGest),bar:mGest,color:'var(--red)'},
+    {label:'Planos concluídos',value:ultimos.filter(r=>r.gest_plano==='100'||r.gest_plano===100).length,sub:'escola(s)'},
+    {label:'Total ações aplicadas',value:ultimos.reduce((s,r)=>s+(r.gest_aplicadas||0),0)},
+    {label:'Reuniões realizadas',value:ultimos.reduce((s,r)=>s+(r.gest_reunioes||0),0)},
+  ]);
+  const labels = ultimos.map(r => r.escola.length>13?r.escola.substr(0,13)+'…':r.escola);
+  barChart('chartGest', labels, [
+    {label:'% Ações aplicadas',data:calcs.map(c=>c.gestExec||0),
+      backgroundColor: calcs.map(c=>(c.gestExec||0)>=80?'rgba(63,185,80,.6)':(c.gestExec||0)>=60?'rgba(227,179,65,.6)':'rgba(248,81,73,.6)'),
+      borderColor: calcs.map(c=>(c.gestExec||0)>=80?'#3fb950':(c.gestExec||0)>=60?'#e3b341':'#f85149'),
+      borderWidth:1
+    }
+  ]);
+  renderTableGeneric('table-gest',
+    ['Escola','Período','Plano TCE','Ações aplic.','Total ações','% Execução','Reuniões'],
+    ultimos.map(r=>{
+      const c=calcIndicadores(r);
+      const plano=String(r.gest_plano||'0')==='100'?'<span class="badge badge-green">Concluído</span>':String(r.gest_plano||'0')==='50'?'<span class="badge badge-amber">Em andamento</span>':'<span class="badge badge-red">Não iniciado</span>';
+      return [r.escola,r.periodo,plano,r.gest_aplicadas||'—',r.gest_total_acoes||'—',badgeV(c.gestExec),r.gest_reunioes||'—'];
+    })
+  );
+}
+
+// ============================
+// POR ESCOLA
+// ============================
+function renderEscolaDetail() {
+  const escola = document.getElementById('escola-detail-select').value;
+  const el = document.getElementById('escola-detail');
+  if (!escola) return;
+  const regs = DADOS.filter(r => r.escola === escola).sort((a, b) => a.periodo.localeCompare(b.periodo));
+  if (!regs.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-sub">Nenhum dado registrado para esta escola.</div></div>';
+    return;
+  }
+  const rows = regs.map(r => {
+    const c = calcIndicadores(r);
+    return `<tr>
+      <td>${r.periodo}</td>
+      <td>${badgeV(c.alf)}</td>
+      <td>${badgeV(c.apr)}</td>
+      <td>${badgeV(c.eq)}</td>
+      <td>${badgeV(c.freq||c.perm)}</td>
+      <td>${badgeV(c.gestExec)}</td>
+      <td>${r.fonte==='sge'?'<span class="badge badge-green">SGE</span>':'<span class="badge badge-gray">Manual</span>'}</td>
+    </tr>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="chart-card" style="margin-bottom:1.25rem">
+      <div class="chart-card-header"><div class="chart-card-title">Evolução temporal — ${escola}</div></div>
+      <div class="chart-wrap" style="height:240px"><canvas id="chartEscola" role="img" aria-label="Evolução dos indicadores da escola ${escola}">Histórico da escola.</canvas></div>
+    </div>
+    <div class="table-card">
+      <div class="table-card-header">Histórico de registros</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Período</th><th>Alfab.</th><th>Aprendiz.</th><th>Equidade</th><th>Perm/Freq</th><th>Gestão</th><th>Fonte</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>`;
+  // Gráfico de evolução
+  setTimeout(() => {
+    destroyChart('chartEscola');
+    const ctx = document.getElementById('chartEscola');
+    if (!ctx) return;
+    const calcs = regs.map(r => calcIndicadores(r));
+    const periodos = regs.map(r => r.periodo);
+    chartInst['chartEscola'] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: periodos,
+        datasets: [
+          {label:'Alfabetização',data:calcs.map(c=>c.alf),borderColor:'#58a6ff',backgroundColor:'transparent',pointBackgroundColor:'#58a6ff',borderWidth:2,pointRadius:4,spanGaps:true},
+          {label:'Aprendizagem',data:calcs.map(c=>c.apr),borderColor:'#3fb950',backgroundColor:'transparent',pointBackgroundColor:'#3fb950',borderWidth:2,pointRadius:4,spanGaps:true},
+          {label:'Equidade',data:calcs.map(c=>c.eq),borderColor:'#d4a843',backgroundColor:'transparent',pointBackgroundColor:'#d4a843',borderWidth:2,pointRadius:4,spanGaps:true},
+          {label:'Freq/Perm',data:calcs.map(c=>c.freq||c.perm),borderColor:'#e3b341',backgroundColor:'transparent',borderDash:[4,3],pointBackgroundColor:'#e3b341',borderWidth:2,pointRadius:4,spanGaps:true},
+          {label:'Gestão',data:calcs.map(c=>c.gestExec),borderColor:'#f85149',backgroundColor:'transparent',pointBackgroundColor:'#f85149',borderWidth:2,pointRadius:4,spanGaps:true},
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#8b949e',font:{size:11},boxWidth:10}}},
+        scales:{
+          y:{beginAtZero:true,max:100,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#8b949e',callback:v=>v+'%',font:{size:11}}},
+          x:{grid:{display:false},ticks:{color:'#8b949e',font:{size:11}}}
+        }
+      }
+    });
+  }, 50);
+}
+
+// ============================
+// INSERÇÃO MANUAL
+// ============================
+function salvarManual() {
+  const escola = document.getElementById('inp-escola').value;
+  const periodo = document.getElementById('inp-periodo').value;
+  const al = document.getElementById('alert-insert');
+  if (!escola) { showAlert(al, 'Selecione uma escola.', 'info'); return; }
+  const reg = {
+    escola, periodo, fonte: 'manual', ts: Date.now(),
+    alf_avaliados: +document.getElementById('alf-avaliados').value || 0,
+    alf_alfabetizados: +document.getElementById('alf-alfabetizados').value || 0,
+    alf_formados: +document.getElementById('alf-formados').value || 0,
+    alf_total_prof: +document.getElementById('alf-total-prof').value || 0,
+    apr_defasagem: +document.getElementById('apr-defasagem').value || 0,
+    apr_recomposicao: +document.getElementById('apr-recomposicao').value || 0,
+    apr_simulados: +document.getElementById('apr-simulados').value || 0,
+    eq_paee: +document.getElementById('eq-paee').value || 0,
+    eq_aee: +document.getElementById('eq-aee').value || 0,
+    eq_form_inc: +document.getElementById('eq-form-inc').value || 0,
+    eq_total_prof: +document.getElementById('eq-total-prof').value || 0,
+    perm_evasao: +document.getElementById('perm-evasao').value || 0,
+    perm_busca_ativa: +document.getElementById('perm-busca-ativa').value || 0,
+    gest_plano: document.getElementById('gest-plano').value,
+    gest_aplicadas: +document.getElementById('gest-aplicadas').value || 0,
+    gest_total_acoes: +document.getElementById('gest-total-acoes').value || 0,
+    gest_reunioes: +document.getElementById('gest-reunioes').value || 0,
+  };
+  DADOS.push(reg);
+  localStorage.setItem('tce_dados', JSON.stringify(DADOS));
+  showAlert(al, `Registro salvo para ${escola} (${periodo}).`, 'success');
+  renderAll();
+}
+
+function limparForm() {
+  document.querySelectorAll('#panel-inserir input[type=number]').forEach(el => el.value = '');
+  document.getElementById('gest-plano').value = '';
+}
+
+function showAlert(el, msg, tipo) {
+  el.className = 'alert alert-' + tipo;
+  el.textContent = msg;
+  setTimeout(() => el.className = 'alert hidden', 4000);
+}
+
+// ============================
+// EXPORTAR CSV
+// ============================
+function exportarCSV() {
+  if (!DADOS.length) { alert('Nenhum dado para exportar.'); return; }
+  const cols = Object.keys(DADOS[0]);
+  const csv = [cols.join(','), ...DADOS.map(r => cols.map(c => JSON.stringify(r[c] ?? '')).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'TCE_Jurua_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+</script>
+</body>
+</html>
