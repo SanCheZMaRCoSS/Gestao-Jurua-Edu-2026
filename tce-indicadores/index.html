@@ -599,6 +599,9 @@ tr:hover td { background: var(--azul-light); }
 .empty-state-title { font-size: 14px; font-weight: 600; color: var(--text2); margin-bottom: .4rem; }
 .empty-state-sub   { font-size: 12px; color: var(--text3); }
 
+.escola-edit-row:hover { background: var(--azul-light); }
+.escola-edit-row:last-child { border-bottom: none !important; }
+
 /* ============================================================
    RESPONSIVO
    ============================================================ */
@@ -1018,8 +1021,8 @@ tr:hover td { background: var(--azul-light); }
   </div>
 
   <div class="config-field">
-    <div class="config-field-title">Adicionar escolas da rede</div>
-    <div class="config-field-desc">Cadastre as escolas municipais de Juruá. O nome deve ser idêntico ao usado no SGE.</div>
+    <div class="config-field-title">Escolas da rede</div>
+    <div class="config-field-desc">As escolas são importadas automaticamente ao sincronizar. Aqui você pode adicionar manualmente, editar a zona (urbana/rural/ribeirinha) ou remover escolas da lista.</div>
     <div style="display:flex;gap:8px;margin-bottom:.75rem">
       <input type="text" id="nova-escola" placeholder="Nome exato da escola" style="flex:1">
       <select id="zona-escola" style="width:130px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:8px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px">
@@ -1163,13 +1166,73 @@ function salvarEscolas() {
 function renderListaEscolas() {
   const el = document.getElementById('lista-escolas');
   if (!el) return;
-  el.innerHTML = CONFIG.escolas.length ? CONFIG.escolas.map((e, i) => `
-    <div class="school-row">
-      <div class="school-name">${e.nome}</div>
-      <span class="badge badge-${e.zona==='urbana'?'blue':e.zona==='rural'?'green':'amber'}">${e.zona}</span>
-      <button class="btn btn-sm" onclick="removerEscola(${i})">Remover</button>
-    </div>`).join('') :
-    '<div style="padding:.5rem 0;font-size:13px;color:var(--text2)">Nenhuma escola cadastrada.</div>';
+  if (!CONFIG.escolas.length) {
+    el.innerHTML = '<div style="padding:.5rem 0;font-size:13px;color:var(--text2)">Nenhuma escola cadastrada. Clique em Sincronizar para importar do SGE.</div>';
+    return;
+  }
+
+  // Filtro de busca
+  const filtro = (document.getElementById('filtro-escolas') || {}).value || '';
+  const lista = CONFIG.escolas.filter(e =>
+    !filtro || e.nome.toLowerCase().includes(filtro.toLowerCase()) || e.zona.includes(filtro.toLowerCase())
+  );
+
+  // Contadores por zona
+  const total   = CONFIG.escolas.length;
+  const urbanas = CONFIG.escolas.filter(e => e.zona === 'urbana').length;
+  const rurais  = CONFIG.escolas.filter(e => e.zona === 'rural').length;
+  const ribei   = CONFIG.escolas.filter(e => e.zona === 'ribeirinha').length;
+
+  el.innerHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:.75rem;flex-wrap:wrap;align-items:center">
+      <input type="text" id="filtro-escolas" placeholder="Buscar escola..." oninput="renderListaEscolas()"
+        value="${filtro}" style="flex:1;min-width:160px;background:var(--surface2);border:1px solid var(--border2);
+        border-radius:var(--radius);padding:6px 10px;color:var(--text);font-size:13px;font-family:var(--font)">
+      <span class="badge badge-gray">${total} escolas</span>
+      <span class="badge badge-blue">${urbanas} urbanas</span>
+      <span class="badge badge-green">${rurais} rurais</span>
+      <span class="badge badge-amber">${ribei} ribeirinhas</span>
+      <button class="btn btn-sm" onclick="definirTodasZona('rural')" title="Marcar todas como rural">Todas → Rural</button>
+    </div>
+    <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+      <div style="display:grid;grid-template-columns:1fr auto auto;gap:0;background:var(--surface2);
+           padding:7px 12px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;
+           color:var(--text2);text-transform:uppercase;letter-spacing:.05em">
+        <span>Escola</span><span style="text-align:center;padding:0 8px">Zona</span><span></span>
+      </div>
+      ${lista.map((e, i) => {
+        const idx = CONFIG.escolas.indexOf(e);
+        return `<div style="display:grid;grid-template-columns:1fr auto auto;align-items:center;
+             gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px"
+             class="escola-edit-row">
+          <div style="color:var(--text)">${e.nome}</div>
+          <select onchange="editarZona(${idx}, this.value)"
+            style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;
+            padding:4px 8px;color:var(--text);font-size:12px;font-family:var(--font);cursor:pointer">
+            <option value="urbana"   ${e.zona==='urbana'   ?'selected':''}>🏙 Urbana</option>
+            <option value="rural"    ${e.zona==='rural'    ?'selected':''}>🌿 Rural</option>
+            <option value="ribeirinha"${e.zona==='ribeirinha'?'selected':''}>🌊 Ribeirinha</option>
+          </select>
+          <button class="btn btn-sm" onclick="removerEscola(${idx})"
+            style="color:var(--vermelho);border-color:rgba(192,57,43,.2);font-size:11px">✕</button>
+        </div>`;
+      }).join('')}
+    </div>
+    ${lista.length < CONFIG.escolas.length ? `<div style="font-size:12px;color:var(--text2);margin-top:.5rem">${lista.length} de ${total} escolas exibidas</div>` : ''}`;
+}
+
+function editarZona(idx, novaZona) {
+  if (idx < 0 || idx >= CONFIG.escolas.length) return;
+  CONFIG.escolas[idx].zona = novaZona;
+  salvarEscolas();
+  // Não re-renderiza para não perder foco do select
+  popularSelects();
+}
+
+function definirTodasZona(zona) {
+  if (!confirm('Definir TODAS as ' + CONFIG.escolas.length + ' escolas como "' + zona + '"?\nVocê poderá alterar individualmente depois.')) return;
+  CONFIG.escolas.forEach(e => e.zona = zona);
+  salvarEscolas();
 }
 
 function popularSelects() {
