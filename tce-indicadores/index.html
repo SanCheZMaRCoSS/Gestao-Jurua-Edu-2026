@@ -1106,6 +1106,9 @@ let chartInst = {};
 // INIT
 // ============================
 document.addEventListener('DOMContentLoaded', () => {
+  // Restaurar cache do SGE se existir
+  const cache = localStorage.getItem('tce_sheets_cache');
+  if (cache) { try { SHEETS = JSON.parse(cache); } catch(e){} }
   if (CONFIG.webAppUrl) {
     document.getElementById('cfg-url').value = CONFIG.webAppUrl;
     document.getElementById('config-banner').classList.add('hidden');
@@ -1193,12 +1196,12 @@ async function sincronizar() {
   }
   setSync('loading', 'Sincronizando...');
   try {
-    const abas = ['Frequencia', 'Notas', 'Alunos', 'Diagnostico'];
-    for (const aba of abas) {
-      const url = CONFIG.webAppUrl + '?aba=' + aba;
+    const tipos = ['escolas', 'frequencia', 'notas', 'situacao'];
+    for (const tipo of tipos) {
+      const url = CONFIG.webAppUrl + '?tipo=' + tipo;
       const r = await fetch(url);
       const json = await r.json();
-      if (json.dados) SHEETS[aba] = json.dados;
+      if (json.dados) SHEETS[tipo] = json.dados;
     }
     processarDadosSGE();
     localStorage.setItem('tce_sheets_cache', JSON.stringify(SHEETS));
@@ -1223,65 +1226,94 @@ function setSync(estado, msg) {
 function processarDadosSGE() {
   const periodo = detectarPeriodoAtual();
 
-  // Para cada escola, calcula frequência, notas e diagnóstico do SGE
+  // Registrar escolas encontradas no SGE automaticamente
+  if (SHEETS['escolas'] && SHEETS['escolas'].length) {
+    SHEETS['escolas'].forEach(e => {
+      const nome = e.escola || '';
+      if (nome && !CONFIG.escolas.find(x => normalizar(x.nome) === normalizar(nome))) {
+        // Detecta zona pelo código (heurística simples)
+        const zona = e.codigo && e.codigo.includes('RIB') ? 'ribeirinha' :
+                     e.codigo && (e.codigo.includes('RUR') || e.codigo.includes('FAZ')) ? 'rural' : 'urbana';
+        CONFIG.escolas.push({ nome, zona });
+      }
+    });
+    salvarEscolas();
+  }
+
   CONFIG.escolas.forEach(escola => {
     const dadoExistente = DADOS.find(d => d.escola === escola.nome && d.periodo === periodo && d.fonte === 'sge');
-    if (dadoExistente) return; // já processado
+    if (dadoExistente) {
+      // Atualiza registro existente
+      DADOS = DADOS.filter(d => !(d.escola === escola.nome && d.periodo === periodo && d.fonte === 'sge'));
+    }
 
     const regSGE = { escola: escola.nome, periodo, fonte: 'sge', ts: Date.now() };
 
-    // FREQUÊNCIA
-    if (SHEETS['Frequencia']) {
-      const freqEscola = SHEETS['Frequencia'].filter(r => normalizar(r.escola) === normalizar(escola.nome));
+    // FREQUÊNCIA — vem consolidada por aluno com % pronto
+    if (SHEETS['frequencia']) {
+      const freqEscola = SHEETS['frequencia'].filter(r =>
+        normalizar(r.escola) === normalizar(escola.nome) ||
+        normalizar(r.codigo) === normalizar(escola.nome)
+      );
       if (freqEscola.length) {
-        const alunos = [...new Set(freqEscola.map(r => r.aluno_id))];
-        const presencas = freqEscola.filter(r => String(r.presente).toUpperCase() === 'S').length;
-        regSGE.freq_total_registros = freqEscola.length;
-        regSGE.freq_presencas = presencas;
-        regSGE.perm_frequencia = Math.round(presencas / freqEscola.length * 100);
+        regSGE.perm_matriculas = freqEscola.length;
+        // Média do % de frequência já calculado pelo SGE
+        const pcts = freqEscola.map(r => Number(r.pct_freq)).filter(v => !isNaN(v) && v > 0);
+        if (pcts.length) regSGE.perm_frequencia = Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length);
+        // Evasão = alunos com situação contendo "evasão" ou "abandono"
+        regSGE.perm_evasao_sge = freqEscola.filter(r =>
+          /evas|abandon/i.test(String(r.situacao||''))
+        ).length;
+        // Total de faltas da escola
+        regSGE.total_faltas = freqEscola.reduce((s,r)=>s+Number(r.faltas||0),0);
       }
     }
 
-    // MATRÍCULAS / EVASÃO
-    if (SHEETS['Alunos']) {
-      const alunosEscola = SHEETS['Alunos'].filter(r => normalizar(r.escola) === normalizar(escola.nome));
-      regSGE.perm_matriculas = alunosEscola.filter(r => String(r.ativo).toUpperCase() === 'S').length;
-      regSGE.perm_evasao_sge = alunosEscola.filter(r => String(r.ativo).toUpperCase() === 'N' && r.data_saida).length;
+    // MATRÍCULAS — da aba "Todas as Escolas"
+    if (SHEETS['escolas']) {
+      const escoRow = SHEETS['escolas'].find(r =>
+        normalizar(r.escola) === normalizar(escola.nome) ||
+        normalizar(r.codigo) === normalizar(escola.nome)
+      );
+      if (escoRow) {
+        regSGE.perm_matriculas = Number(escoRow.alunos) || regSGE.perm_matriculas || 0;
+        regSGE.total_turmas = Number(escoRow.turmas) || 0;
+        regSGE.alunos_ei  = Number(escoRow.ei)  || 0;
+        regSGE.alunos_ef1 = Number(escoRow.ef1) || 0;
+        regSGE.alunos_ef2 = Number(escoRow.ef2) || 0;
+        regSGE.alunos_eja = (Number(escoRow.eja1)||0) + (Number(escoRow.eja2)||0);
+      }
+    }
+
+    // SITUAÇÃO FINAL — evasão/reprovação confirmada
+    if (SHEETS['situacao']) {
+      const sitEscola = SHEETS['situacao'].filter(r =>
+        normalizar(r.escola||r.codigo||'') === normalizar(escola.nome)
+      );
+      if (sitEscola.length) {
+        regSGE.perm_evasao_sge = sitEscola.filter(r =>
+          /evas|abandon/i.test(String(r.situacao||r.resultado||''))
+        ).length;
+        regSGE.reprovados = sitEscola.filter(r =>
+          /reprov/i.test(String(r.situacao||r.resultado||''))
+        ).length;
+      }
     }
 
     // NOTAS
-    if (SHEETS['Notas']) {
-      const notasEscola = SHEETS['Notas'].filter(r =>
-        normalizar(r.escola) === normalizar(escola.nome) &&
-        mapBimestre(r.bimestre) === periodo
+    if (SHEETS['notas'] && SHEETS['notas'].length) {
+      const notasEscola = SHEETS['notas'].filter(r =>
+        normalizar(r.escola||'') === normalizar(escola.nome)
       );
       if (notasEscola.length) {
-        const vals = notasEscola.map(r => parseFloat(r.nota)).filter(v => !isNaN(v));
-        if (vals.length) regSGE.apr_media_sge = Math.round(vals.reduce((a,b)=>a+b,0) / vals.length * 10) / 10;
-        // Conta alunos com nota abaixo de 5 como defasagem
-        const porAluno = {};
-        notasEscola.forEach(r => {
-          if (!porAluno[r.aluno_id]) porAluno[r.aluno_id] = [];
-          porAluno[r.aluno_id].push(parseFloat(r.nota));
-        });
-        const defasados = Object.values(porAluno).filter(notas => {
-          const media = notas.reduce((a,b)=>a+b,0)/notas.length;
-          return media < 5;
-        }).length;
-        regSGE.apr_defasagem_sge = defasados;
-      }
-    }
-
-    // DIAGNÓSTICO ALFABETIZAÇÃO
-    if (SHEETS['Diagnostico']) {
-      const diagEscola = SHEETS['Diagnostico'].filter(r =>
-        normalizar(r.escola) === normalizar(escola.nome) &&
-        mapBimestre(r.bimestre) === periodo
-      );
-      if (diagEscola.length) {
-        regSGE.alf_avaliados_sge = diagEscola.length;
-        // Nível 3 e 4 = alfabetizado
-        regSGE.alf_alfabetizados_sge = diagEscola.filter(r => parseInt(r.nivel_leitura) >= 3).length;
+        const vals = notasEscola.map(r => {
+          const v = parseFloat(String(r.nota||r.media||r.resultado||0).replace(',','.'));
+          return isNaN(v) ? null : v;
+        }).filter(v => v !== null);
+        if (vals.length) {
+          regSGE.apr_media_sge = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*10)/10;
+          regSGE.apr_defasagem_sge = vals.filter(v => v < 5).length;
+        }
       }
     }
 
@@ -1318,10 +1350,10 @@ async function testarConexao() {
   el.textContent = '...testando';
   el.style.color = 'var(--text2)';
   try {
-    const r = await fetch(url + '?aba=Alunos');
+    const r = await fetch(url + '?tipo=escolas');
     const j = await r.json();
     if (j.dados) {
-      el.textContent = '✓ Conexão OK — ' + j.dados.length + ' alunos encontrados';
+      el.textContent = '✓ Conexão OK — ' + j.dados.length + ' escola(s) encontrada(s)';
       el.style.color = 'var(--green)';
       CONFIG.webAppUrl = url;
       localStorage.setItem('tce_url', url);
