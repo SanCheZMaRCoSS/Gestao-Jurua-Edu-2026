@@ -2323,7 +2323,7 @@ const ANO_ORDEM = [
 let nomeEscola      = 'Escola Municipal Indígena Coridsa';
 let municipioEscola = 'Juruá — Amazonas';
 let configEscola    = { diretor:'Felipe da Silva', secretario:'', inep:'13077970', anoLetivo:'2026' };
-let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbwEGer3cJja1lT-3zdIk9xFiZ8-_3iboCm4J4-p-KWUPgj4bA4bllVzVKudI6XuG0tDHQ/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMICORIDSA', ativo:true, semedAtivo:true };
+let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbyN2nwCH4f7M2LCVBq8VXeMu4E2ltxPXADlu4lqohn5l7S6t-fmybh7G-5LPXNu7n_z2g/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMICORIDSA', ativo:true, semedAtivo:true };
 
 let turmas          = [];
 let alunos          = [];
@@ -2350,7 +2350,7 @@ function carregarConfig() {
   // cloudConfig e nomeEscola já estão definidos corretamente nas variáveis let
   // localStorage só pode personalizar secretário e anoLetivo
   try {
-    const c = localStorage.getItem('gestao_config_EMICORIDSA');
+    const c = localStorage.getItem('gestao_config_EMEJACIGUARA');
     if (c) {
       const parsed = JSON.parse(c);
       if (parsed.configEscola?.secretario) configEscola.secretario = parsed.configEscola.secretario;
@@ -2361,7 +2361,7 @@ function carregarConfig() {
 
 function salvarConfig() {
   try {
-    localStorage.setItem('gestao_config_EMICORIDSA', JSON.stringify({
+    localStorage.setItem('gestao_config_EMEJACIGUARA', JSON.stringify({
       configEscola: { secretario: configEscola.secretario, anoLetivo: configEscola.anoLetivo }
     }));
   } catch(e) { console.warn('Erro ao salvar config:', e); }
@@ -3012,7 +3012,7 @@ function getNota(alunoId, disc, bim, tipo='reg') {
 
 function setNota(alunoId, disc, bim, val, tipo='reg') {
   if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
-    pedirSenhaTurma(null);
+    pedirSenhaTurma(() => salvarNotaBimestre(alunoId, bim, tipo, val));
     return;
   }
   if (!notas[alunoId]) notas[alunoId] = {};
@@ -3222,6 +3222,10 @@ function atualizarSelectAlunos() {
 }
 
 function salvarObservacao() {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => salvarObservacao());
+    return;
+  }
   const alunoId = parseInt(document.getElementById('obsAluno').value);
   const tipo    = document.getElementById('obsTipo').value;
   const data    = document.getElementById('obsData').value;
@@ -3265,6 +3269,10 @@ function renderObservacoes() {
 }
 
 function removerObs(i) {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => removerObs(i));
+    return;
+  }
   const filtro = turmaAtual ? observacoes.filter(o => { const a = alunos.find(a => a.id===o.alunoId); return !a || a.turmaId===turmaAtual.id; }) : observacoes;
   const obs = filtro[i];
   const idx = observacoes.indexOf(obs);
@@ -3371,6 +3379,10 @@ function abrirEditarAluno(id) {
 }
 
 async function salvarAluno() {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => salvarAluno());
+    return;
+  }
   const editId  = document.getElementById('alunoEditId').value;
   const nome    = document.getElementById('alunoNome').value.trim();
   const mat     = document.getElementById('alunoMatricula').value.trim();
@@ -3417,6 +3429,10 @@ async function salvarAluno() {
 function cadastrarAluno() { salvarAluno(); }
 
 async function excluirAluno(id) {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => excluirAluno(id));
+    return;
+  }
   const a = alunos.find(a => a.id === id);
   if (!a) return;
   if (!confirm(`Excluir o aluno "${a.nome}"?\n\nTodos os dados serão removidos. Esta ação não pode ser desfeita.`)) return;
@@ -3604,6 +3620,10 @@ function getDiarioEntry(turmaId, grupo, data, disc) {
 }
 
 function setDiarioField(turmaId, grupo, data, disc, campo, valor) {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => setDiarioField(turmaId, grupo, data, disc, campo, valor));
+    return;
+  }
   if (!diario[turmaId]) diario[turmaId] = {};
   if (!diario[turmaId][grupo]) diario[turmaId][grupo] = {};
   if (!diario[turmaId][grupo][data]) diario[turmaId][grupo][data] = {};
@@ -3692,6 +3712,12 @@ function renderDiario() {
 function escHtml(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function diarioBnccHandler(sel, turmaId, grupo, data, disc) {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => {
+      diarioBnccHandler(sel, turmaId, grupo, data, disc);
+    });
+    return;
+  }
   if (!diario[turmaId]) diario[turmaId] = {};
   if (!diario[turmaId][grupo]) diario[turmaId][grupo] = {};
   if (!diario[turmaId][grupo][data]) diario[turmaId][grupo][data] = {};
@@ -4543,6 +4569,15 @@ function normalizarChavesDiario(diarioRaw) {
 }
 
 // ===== INIT =====
+// Limpar localStorage para evitar contaminação entre escolas
+try {
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    keysToRemove.push(localStorage.key(i));
+  }
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+} catch(e) {}
+
 init();
 </script>
 </body>
