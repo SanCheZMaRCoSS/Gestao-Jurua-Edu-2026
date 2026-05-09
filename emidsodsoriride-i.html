@@ -1481,7 +1481,7 @@
         </select>
         <div style="margin-top:10px">
           <div class="field-label">Buscar Aluno</div>
-          <input type="text" id="buscaAluno" placeholder="🔍 Nome ou matrícula..." autocomplete="off" oninput="filtrarAlunos()">
+          <input type="text" id="buscaAluno" placeholder="🔍 Nome ou matrícula..." autocomplete="new-password" oninput="filtrarAlunos()">
         </div>
       </div>
     </div>
@@ -2323,7 +2323,7 @@ const ANO_ORDEM = [
 let nomeEscola      = 'Escola Municipal Indígena Dsodsoriride — Anexo I (Boca do Pau-Pixuna)';
 let municipioEscola = 'Juruá — Amazonas';
 let configEscola    = { diretor:'Marcelo Amorim', secretario:'', inep:'13077953', anoLetivo:'2026' };
-let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbzm_UtmhLv5PLlwyg-wti5jeVokeUtoJUBLoPZhOAeDK2cpDXD4TvKRZ8Re-mr3T2lg3g/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMIDSODSORIRIDE-I', ativo:true, semedAtivo:true };
+let cloudConfig     = { scriptUrl:'https://script.google.com/macros/s/AKfycbyN_YeYOXaMTUJLxuiX4l0Z74IvCSz9SNKvajE5kRqIRteQjQFY3oQ4ufC5UbOm_cR3UQ/exec', semedScriptUrl:'https://script.google.com/macros/s/AKfycbxjRxWNSXPPVbZx2IzXURPA_x3hRag3dgsBW143tRIRJUH/exec', escolaCode:'EMIDSODSORIRIDE-I', ativo:true, semedAtivo:true };
 
 let turmas          = [];
 let alunos          = [];
@@ -2350,7 +2350,7 @@ function carregarConfig() {
   // cloudConfig e nomeEscola já estão definidos corretamente nas variáveis let
   // localStorage só pode personalizar secretário e anoLetivo
   try {
-    const c = localStorage.getItem('gestao_config_EMIDSODSORIRIDE-I');
+    const c = localStorage.getItem('gestao_config_EMEJACIGUARA');
     if (c) {
       const parsed = JSON.parse(c);
       if (parsed.configEscola?.secretario) configEscola.secretario = parsed.configEscola.secretario;
@@ -2361,7 +2361,7 @@ function carregarConfig() {
 
 function salvarConfig() {
   try {
-    localStorage.setItem('gestao_config_EMIDSODSORIRIDE-I', JSON.stringify({
+    localStorage.setItem('gestao_config_EMEJACIGUARA', JSON.stringify({
       configEscola: { secretario: configEscola.secretario, anoLetivo: configEscola.anoLetivo }
     }));
   } catch(e) { console.warn('Erro ao salvar config:', e); }
@@ -2882,6 +2882,79 @@ function getFreqAluno(alunoId) {
   return { pct: total ? Math.round(presentes/total*100) : 100, faltas: total - presentes, dias: total };
 }
 
+
+// ── CALENDÁRIO ESCOLAR MUNICIPAL DE JURUÁ 2026 ──────────────────
+const FERIADOS_2026 = new Set([
+  '2026-02-18', // Quarta-feira de Cinzas
+  '2026-04-03', // Sexta-feira Santa
+  '2026-04-21', // Tiradentes
+  '2026-05-01', // Dia do Trabalhador
+  '2026-05-13', // N. Sra. de Fátima (Padroeira de Juruá)
+  '2026-06-04', // Corpus Christi
+  '2026-09-05', // Elevação do AM à categoria de Província
+  '2026-09-07', // Independência do Brasil
+  '2026-10-04', // Dia de São Francisco de Assis
+  '2026-10-12', // N. Sra. Aparecida / Dia das Crianças
+  '2026-10-15', // Dia do Professor
+  '2026-10-28', // Dia do Servidor Público
+  '2026-11-02', // Dia de Finados
+  '2026-11-15', // Proclamação da República
+  '2026-11-20', // Dia da Consciência Negra
+  '2026-12-08', // N. Sra. Imaculada Conceição
+  '2026-12-19', // Aniversário de Juruá
+  '2026-12-25', // Natal
+]);
+
+const SABADOS_LETIVOS_2026 = new Set([
+  '2026-03-21','2026-03-28',
+  '2026-04-11','2026-04-18',
+  '2026-05-09','2026-05-23','2026-05-30',
+  '2026-06-13','2026-06-27',
+  '2026-07-04','2026-07-18',
+  '2026-08-08','2026-08-22',
+  '2026-09-19','2026-09-26',
+  '2026-10-10','2026-10-31',
+]);
+
+// Início de cada bimestre
+const INICIO_BIMESTRES = {
+  1: new Date(2026, 2, 9),  // 09/03
+  2: new Date(2026, 4, 18), // 18/05
+  3: new Date(2026, 6, 27), // 27/07
+  4: new Date(2026, 9, 1),  // 01/10
+};
+const FIM_BIMESTRES = {
+  1: new Date(2026, 4, 14), // 14/05
+  2: new Date(2026, 6, 23), // 23/07
+  3: new Date(2026, 8, 29), // 29/09
+  4: new Date(2026, 11, 15),// 15/12
+};
+
+function getDiasLetivos(mes) {
+  // mes: 1-12
+  const diasMes = new Date(2026, mes, 0).getDate();
+  const dias = [];
+  for (let d = 1; d <= diasMes; d++) {
+    const data = new Date(2026, mes-1, d);
+    const dow  = data.getDay(); // 0=dom, 6=sab
+    const iso  = `2026-${String(mes).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+    // Verificar se é dia letivo
+    const ehFeriado      = FERIADOS_2026.has(iso);
+    const ehSabado       = dow === 6;
+    const ehDomingo      = dow === 0;
+    const ehSabadoLetivo = SABADOS_LETIVOS_2026.has(iso);
+
+    // Inclui se: (seg-sex OU sábado letivo) E não é feriado
+    if (!ehFeriado && !ehDomingo) {
+      if (ehSabadoLetivo || (!ehSabado)) {
+        dias.push(d);
+      }
+    }
+  }
+  return dias;
+}
+
 function renderFrequencia() {
   const el = document.getElementById('tabelaFrequencia');
   if (!turmaAtual || alunosFiltrados.length === 0) {
@@ -2889,13 +2962,7 @@ function renderFrequencia() {
     return;
   }
   const mes      = parseInt(document.getElementById('selMes').value);
-  const diasMes  = new Date(2026, mes, 0).getDate();
-  const diasUteis = [];
-  for (let d = 1; d <= diasMes; d++) {
-    const dow = new Date(2026, mes-1, d).getDay();
-    if (dow >= 1 && dow <= 5) diasUteis.push(d);
-  }
-  const diasShow = diasUteis.slice(0, 22);
+  const diasShow = getDiasLetivos(mes);
   const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
 
   let html = `<table><thead><tr>
@@ -3012,7 +3079,7 @@ function getNota(alunoId, disc, bim, tipo='reg') {
 
 function setNota(alunoId, disc, bim, val, tipo='reg') {
   if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
-    pedirSenhaTurma(null);
+    pedirSenhaTurma(() => salvarNotaBimestre(alunoId, bim, tipo, val));
     return;
   }
   if (!notas[alunoId]) notas[alunoId] = {};
@@ -3222,6 +3289,10 @@ function atualizarSelectAlunos() {
 }
 
 function salvarObservacao() {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => salvarObservacao());
+    return;
+  }
   const alunoId = parseInt(document.getElementById('obsAluno').value);
   const tipo    = document.getElementById('obsTipo').value;
   const data    = document.getElementById('obsData').value;
@@ -3265,6 +3336,10 @@ function renderObservacoes() {
 }
 
 function removerObs(i) {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => removerObs(i));
+    return;
+  }
   const filtro = turmaAtual ? observacoes.filter(o => { const a = alunos.find(a => a.id===o.alunoId); return !a || a.turmaId===turmaAtual.id; }) : observacoes;
   const obs = filtro[i];
   const idx = observacoes.indexOf(obs);
@@ -3371,6 +3446,10 @@ function abrirEditarAluno(id) {
 }
 
 async function salvarAluno() {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => salvarAluno());
+    return;
+  }
   const editId  = document.getElementById('alunoEditId').value;
   const nome    = document.getElementById('alunoNome').value.trim();
   const mat     = document.getElementById('alunoMatricula').value.trim();
@@ -3417,6 +3496,10 @@ async function salvarAluno() {
 function cadastrarAluno() { salvarAluno(); }
 
 async function excluirAluno(id) {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => excluirAluno(id));
+    return;
+  }
   const a = alunos.find(a => a.id === id);
   if (!a) return;
   if (!confirm(`Excluir o aluno "${a.nome}"?\n\nTodos os dados serão removidos. Esta ação não pode ser desfeita.`)) return;
@@ -3604,6 +3687,10 @@ function getDiarioEntry(turmaId, grupo, data, disc) {
 }
 
 function setDiarioField(turmaId, grupo, data, disc, campo, valor) {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => setDiarioField(turmaId, grupo, data, disc, campo, valor));
+    return;
+  }
   if (!diario[turmaId]) diario[turmaId] = {};
   if (!diario[turmaId][grupo]) diario[turmaId][grupo] = {};
   if (!diario[turmaId][grupo][data]) diario[turmaId][grupo][data] = {};
@@ -3652,7 +3739,7 @@ function renderDiario() {
           <div class="diario-entry-header" onclick="toggleDiarioEntry('${eid}')">
             <span class="diario-disc">${disc}</span>
             <span class="diario-entry-preview">${entry.conteudo ? entry.conteudo.substr(0,60)+'...' : 'Clique para registrar'}</span>
-            <span class="diario-toggle">▼</span>
+            <span class="diario-toggle">⌄</span>
           </div>
           <div class="diario-entry-body" id="deb_${eid}" style="display:none">
             <div class="form-group full" style="padding:12px 16px 0">
@@ -3692,6 +3779,12 @@ function renderDiario() {
 function escHtml(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function diarioBnccHandler(sel, turmaId, grupo, data, disc) {
+  if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
+    pedirSenhaTurma(() => {
+      diarioBnccHandler(sel, turmaId, grupo, data, disc);
+    });
+    return;
+  }
   if (!diario[turmaId]) diario[turmaId] = {};
   if (!diario[turmaId][grupo]) diario[turmaId][grupo] = {};
   if (!diario[turmaId][grupo][data]) diario[turmaId][grupo][data] = {};
@@ -3722,12 +3815,9 @@ function renderDiarioCalendario(turmaId, dataSel) {
   if (!cal) return;
   const diasComReg = getDiasComRegistro(turmaId);
   const [ano, mes] = dataSel.split('-').map(Number);
-  const diasMes = new Date(ano, mes, 0).getDate();
   let html = '<div style="display:flex;flex-wrap:wrap;gap:4px;padding:8px 16px">';
-  for (let d = 1; d <= diasMes; d++) {
+  for (let d of getDiasLetivos(mes)) {
     const dt  = `${ano}-${String(mes).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dow = new Date(ano, mes-1, d).getDay();
-    if (dow === 0 || dow === 6) continue;
     const temReg = diasComReg.has(dt);
     const isSel  = dt === dataSel;
     html += `<button onclick="selecionarDataDiario('${dt}')" style="width:28px;height:28px;border-radius:5px;border:1.5px solid ${isSel?'var(--azul-principal)':temReg?'var(--dourado)':'var(--cinza-border)'};background:${isSel?'var(--azul-principal)':temReg?'var(--dourado-light)':'white'};color:${isSel?'white':temReg?'#7a5c00':'var(--cinza-text)'};font-size:0.72rem;cursor:pointer;font-weight:${isSel||temReg?'700':'400'}">${d}</button>`;
@@ -4543,6 +4633,15 @@ function normalizarChavesDiario(diarioRaw) {
 }
 
 // ===== INIT =====
+// Limpar localStorage para evitar contaminação entre escolas
+try {
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    keysToRemove.push(localStorage.key(i));
+  }
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+} catch(e) {}
+
 init();
 </script>
 </body>
