@@ -1389,6 +1389,7 @@
   }
 
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -1414,6 +1415,8 @@
         </div>
         <div class="btn-group-sep"></div>
         <button class="btn-header cadastro" onclick="abrirCadastroAluno()"        title="Cadastrar novo aluno">➕ Aluno</button>
+        <button class="btn-header cadastro" onclick="abrirImportarDocx()" title="Importar alunos de arquivo Word (.docx)">📄 Importar Word</button>
+        <input type="file" id="inputDocxAlunos" accept=".docx" style="display:none" onchange="processarDocxAlunos(event)">
         <button class="btn-header cadastro" onclick="openModal('modalObs')"        title="Registrar observação">📝 Observação</button>
         <button class="btn-header cadastro" onclick="openModal('modalEscola')"     title="Configurar dados da escola">⚙️ Escola</button>
         <div class="btn-group-sep"></div>
@@ -1789,7 +1792,21 @@
       </div>
     </div>
 
-  </main>
+  
+<!-- ── MODAL: IMPORTAR ALUNOS DO WORD ─────────────────────── -->
+<div class="modal-overlay" id="modalImportarDocx">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-title">📄 Importar Alunos do Word</div>
+    <div id="importDocxInfo" style="margin-bottom:12px;font-size:0.85rem;color:#555"></div>
+    <div id="importDocxPreview" style="max-height:320px;overflow-y:auto;margin-bottom:14px;border:1px solid #e5e7eb;border-radius:8px;padding:8px"></div>
+    <div id="importDocxStatus" style="font-size:0.82rem;color:#888;margin-bottom:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalImportarDocx')">Cancelar</button>
+      <button class="btn btn-primary" id="btnConfirmarImportDocx" onclick="confirmarImportarDocx()" style="display:none">✅ Importar Alunos</button>
+    </div>
+  </div>
+</div>
+</main>
 </div>
 
 <!-- ===== MODAL: NOVO ALUNO / EDITAR ALUNO ===== -->
@@ -2477,6 +2494,189 @@ function agendarAutoSave(msg = '') {
   clearTimeout(autoSaveTimer);
   setSyncStatus('syncing', msg || 'Aguardando...');
   autoSaveTimer = setTimeout(() => salvarNoSheets(), 3000);
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// IMPORTAR ALUNOS DO WORD (.docx)
+// ═══════════════════════════════════════════════════════════════
+
+let alunosParaImportar = [];
+
+function abrirImportarDocx() {
+  if (!turmaAtual) {
+    showToast('⚠️ Selecione uma turma antes de importar!', 'gold');
+    return;
+  }
+  document.getElementById('inputDocxAlunos').value = '';
+  document.getElementById('inputDocxAlunos').click();
+}
+
+function processarDocxAlunos(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  showToast('⏳ Lendo arquivo...', 'blue');
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      // Ler o .docx como ZIP e extrair o document.xml
+      const arrayBuffer = e.target.result;
+      extrairAlunosDocx(arrayBuffer, file.name);
+    } catch(err) {
+      showToast('❌ Erro ao ler arquivo: ' + err.message, 'red');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function extrairAlunosDocx(buffer, nomeArq) {
+  try {
+    const zip = await JSZip.loadAsync(buffer);
+    const xml = await zip.file('word/document.xml').async('string');
+    processarXmlDocx(xml, nomeArq);
+  } catch(err) {
+    showToast('❌ Erro ao processar arquivo: ' + err.message, 'red');
+    console.error('Erro DOCX:', err);
+  }
+}
+
+function processarXmlDocx(xml, nomeArq) {
+  // Parser de XML
+  const parser = new DOMParser();
+  const doc    = parser.parseFromString(xml, 'application/xml');
+
+  // Encontrar todas as linhas de tabela (w:tr)
+  const linhas = doc.querySelectorAll('tr');
+
+  const alunos_encontrados = [];
+
+  linhas.forEach(function(tr) {
+    const celulas = tr.querySelectorAll('tc');
+    if (celulas.length < 3) return; // linha inválida
+
+    // Extrair texto de cada célula
+    const textos = Array.from(celulas).map(function(tc) {
+      return Array.from(tc.querySelectorAll('t'))
+        .map(function(t) { return t.textContent; })
+        .join('').trim();
+    });
+
+    const nº   = textos[0];
+    const nome = textos[1];
+    const ano  = textos[2];
+    const nasc = textos[4] || ''; // coluna Data de Nascimento
+
+    // Ignorar cabeçalhos e linhas vazias
+    if (!nome || nome === 'NOME DO ALUNO (A)' || nome === 'NOME') return;
+    if (!nº || isNaN(parseInt(nº))) return;
+    if (nome.length < 3) return;
+
+    // Capitalizar nome: Maiúscula em cada palavra
+    const nomeCapitalizado = nome.toLowerCase().split(' ').map(function(p) {
+      return p.length > 2 ? p.charAt(0).toUpperCase() + p.slice(1) : p;
+    }).join(' ');
+
+    // Converter data DD/MM/YYYY para YYYY-MM-DD
+    let nascISO = '';
+    if (nasc && nasc.includes('/')) {
+      const partes = nasc.split('/');
+      if (partes.length === 3) {
+        nascISO = partes[2] + '-' + partes[1].padStart(2,'0') + '-' + partes[0].padStart(2,'0');
+      }
+    }
+
+    alunos_encontrados.push({
+      numero: parseInt(nº),
+      nome:   nomeCapitalizado,
+      ano:    ano,
+      nasc:   nascISO
+    });
+  });
+
+  // Mostrar preview
+  alunosParaImportar = alunos_encontrados;
+  mostrarPreviewDocx(nomeArq);
+}
+
+function mostrarPreviewDocx(nomeArq) {
+  const preview = document.getElementById('importDocxPreview');
+  const info    = document.getElementById('importDocxInfo');
+  const status  = document.getElementById('importDocxStatus');
+  const btnConf = document.getElementById('btnConfirmarImportDocx');
+
+  if (alunosParaImportar.length === 0) {
+    info.innerHTML = `<b>Arquivo:</b> ${nomeArq}`;
+    preview.innerHTML = '<p style="color:#e74c3c;padding:8px">Nenhum aluno encontrado. Verifique se o arquivo tem uma tabela com colunas: Nº | Nome | Ano/Série | ... | Data de Nascimento.</p>';
+    status.textContent = '';
+    btnConf.style.display = 'none';
+    openModal('modalImportarDocx');
+    return;
+  }
+
+  info.innerHTML = `<b>Arquivo:</b> ${nomeArq} &nbsp;|&nbsp; <b>Turma:</b> ${turmaAtual.nome} &nbsp;|&nbsp; <b>${alunosParaImportar.length} aluno(s) encontrado(s)</b>`;
+
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:0.82rem">';
+  html += '<thead><tr style="background:#1a6b3c;color:white">' +
+          '<th style="padding:6px 8px;text-align:left">Nº</th>' +
+          '<th style="padding:6px 8px;text-align:left">Nome</th>' +
+          '<th style="padding:6px 8px;text-align:left">Ano/Série</th>' +
+          '<th style="padding:6px 8px;text-align:left">Data Nasc.</th>' +
+          '</tr></thead><tbody>';
+
+  alunosParaImportar.forEach(function(a, i) {
+    const bg = i % 2 === 0 ? '#f9f9f9' : '#ffffff';
+    html += `<tr style="background:${bg}">` +
+            `<td style="padding:5px 8px">${a.numero}</td>` +
+            `<td style="padding:5px 8px">${a.nome}</td>` +
+            `<td style="padding:5px 8px">${a.ano}</td>` +
+            `<td style="padding:5px 8px">${a.nasc ? a.nasc.split('-').reverse().join('/') : '—'}</td>` +
+            '</tr>';
+  });
+  html += '</tbody></table>';
+
+  preview.innerHTML = html;
+  status.textContent = 'Revise os dados acima antes de confirmar. Alunos já cadastrados com o mesmo nome serão ignorados.';
+  btnConf.style.display = '';
+  openModal('modalImportarDocx');
+}
+
+function confirmarImportarDocx() {
+  if (!alunosParaImportar.length || !turmaAtual) return;
+
+  let adicionados = 0, ignorados = 0;
+  const matriculasExistentes = new Set(alunos.map(function(a) { return a.nome.toLowerCase(); }));
+
+  alunosParaImportar.forEach(function(a) {
+    if (matriculasExistentes.has(a.nome.toLowerCase())) {
+      ignorados++;
+      return;
+    }
+
+    // Usar número sequencial do arquivo como matrícula
+    const mat = String(a.numero).padStart(2, '0');
+
+    alunos.push({
+      id:        Date.now() + adicionados,
+      nome:      a.nome,
+      matricula: mat,
+      turmaId:   turmaAtual.id,
+      turmaNome: turmaAtual.nome,
+      ano:       a.ano,
+      nasc:      a.nasc,
+      resp:      '',
+      contato:   '',
+      endereco:  ''
+    });
+    adicionados++;
+  });
+
+  closeModal('modalImportarDocx');
+  alunosParaImportar = [];
+  renderTurma();
+  salvarLocal();
+  showToast(`✅ ${adicionados} aluno(s) importado(s)${ignorados > 0 ? ', ' + ignorados + ' ignorado(s) (já existem)' : ''}!`, 'green');
 }
 
 // ===== INIT =====
@@ -3739,7 +3939,7 @@ function renderDiario() {
           <div class="diario-entry-header" onclick="toggleDiarioEntry('${eid}')">
             <span class="diario-disc">${disc}</span>
             <span class="diario-entry-preview">${entry.conteudo ? entry.conteudo.substr(0,60)+'...' : 'Clique para registrar'}</span>
-            <span class="diario-toggle">⌄</span>
+            <span class="diario-toggle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
           </div>
           <div class="diario-entry-body" id="deb_${eid}" style="display:none">
             <div class="form-group full" style="padding:12px 16px 0">
