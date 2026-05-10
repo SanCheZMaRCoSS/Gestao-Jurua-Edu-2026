@@ -2631,7 +2631,7 @@ function mostrarPreviewDocx(nomeArq) {
             `<td style="padding:5px 8px">${a.numero}</td>` +
             `<td style="padding:5px 8px">${a.nome}</td>` +
             `<td style="padding:5px 8px">${a.ano}</td>` +
-            `<td style="padding:5px 8px">${a.nasc || '—'}</td>` +
+            `<td style="padding:5px 8px">${a.nasc ? a.nasc.split('-').reverse().join('/') : '—'}</td>` +
             '</tr>';
   });
   html += '</tbody></table>';
@@ -2654,8 +2654,8 @@ function confirmarImportarDocx() {
       return;
     }
 
-    // Gerar matrícula automática se não tiver
-    const mat = String(Date.now() + adicionados).slice(-8);
+    // Usar número sequencial do arquivo como matrícula
+    const mat = String(a.numero).padStart(2, '0');
 
     alunos.push({
       id:        Date.now() + adicionados,
