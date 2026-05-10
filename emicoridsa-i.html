@@ -1389,6 +1389,7 @@
   }
 
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -2518,20 +2519,11 @@ function processarDocxAlunos(event) {
 
 async function extrairAlunosDocx(buffer, nomeArq) {
   try {
-    // Descompactar o .docx (é um ZIP) e pegar o document.xml
-    const { default: JSZip } = await import('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js').catch(() => ({ default: null }));
-
-    // Fallback: usar DecompressionStream se JSZip não carregar
-    // Tentar via fetch da biblioteca
-    if (!JSZip) throw new Error('Biblioteca de ZIP não carregou');
-
-    const zip  = await JSZip.loadAsync(buffer);
-    const xml  = await zip.file('word/document.xml').async('string');
+    const zip = await JSZip.loadAsync(buffer);
+    const xml = await zip.file('word/document.xml').async('string');
     processarXmlDocx(xml, nomeArq);
-
   } catch(err) {
-    // Fallback: tentar DataView manual
-    showToast('❌ Erro ao processar arquivo. Tente salvar o Word como .docx e tente novamente.', 'red');
+    showToast('❌ Erro ao processar arquivo: ' + err.message, 'red');
     console.error('Erro DOCX:', err);
   }
 }
