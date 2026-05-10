@@ -1792,7 +1792,21 @@
       </div>
     </div>
 
-  </main>
+  
+<!-- ── MODAL: IMPORTAR ALUNOS DO WORD ─────────────────────── -->
+<div class="modal-overlay" id="modalImportarDocx">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-title">📄 Importar Alunos do Word</div>
+    <div id="importDocxInfo" style="margin-bottom:12px;font-size:0.85rem;color:#555"></div>
+    <div id="importDocxPreview" style="max-height:320px;overflow-y:auto;margin-bottom:14px;border:1px solid #e5e7eb;border-radius:8px;padding:8px"></div>
+    <div id="importDocxStatus" style="font-size:0.82rem;color:#888;margin-bottom:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalImportarDocx')">Cancelar</button>
+      <button class="btn btn-primary" id="btnConfirmarImportDocx" onclick="confirmarImportarDocx()" style="display:none">✅ Importar Alunos</button>
+    </div>
+  </div>
+</div>
+</main>
 </div>
 
 <!-- ===== MODAL: NOVO ALUNO / EDITAR ALUNO ===== -->
@@ -4631,21 +4645,7 @@ function _htmlRodapePrint(prof, pedagogo, legenda) {
       <div>${pedagogo || 'Pedagogo(a)'}<br><small>Assinatura</small></div>
     </div>
     ${legenda ? `<div class="leg"><b>Legenda:</b> ${legenda}</div>` : ''}
-  </div>
-<!-- ── MODAL: IMPORTAR ALUNOS DO WORD ─────────────────────── -->
-<div class="modal-overlay" id="modalImportarDocx">
-  <div class="modal" style="max-width:640px">
-    <div class="modal-title">📄 Importar Alunos do Word</div>
-    <div id="importDocxInfo" style="margin-bottom:12px;font-size:0.85rem;color:#555"></div>
-    <div id="importDocxPreview" style="max-height:320px;overflow-y:auto;margin-bottom:14px;border:1px solid #e5e7eb;border-radius:8px;padding:8px"></div>
-    <div id="importDocxStatus" style="font-size:0.82rem;color:#888;margin-bottom:10px"></div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" onclick="closeModal('modalImportarDocx')">Cancelar</button>
-      <button class="btn btn-primary" id="btnConfirmarImportDocx" onclick="confirmarImportarDocx()" style="display:none">✅ Importar Alunos</button>
-    </div>
-  </div>
-</div>
-</body></html>`;
+  </div></body></html>`;
 }
 
 function _htmlRodapeAtaPrint(prof, pedagogo, diretor) {
