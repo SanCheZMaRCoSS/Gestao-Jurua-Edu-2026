@@ -327,14 +327,14 @@
   }
   .tab:hover { background: var(--azul-light); color: var(--azul-principal); }
   .tab.active {
-    background: var(--azul-principal);
+    background: linear-gradient(135deg, #0099cc, #00b4d8);
     color: white;
-    box-shadow: 0 2px 8px rgba(36, 113, 163, 0.35);
+    box-shadow: 0 2px 8px rgba(0,180,216,0.4);
     font-weight: 600;
   }
 .tab:not(.active):hover {
-    background: var(--azul-light);
-    color: var(--azul-principal);
+    background: rgba(0,180,216,0.12);
+    color: #0099cc;
   }
 
   /* CARDS */
@@ -479,8 +479,12 @@
     z-index: 2;
   }
   .freq-wrap thead .fcol {
-    background: var(--azul-principal) !important;
+    background: linear-gradient(135deg, #0099cc, #00b4d8) !important;
     z-index: 4;
+  }
+  .freq-wrap thead th:not(.fcol) {
+    cursor: default;
+    pointer-events: none;
   }
   .freq-wrap .fcol-1 { left: 0;    min-width: 36px; max-width: 36px; }
   .freq-wrap .fcol-2 { left: 36px; min-width: 180px; }
@@ -3205,9 +3209,9 @@ function renderFrequencia() {
   const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
 
   let html = `<div class="freq-wrap"><table><thead><tr>
-    <th class="fcol fcol-1" style="text-align:center">Nº</th>
-    <th class="fcol fcol-2 left" style="font-size:0.9rem;font-weight:700;letter-spacing:0.03em">👤 Alunos</th>
-    <th class="fcol fcol-3 left">Matr.</th>
+    <th class="fcol fcol-1" style="text-align:center;background:linear-gradient(135deg,#0099cc,#00b4d8)!important;color:white!important">Nº</th>
+    <th class="fcol fcol-2 left" style="font-size:0.85rem;font-weight:700;letter-spacing:0.04em;background:linear-gradient(135deg,#0099cc,#00b4d8)!important;color:white!important;text-align:center">ALUNOS</th>
+    <th class="fcol fcol-3 left" style="background:linear-gradient(135deg,#0099cc,#00b4d8)!important;color:white!important">Matr.</th>
     ${diasShow.map(d => `<th style="min-width:34px;text-align:center">${d}</th>`).join('')}
     <th style="min-width:80px">% Freq.</th>
     <th style="min-width:44px">Faltas</th>
