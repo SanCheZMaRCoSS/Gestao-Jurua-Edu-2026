@@ -456,64 +456,38 @@
   .freq-warn .freq-pct { color: var(--dourado); }
   .freq-bad .freq-pct { color: var(--vermelho); }
 
-  /* FREQUÊNCIA — LAYOUT DUPLA TABELA (fixa + rolável) */
-  .freq-container {
-    display: flex;
-    width: 100%;
-    overflow: hidden;
-  }
-  .freq-fixed {
-    flex-shrink: 0;
-    z-index: 2;
-    box-shadow: 3px 0 8px rgba(0,0,0,0.15);
-    overflow: hidden;
-  }
-  .freq-scroll {
-    flex: 1;
+  /* FREQUÊNCIA — TABELA ÚNICA COM STICKY COLUMNS */
+  .freq-wrap {
     overflow-x: auto;
-    overflow-y: hidden;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
   }
-  .freq-fixed table,
-  .freq-scroll table {
-    border-collapse: collapse;
-    table-layout: fixed;
-    white-space: nowrap;
+  .freq-wrap table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: max-content;
   }
-  .freq-fixed table { width: auto; }
-  .freq-scroll table { min-width: 100%; }
-  /* Sincronizar altura das linhas */
-  .freq-fixed tr,
-  .freq-scroll tr { height: 38px; }
-  .freq-fixed thead th,
-  .freq-scroll thead th {
-    background: var(--azul-principal);
-    color: white;
-    padding: 6px 8px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    text-align: center;
-    border-bottom: 2px solid rgba(255,255,255,0.2);
-    height: 38px;
-  }
-  .freq-fixed tbody td,
-  .freq-scroll tbody td {
-    padding: 4px 6px;
-    border-bottom: 1px solid var(--cinza-border);
-    font-size: 0.82rem;
+  /* Colunas fixas — td e th */
+  .freq-wrap .fcol {
+    position: sticky;
     background: var(--branco);
+    z-index: 2;
   }
-  .freq-fixed tbody tr:hover td,
-  .freq-scroll tbody tr:hover td {
-    background: var(--azul-light);
+  .freq-wrap thead .fcol {
+    background: var(--azul-principal) !important;
+    z-index: 4;
   }
-  .freq-fixed .multi-section-divider td,
-  .freq-scroll .multi-section-divider td {
-    background: var(--azul-light) !important;
-    font-weight: 600;
-    color: var(--azul-principal);
-    font-size: 0.8rem;
-    padding: 4px 8px;
-  }
+  .freq-wrap .fcol-1 { left: 0;    min-width: 36px; max-width: 36px; }
+  .freq-wrap .fcol-2 { left: 36px; min-width: 180px; }
+  .freq-wrap .fcol-3 { left: 216px; min-width: 80px;
+    border-right: 2px solid var(--cinza-border) !important;
+    box-shadow: 3px 0 6px rgba(0,0,0,0.12); }
+  .freq-wrap thead .fcol-3 {
+    border-right: 2px solid rgba(255,255,255,0.25) !important; }
+  /* Linhas alternadas nas colunas fixas */
+  .freq-wrap tbody tr:nth-child(odd)  .fcol { background: var(--branco); }
+  .freq-wrap tbody tr:nth-child(even) .fcol { background: var(--azul-light); }
+  .freq-wrap tbody tr:hover .fcol { background: var(--dourado-light) !important; }
 
 /* FREQUÊNCIA — NOTA CELL */
 /* NOTA CELL */
@@ -3221,26 +3195,20 @@ function renderFrequencia() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div>Selecione uma turma</div></div>';
     return;
   }
-  const mes      = parseInt(document.getElementById('selMes').value);
-  const diasShow = getDiasLetivos(mes);
+  const mes          = parseInt(document.getElementById('selMes').value);
+  const diasShow     = getDiasLetivos(mes);
   const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
 
-  // Tabela fixa (Nº, Aluno, Matrícula)
-  let htmlFixed = `<table><thead><tr>
-    <th style="width:36px;text-align:center">Nº</th>
-    <th style="min-width:180px;text-align:left">Aluno</th>
-    <th style="min-width:80px;text-align:left">Matr.</th>
-  </tr></thead><tbody>`;
-
-  // Tabela rolável (dias + freq% + faltas + ações)
-  let htmlScroll = `<table><thead><tr>
-    ${diasShow.map(d => `<th style="min-width:34px">${d}</th>`).join('')}
+  let html = `<div class="freq-wrap"><table><thead><tr>
+    <th class="fcol fcol-1" style="text-align:center">Nº</th>
+    <th class="fcol fcol-2 left">Aluno</th>
+    <th class="fcol fcol-3 left">Matr.</th>
+    ${diasShow.map(d => `<th style="min-width:34px;text-align:center">${d}</th>`).join('')}
     <th style="min-width:80px">% Freq.</th>
     <th style="min-width:44px">Faltas</th>
     <th style="min-width:70px">Ações</th>
   </tr></thead><tbody>`;
 
-  let html = ''; // não usado mas mantido para compatibilidade
   let anoAtual = null;
   listaOrdenada.forEach(a => {
     if (!frequencia[a.id]) frequencia[a.id] = {};
@@ -3250,24 +3218,19 @@ function renderFrequencia() {
     const { pct, faltas } = getFreqAluno(a.id);
     const cls = pct >= 75 ? 'freq-good' : pct >= 60 ? 'freq-warn' : 'freq-bad';
 
-    // Separador de ano para multisseriadas
     if (turmaAtual.multisseriada && a.ano && a.ano !== anoAtual) {
       anoAtual = a.ano;
-      htmlFixed  += `<tr class="multi-section-divider"><td colspan="3">🔀 ${a.ano}</td></tr>`;
-      htmlScroll += `<tr class="multi-section-divider"><td colspan="99">&nbsp;</td></tr>`;
+      html += `<tr><td colspan="99" class="multi-section-divider">🔀 ${a.ano}</td></tr>`;
     }
 
-    htmlFixed += `<tr>
-      <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
-      <td style="text-align:left"><div class="aluno-nome">${a.nome}</div></td>
-      <td style="text-align:left"><span class="matricula">${a.matricula}</span></td>
-    </tr>`;
-
-    htmlScroll += `<tr>
+    html += `<tr>
+      <td class="fcol fcol-1" style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
+      <td class="fcol fcol-2 left"><div class="aluno-nome">${a.nome}</div></td>
+      <td class="fcol fcol-3 left"><span class="matricula">${a.matricula}</span></td>
       ${diasShow.map(d => {
         const v   = frequencia[a.id][mes][d] || 'P';
         const cor = v==='P' ? '#2e86c1' : v==='F' ? '#c0392b' : '#b8860b';
-        return `<td><button onclick="toggleFreq(${a.id},${mes},${d})"
+        return `<td style="text-align:center"><button onclick="toggleFreq(${a.id},${mes},${d})"
           style="border:none;background:${v==='P'?'#ebf5fb':v==='F'?'#f8d7da':'#fff3cd'};color:${cor};width:26px;height:26px;border-radius:5px;font-weight:700;font-size:0.72rem;cursor:pointer;transition:all 0.15s"
           data-tip="${v==='P'?'Presente':v==='F'?'Falta':'Justificada'}">${v}</button></td>`;
       }).join('')}
@@ -3275,7 +3238,7 @@ function renderFrequencia() {
         <div class="freq-bar"><div class="freq-fill" style="width:${pct}%"></div></div>
         <span class="freq-pct">${pct}%</span>
       </div></td>
-      <td style="font-family:Consolas,monospace;font-size:0.78rem;color:${faltas>5?'var(--vermelho)':'var(--cinza-mid)'}">${numSeq(Math.round(faltas))}</td>
+      <td style="font-family:Consolas,monospace;font-size:0.78rem;text-align:center;color:${faltas>5?'var(--vermelho)':'var(--cinza-mid)'}">${numSeq(Math.round(faltas))}</td>
       <td style="white-space:nowrap">
         <button onclick="abrirEditarAluno(${a.id})" title="Editar aluno"
           style="border:none;background:rgba(36,113,163,0.12);color:var(--azul-principal);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:0.72rem;margin-right:3px">✏️</button>
@@ -3284,27 +3247,10 @@ function renderFrequencia() {
       </td>
     </tr>`;
   });
-
-  htmlFixed  += '</tbody></table>';
-  htmlScroll += '</tbody></table>';
-
-  el.innerHTML = `<div class="freq-container">
-    <div class="freq-fixed">${htmlFixed}</div>
-    <div class="freq-scroll">${htmlScroll}</div>
-  </div>`;
-
-  // Sincronizar alturas das linhas entre as duas tabelas
-  requestAnimationFrame(() => {
-    const fixedRows  = el.querySelectorAll('.freq-fixed  tr');
-    const scrollRows = el.querySelectorAll('.freq-scroll tr');
-    const len = Math.min(fixedRows.length, scrollRows.length);
-    for (let i = 0; i < len; i++) {
-      const h = Math.max(fixedRows[i].offsetHeight, scrollRows[i].offsetHeight);
-      fixedRows[i].style.height  = h + 'px';
-      scrollRows[i].style.height = h + 'px';
-    }
-  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
 }
+
 
 function toggleFreq(alunoId, mes, dia) {
   if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
