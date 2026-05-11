@@ -456,86 +456,64 @@
   .freq-warn .freq-pct { color: var(--dourado); }
   .freq-bad .freq-pct { color: var(--vermelho); }
 
-  /* FREQUÊNCIA — COLUNAS FIXAS (sticky) */
-  .freq-table-wrap {
-    overflow-x: auto;
-    position: relative;
+  /* FREQUÊNCIA — LAYOUT DUPLA TABELA (fixa + rolável) */
+  .freq-container {
+    display: flex;
     width: 100%;
+    overflow: hidden;
   }
-  .freq-table-wrap table {
-    border-collapse: separate;
-    border-spacing: 0;
-    min-width: 100%;
-  }
-  /* tbody: colunas fixas — z-index baixo */
-  .freq-table-wrap tbody td.col-num {
-    position: sticky;
-    left: 0;
-    z-index: 1;
-    min-width: 36px;
-    max-width: 36px;
-    width: 36px;
-    background: var(--branco);
-  }
-  .freq-table-wrap tbody td.col-aluno {
-    position: sticky;
-    left: 36px;
-    z-index: 1;
-    min-width: 180px;
-    background: var(--branco);
-  }
-  .freq-table-wrap tbody td.col-mat {
-    position: sticky;
-    left: 216px;
-    z-index: 1;
-    min-width: 80px;
-    background: var(--branco);
-    border-right: 2px solid var(--cinza-border) !important;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.15);
-  }
-  /* thead: todos os th — z-index alto para ficar acima do tbody */
-  .freq-table-wrap thead th {
-    position: sticky;
-    top: 0;
+  .freq-fixed {
+    flex-shrink: 0;
     z-index: 2;
+    box-shadow: 3px 0 8px rgba(0,0,0,0.15);
+    overflow: hidden;
+  }
+  .freq-scroll {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .freq-fixed table,
+  .freq-scroll table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    white-space: nowrap;
+  }
+  .freq-fixed table { width: auto; }
+  .freq-scroll table { min-width: 100%; }
+  /* Sincronizar altura das linhas */
+  .freq-fixed tr,
+  .freq-scroll tr { height: 38px; }
+  .freq-fixed thead th,
+  .freq-scroll thead th {
     background: var(--azul-principal);
     color: white;
+    padding: 6px 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+    height: 38px;
   }
-  /* thead: colunas fixas — z-index mais alto de todos (canto) */
-  .freq-table-wrap thead th.col-num {
-    position: sticky;
-    left: 0;
-    top: 0;
-    z-index: 6;
-    min-width: 36px;
-    max-width: 36px;
-    width: 36px;
+  .freq-fixed tbody td,
+  .freq-scroll tbody td {
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--cinza-border);
+    font-size: 0.82rem;
+    background: var(--branco);
   }
-  .freq-table-wrap thead th.col-aluno {
-    position: sticky;
-    left: 36px;
-    top: 0;
-    z-index: 6;
-    min-width: 180px;
+  .freq-fixed tbody tr:hover td,
+  .freq-scroll tbody tr:hover td {
+    background: var(--azul-light);
   }
-  .freq-table-wrap thead th.col-mat {
-    position: sticky;
-    left: 216px;
-    top: 0;
-    z-index: 6;
-    min-width: 80px;
-    border-right: 2px solid rgba(255,255,255,0.3) !important;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.15);
+  .freq-fixed .multi-section-divider td,
+  .freq-scroll .multi-section-divider td {
+    background: var(--azul-light) !important;
+    font-weight: 600;
+    color: var(--azul-principal);
+    font-size: 0.8rem;
+    padding: 4px 8px;
   }
-  /* Linhas alternadas */
-  .freq-table-wrap tbody tr:nth-child(even) td.col-num,
-  .freq-table-wrap tbody tr:nth-child(even) td.col-aluno,
-  .freq-table-wrap tbody tr:nth-child(even) td.col-mat { background: var(--azul-light); }
-  .freq-table-wrap tbody tr:nth-child(odd)  td.col-num,
-  .freq-table-wrap tbody tr:nth-child(odd)  td.col-aluno,
-  .freq-table-wrap tbody tr:nth-child(odd)  td.col-mat { background: var(--branco); }
-  /* Separador de ano (multisseriada) */
-  .freq-table-wrap .multi-section-divider td { background: var(--azul-light) !important; }
 
 /* FREQUÊNCIA — NOTA CELL */
 /* NOTA CELL */
@@ -3247,14 +3225,22 @@ function renderFrequencia() {
   const diasShow = getDiasLetivos(mes);
   const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
 
-  let html = `<div class="freq-table-wrap"><table><thead><tr>
-    <th class="col-num" style="text-align:center">Nº</th>
-    <th class="col-aluno left">Aluno</th>
-    <th class="col-mat left">Matrícula</th>
-    ${diasShow.map(d => `<th data-tip="Dia ${d}">${d}</th>`).join('')}
-    <th>% Freq.</th><th>Faltas</th><th>Ações</th>
+  // Tabela fixa (Nº, Aluno, Matrícula)
+  let htmlFixed = `<table><thead><tr>
+    <th style="width:36px;text-align:center">Nº</th>
+    <th style="min-width:180px;text-align:left">Aluno</th>
+    <th style="min-width:80px;text-align:left">Matr.</th>
   </tr></thead><tbody>`;
 
+  // Tabela rolável (dias + freq% + faltas + ações)
+  let htmlScroll = `<table><thead><tr>
+    ${diasShow.map(d => `<th style="min-width:34px">${d}</th>`).join('')}
+    <th style="min-width:80px">% Freq.</th>
+    <th style="min-width:44px">Faltas</th>
+    <th style="min-width:70px">Ações</th>
+  </tr></thead><tbody>`;
+
+  let html = ''; // não usado mas mantido para compatibilidade
   let anoAtual = null;
   listaOrdenada.forEach(a => {
     if (!frequencia[a.id]) frequencia[a.id] = {};
@@ -3267,13 +3253,17 @@ function renderFrequencia() {
     // Separador de ano para multisseriadas
     if (turmaAtual.multisseriada && a.ano && a.ano !== anoAtual) {
       anoAtual = a.ano;
-      html += `<tr><td colspan="99" class="multi-section-divider">🔀 ${a.ano}</td></tr>`;
+      htmlFixed  += `<tr class="multi-section-divider"><td colspan="3">🔀 ${a.ano}</td></tr>`;
+      htmlScroll += `<tr class="multi-section-divider"><td colspan="99">&nbsp;</td></tr>`;
     }
 
-    html += `<tr>
-      <td class="col-num" style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
-      <td class="col-aluno left"><div class="aluno-nome">${a.nome}</div></td>
-      <td class="col-mat left"><span class="matricula">${a.matricula}</span></td>
+    htmlFixed += `<tr>
+      <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
+      <td style="text-align:left"><div class="aluno-nome">${a.nome}</div></td>
+      <td style="text-align:left"><span class="matricula">${a.matricula}</span></td>
+    </tr>`;
+
+    htmlScroll += `<tr>
       ${diasShow.map(d => {
         const v   = frequencia[a.id][mes][d] || 'P';
         const cor = v==='P' ? '#2e86c1' : v==='F' ? '#c0392b' : '#b8860b';
@@ -3294,8 +3284,26 @@ function renderFrequencia() {
       </td>
     </tr>`;
   });
-  html += '</tbody></table></div>';
-  el.innerHTML = html;
+
+  htmlFixed  += '</tbody></table>';
+  htmlScroll += '</tbody></table>';
+
+  el.innerHTML = `<div class="freq-container">
+    <div class="freq-fixed">${htmlFixed}</div>
+    <div class="freq-scroll">${htmlScroll}</div>
+  </div>`;
+
+  // Sincronizar alturas das linhas entre as duas tabelas
+  requestAnimationFrame(() => {
+    const fixedRows  = el.querySelectorAll('.freq-fixed  tr');
+    const scrollRows = el.querySelectorAll('.freq-scroll tr');
+    const len = Math.min(fixedRows.length, scrollRows.length);
+    for (let i = 0; i < len; i++) {
+      const h = Math.max(fixedRows[i].offsetHeight, scrollRows[i].offsetHeight);
+      fixedRows[i].style.height  = h + 'px';
+      scrollRows[i].style.height = h + 'px';
+    }
+  });
 }
 
 function toggleFreq(alunoId, mes, dia) {
