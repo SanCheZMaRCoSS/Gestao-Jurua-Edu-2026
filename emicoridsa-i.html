@@ -330,6 +330,11 @@
     background: var(--azul-principal);
     color: white;
     box-shadow: 0 2px 8px rgba(36, 113, 163, 0.35);
+    font-weight: 600;
+  }
+.tab:not(.active):hover {
+    background: var(--azul-light);
+    color: var(--azul-principal);
   }
 
   /* CARDS */
@@ -3201,7 +3206,7 @@ function renderFrequencia() {
 
   let html = `<div class="freq-wrap"><table><thead><tr>
     <th class="fcol fcol-1" style="text-align:center">Nº</th>
-    <th class="fcol fcol-2 left">Aluno</th>
+    <th class="fcol fcol-2 left" style="font-size:0.9rem;font-weight:700;letter-spacing:0.03em">👤 Alunos</th>
     <th class="fcol fcol-3 left">Matr.</th>
     ${diasShow.map(d => `<th style="min-width:34px;text-align:center">${d}</th>`).join('')}
     <th style="min-width:80px">% Freq.</th>
@@ -3230,9 +3235,11 @@ function renderFrequencia() {
       ${diasShow.map(d => {
         const v   = frequencia[a.id][mes][d] || 'P';
         const cor = v==='P' ? '#2e86c1' : v==='F' ? '#c0392b' : '#b8860b';
-        return `<td style="text-align:center"><button onclick="toggleFreq(${a.id},${mes},${d})"
+        return `<td style="text-align:center"><button
+          data-aid="${a.id}" data-mes="${mes}" data-dia="${d}"
+          onclick="toggleFreq(+this.dataset.aid,+this.dataset.mes,+this.dataset.dia)"
           style="border:none;background:${v==='P'?'#ebf5fb':v==='F'?'#f8d7da':'#fff3cd'};color:${cor};width:26px;height:26px;border-radius:5px;font-weight:700;font-size:0.72rem;cursor:pointer;transition:all 0.15s"
-          data-tip="${v==='P'?'Presente':v==='F'?'Falta':'Justificada'}">${v}</button></td>`;
+          title="${v==='P'?'Presente':v==='F'?'Falta':'Justificada'}">${v}</button></td>`;
       }).join('')}
       <td><div class="freq-cell ${cls}">
         <div class="freq-bar"><div class="freq-fill" style="width:${pct}%"></div></div>
