@@ -467,46 +467,67 @@
     border-spacing: 0;
     min-width: 100%;
   }
-  /* Coluna Nº */
-  .freq-table-wrap th.col-num,
-  .freq-table-wrap td.col-num {
+  /* tbody: colunas fixas — z-index baixo */
+  .freq-table-wrap tbody td.col-num {
     position: sticky;
     left: 0;
-    z-index: 3;
+    z-index: 1;
     min-width: 36px;
     max-width: 36px;
     width: 36px;
     background: var(--branco);
   }
-  /* Coluna Aluno */
-  .freq-table-wrap th.col-aluno,
-  .freq-table-wrap td.col-aluno {
+  .freq-table-wrap tbody td.col-aluno {
     position: sticky;
     left: 36px;
-    z-index: 3;
+    z-index: 1;
     min-width: 180px;
     background: var(--branco);
   }
-  /* Coluna Matrícula */
-  .freq-table-wrap th.col-mat,
-  .freq-table-wrap td.col-mat {
+  .freq-table-wrap tbody td.col-mat {
     position: sticky;
     left: 216px;
-    z-index: 3;
+    z-index: 1;
     min-width: 80px;
     background: var(--branco);
     border-right: 2px solid var(--cinza-border) !important;
-    box-shadow: 2px 0 4px rgba(0,0,0,0.12);
+    box-shadow: 2px 0 5px rgba(0,0,0,0.15);
   }
-  /* Cabeçalho sticky — cor azul */
-  .freq-table-wrap thead th.col-num,
-  .freq-table-wrap thead th.col-aluno,
-  .freq-table-wrap thead th.col-mat {
-    background: var(--azul-principal) !important;
+  /* thead: todos os th — z-index alto para ficar acima do tbody */
+  .freq-table-wrap thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--azul-principal);
     color: white;
-    z-index: 5;
   }
-  /* Linhas alternadas — adaptadas ao tema */
+  /* thead: colunas fixas — z-index mais alto de todos (canto) */
+  .freq-table-wrap thead th.col-num {
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 6;
+    min-width: 36px;
+    max-width: 36px;
+    width: 36px;
+  }
+  .freq-table-wrap thead th.col-aluno {
+    position: sticky;
+    left: 36px;
+    top: 0;
+    z-index: 6;
+    min-width: 180px;
+  }
+  .freq-table-wrap thead th.col-mat {
+    position: sticky;
+    left: 216px;
+    top: 0;
+    z-index: 6;
+    min-width: 80px;
+    border-right: 2px solid rgba(255,255,255,0.3) !important;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.15);
+  }
+  /* Linhas alternadas */
   .freq-table-wrap tbody tr:nth-child(even) td.col-num,
   .freq-table-wrap tbody tr:nth-child(even) td.col-aluno,
   .freq-table-wrap tbody tr:nth-child(even) td.col-mat { background: var(--azul-light); }
