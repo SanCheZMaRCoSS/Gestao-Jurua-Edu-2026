@@ -327,9 +327,14 @@
   }
   .tab:hover { background: var(--azul-light); color: var(--azul-principal); }
   .tab.active {
-    background: var(--azul-principal);
+    background: linear-gradient(135deg, #0099cc, #00b4d8);
     color: white;
-    box-shadow: 0 2px 8px rgba(36, 113, 163, 0.35);
+    box-shadow: 0 2px 8px rgba(0,180,216,0.4);
+    font-weight: 600;
+  }
+.tab:not(.active):hover {
+    background: rgba(0,180,216,0.12);
+    color: #0099cc;
   }
 
   /* CARDS */
@@ -456,7 +461,52 @@
   .freq-warn .freq-pct { color: var(--dourado); }
   .freq-bad .freq-pct { color: var(--vermelho); }
 
-  /* NOTA CELL */
+  /* FREQUÊNCIA — TABELA ÚNICA COM STICKY COLUMNS */
+  .freq-wrap {
+    overflow-x: auto;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+  .freq-wrap table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: max-content;
+  }
+  /* Colunas fixas — td e th */
+  .freq-wrap .fcol {
+    position: sticky;
+    background: var(--branco);
+    z-index: 2;
+  }
+  .freq-wrap thead th {
+    background: #ebf5fb;
+    color: #1a5276;
+    font-weight: 600;
+  }
+  .freq-wrap thead .fcol {
+    background: #ebf5fb !important;
+    color: #1a5276 !important;
+    font-weight: 700;
+    z-index: 4;
+  }
+  .freq-wrap thead th:not(.fcol) {
+    background: var(--azul-principal);
+    color: white;
+  }
+  .freq-wrap .fcol-1 { left: 0;    min-width: 36px; max-width: 36px; }
+  .freq-wrap .fcol-2 { left: 36px; min-width: 180px; }
+  .freq-wrap .fcol-3 { left: 216px; min-width: 80px;
+    border-right: 2px solid var(--cinza-border) !important;
+    box-shadow: 3px 0 6px rgba(0,0,0,0.12); }
+  .freq-wrap thead .fcol-3 {
+    border-right: 2px solid rgba(255,255,255,0.25) !important; }
+  /* Linhas alternadas nas colunas fixas */
+  .freq-wrap tbody tr:nth-child(odd)  .fcol { background: var(--branco); }
+  .freq-wrap tbody tr:nth-child(even) .fcol { background: var(--azul-light); }
+  .freq-wrap tbody tr:hover .fcol { background: var(--dourado-light) !important; }
+
+/* FREQUÊNCIA — NOTA CELL */
+/* NOTA CELL */
   .nota-input {
     width: 58px;
     border: 1.5px solid transparent;
@@ -1389,6 +1439,7 @@
   }
 
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -1414,6 +1465,8 @@
         </div>
         <div class="btn-group-sep"></div>
         <button class="btn-header cadastro" onclick="abrirCadastroAluno()"        title="Cadastrar novo aluno">➕ Aluno</button>
+        <button class="btn-header cadastro" onclick="abrirImportarDocx()" title="Importar alunos de arquivo Word (.docx)">📄 Importar Word</button>
+        <input type="file" id="inputDocxAlunos" accept=".docx" style="display:none" onchange="processarDocxAlunos(event)">
         <button class="btn-header cadastro" onclick="openModal('modalObs')"        title="Registrar observação">📝 Observação</button>
         <button class="btn-header cadastro" onclick="openModal('modalEscola')"     title="Configurar dados da escola">⚙️ Escola</button>
         <div class="btn-group-sep"></div>
@@ -1481,7 +1534,7 @@
         </select>
         <div style="margin-top:10px">
           <div class="field-label">Buscar Aluno</div>
-          <input type="text" id="buscaAluno" placeholder="🔍 Nome ou matrícula..." autocomplete="off" oninput="filtrarAlunos()">
+          <input type="text" id="buscaAluno" placeholder="🔍 Nome ou matrícula..." autocomplete="new-password" oninput="filtrarAlunos()">
         </div>
       </div>
     </div>
@@ -1789,7 +1842,21 @@
       </div>
     </div>
 
-  </main>
+  
+<!-- ── MODAL: IMPORTAR ALUNOS DO WORD ─────────────────────── -->
+<div class="modal-overlay" id="modalImportarDocx">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-title">📄 Importar Alunos do Word</div>
+    <div id="importDocxInfo" style="margin-bottom:12px;font-size:0.85rem;color:#555"></div>
+    <div id="importDocxPreview" style="max-height:320px;overflow-y:auto;margin-bottom:14px;border:1px solid #e5e7eb;border-radius:8px;padding:8px"></div>
+    <div id="importDocxStatus" style="font-size:0.82rem;color:#888;margin-bottom:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('modalImportarDocx')">Cancelar</button>
+      <button class="btn btn-primary" id="btnConfirmarImportDocx" onclick="confirmarImportarDocx()" style="display:none">✅ Importar Alunos</button>
+    </div>
+  </div>
+</div>
+</main>
 </div>
 
 <!-- ===== MODAL: NOVO ALUNO / EDITAR ALUNO ===== -->
@@ -2479,7 +2546,200 @@ function agendarAutoSave(msg = '') {
   autoSaveTimer = setTimeout(() => salvarNoSheets(), 3000);
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+// IMPORTAR ALUNOS DO WORD (.docx)
+// ═══════════════════════════════════════════════════════════════
+
+let alunosParaImportar = [];
+
+function abrirImportarDocx() {
+  if (!turmaAtual) {
+    showToast('⚠️ Selecione uma turma antes de importar!', 'gold');
+    return;
+  }
+  document.getElementById('inputDocxAlunos').value = '';
+  document.getElementById('inputDocxAlunos').click();
+}
+
+function processarDocxAlunos(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  showToast('⏳ Lendo arquivo...', 'blue');
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      // Ler o .docx como ZIP e extrair o document.xml
+      const arrayBuffer = e.target.result;
+      extrairAlunosDocx(arrayBuffer, file.name);
+    } catch(err) {
+      showToast('❌ Erro ao ler arquivo: ' + err.message, 'red');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function extrairAlunosDocx(buffer, nomeArq) {
+  try {
+    const zip = await JSZip.loadAsync(buffer);
+    const xml = await zip.file('word/document.xml').async('string');
+    processarXmlDocx(xml, nomeArq);
+  } catch(err) {
+    showToast('❌ Erro ao processar arquivo: ' + err.message, 'red');
+    console.error('Erro DOCX:', err);
+  }
+}
+
+function processarXmlDocx(xml, nomeArq) {
+  // Parser de XML
+  const parser = new DOMParser();
+  const doc    = parser.parseFromString(xml, 'application/xml');
+
+  // Encontrar todas as linhas de tabela (w:tr)
+  const linhas = doc.querySelectorAll('tr');
+
+  const alunos_encontrados = [];
+
+  linhas.forEach(function(tr) {
+    const celulas = tr.querySelectorAll('tc');
+    if (celulas.length < 3) return; // linha inválida
+
+    // Extrair texto de cada célula
+    const textos = Array.from(celulas).map(function(tc) {
+      return Array.from(tc.querySelectorAll('t'))
+        .map(function(t) { return t.textContent; })
+        .join('').trim();
+    });
+
+    const nº   = textos[0];
+    const nome = textos[1];
+    const ano  = textos[2];
+    const nasc = textos[4] || ''; // coluna Data de Nascimento
+
+    // Ignorar cabeçalhos e linhas vazias
+    if (!nome || nome === 'NOME DO ALUNO (A)' || nome === 'NOME') return;
+    if (!nº || isNaN(parseInt(nº))) return;
+    if (nome.length < 3) return;
+
+    // Capitalizar nome: Maiúscula em cada palavra
+    const nomeCapitalizado = nome.toLowerCase().split(' ').map(function(p) {
+      return p.length > 2 ? p.charAt(0).toUpperCase() + p.slice(1) : p;
+    }).join(' ');
+
+    // Converter data DD/MM/YYYY para YYYY-MM-DD
+    let nascISO = '';
+    if (nasc && nasc.includes('/')) {
+      const partes = nasc.split('/');
+      if (partes.length === 3) {
+        nascISO = partes[2] + '-' + partes[1].padStart(2,'0') + '-' + partes[0].padStart(2,'0');
+      }
+    }
+
+    alunos_encontrados.push({
+      numero: parseInt(nº),
+      nome:   nomeCapitalizado,
+      ano:    ano,
+      nasc:   nascISO
+    });
+  });
+
+  // Mostrar preview
+  alunosParaImportar = alunos_encontrados;
+  mostrarPreviewDocx(nomeArq);
+}
+
+function mostrarPreviewDocx(nomeArq) {
+  const preview = document.getElementById('importDocxPreview');
+  const info    = document.getElementById('importDocxInfo');
+  const status  = document.getElementById('importDocxStatus');
+  const btnConf = document.getElementById('btnConfirmarImportDocx');
+
+  if (alunosParaImportar.length === 0) {
+    info.innerHTML = `<b>Arquivo:</b> ${nomeArq}`;
+    preview.innerHTML = '<p style="color:#e74c3c;padding:8px">Nenhum aluno encontrado. Verifique se o arquivo tem uma tabela com colunas: Nº | Nome | Ano/Série | ... | Data de Nascimento.</p>';
+    status.textContent = '';
+    btnConf.style.display = 'none';
+    openModal('modalImportarDocx');
+    return;
+  }
+
+  info.innerHTML = `<b>Arquivo:</b> ${nomeArq} &nbsp;|&nbsp; <b>Turma:</b> ${turmaAtual.nome} &nbsp;|&nbsp; <b>${alunosParaImportar.length} aluno(s) encontrado(s)</b>`;
+
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:0.82rem">';
+  html += '<thead><tr style="background:#1a6b3c;color:white">' +
+          '<th style="padding:6px 8px;text-align:left">Nº</th>' +
+          '<th style="padding:6px 8px;text-align:left">Nome</th>' +
+          '<th style="padding:6px 8px;text-align:left">Ano/Série</th>' +
+          '<th style="padding:6px 8px;text-align:left">Data Nasc.</th>' +
+          '</tr></thead><tbody>';
+
+  alunosParaImportar.forEach(function(a, i) {
+    const bg = i % 2 === 0 ? '#f9f9f9' : '#ffffff';
+    html += `<tr style="background:${bg}">` +
+            `<td style="padding:5px 8px">${a.numero}</td>` +
+            `<td style="padding:5px 8px">${a.nome}</td>` +
+            `<td style="padding:5px 8px">${a.ano}</td>` +
+            `<td style="padding:5px 8px">${a.nasc ? a.nasc.split('-').reverse().join('/') : '—'}</td>` +
+            '</tr>';
+  });
+  html += '</tbody></table>';
+
+  preview.innerHTML = html;
+  status.textContent = 'Revise os dados acima antes de confirmar. Alunos já cadastrados com o mesmo nome serão ignorados.';
+  btnConf.style.display = '';
+  openModal('modalImportarDocx');
+}
+
+function confirmarImportarDocx() {
+  if (!alunosParaImportar.length || !turmaAtual) return;
+
+  let adicionados = 0, ignorados = 0;
+  const matriculasExistentes = new Set(alunos.map(function(a) { return a.nome.toLowerCase(); }));
+
+  alunosParaImportar.forEach(function(a) {
+    if (matriculasExistentes.has(a.nome.toLowerCase())) {
+      ignorados++;
+      return;
+    }
+
+    // Usar número sequencial do arquivo como matrícula
+    const mat = String(a.numero).padStart(2, '0');
+
+    alunos.push({
+      id:        Date.now() + adicionados,
+      nome:      a.nome,
+      matricula: mat,
+      turmaId:   turmaAtual.id,
+      turmaNome: turmaAtual.nome,
+      ano:       a.ano,
+      nasc:      a.nasc,
+      resp:      '',
+      contato:   '',
+      endereco:  ''
+    });
+    adicionados++;
+  });
+
+  closeModal('modalImportarDocx');
+  alunosParaImportar = [];
+  renderTurma();
+  salvarLocal();
+  showToast(`✅ ${adicionados} aluno(s) importado(s)${ignorados > 0 ? ', ' + ignorados + ' ignorado(s) (já existem)' : ''}!`, 'green');
+}
+
 // ===== INIT =====
+// Event delegation global para botões de frequência (persiste após re-render)
+document.addEventListener('click', function(ev) {
+  const btn = ev.target.closest('.freq-btn');
+  if (!btn) return;
+  const aid = parseInt(btn.dataset.id);
+  const m   = parseInt(btn.dataset.mes);
+  const d   = parseInt(btn.dataset.dia);
+  if (!isNaN(aid) && !isNaN(m) && !isNaN(d)) toggleFreq(aid, m, d);
+});
+
 async function init() {
   carregarConfig();
   aplicarNomeEscola();
@@ -2961,16 +3221,18 @@ function renderFrequencia() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div>Selecione uma turma</div></div>';
     return;
   }
-  const mes      = parseInt(document.getElementById('selMes').value);
-  const diasShow = getDiasLetivos(mes);
+  const mes          = parseInt(document.getElementById('selMes').value);
+  const diasShow     = getDiasLetivos(mes);
   const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
 
-  let html = `<table><thead><tr>
-    <th style="width:36px">Nº</th>
-    <th class="left" style="min-width:180px">Aluno</th>
-    <th class="left">Matrícula</th>
-    ${diasShow.map(d => `<th data-tip="Dia ${d}">${d}</th>`).join('')}
-    <th>% Freq.</th><th>Faltas</th><th>Ações</th>
+  let html = `<div class="freq-wrap"><table><thead><tr>
+    <th class="fcol fcol-1" style="text-align:center">Nº</th>
+    <th class="fcol fcol-2 left" style="font-size:0.85rem;font-weight:700;letter-spacing:0.04em;text-align:center">ALUNOS</th>
+    <th class="fcol fcol-3 left">Matr.</th>
+    ${diasShow.map(d => `<th style="min-width:34px;text-align:center;background:#ebf5fb;color:#1a5276;font-weight:600">${d}</th>`).join('')}
+    <th style="min-width:80px;background:#ebf5fb;color:#1a5276;font-weight:600">% Freq.</th>
+    <th style="min-width:44px;background:#ebf5fb;color:#1a5276;font-weight:600">Faltas</th>
+    <th style="min-width:70px;background:#ebf5fb;color:#1a5276;font-weight:600">Ações</th>
   </tr></thead><tbody>`;
 
   let anoAtual = null;
@@ -2982,28 +3244,34 @@ function renderFrequencia() {
     const { pct, faltas } = getFreqAluno(a.id);
     const cls = pct >= 75 ? 'freq-good' : pct >= 60 ? 'freq-warn' : 'freq-bad';
 
-    // Separador de ano para multisseriadas
     if (turmaAtual.multisseriada && a.ano && a.ano !== anoAtual) {
       anoAtual = a.ano;
       html += `<tr><td colspan="99" class="multi-section-divider">🔀 ${a.ano}</td></tr>`;
     }
 
     html += `<tr>
-      <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
-      <td class="left"><div class="aluno-nome">${a.nome}</div></td>
-      <td class="left"><span class="matricula">${a.matricula}</span></td>
+      <td class="fcol fcol-1" style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
+      <td class="fcol fcol-2 left"><div class="aluno-nome">${a.nome}</div></td>
+      <td class="fcol fcol-3 left"><span class="matricula">${a.matricula}</span></td>
       ${diasShow.map(d => {
-        const v   = frequencia[a.id][mes][d] || 'P';
-        const cor = v==='P' ? '#2e86c1' : v==='F' ? '#c0392b' : '#b8860b';
-        return `<td><button onclick="toggleFreq(${a.id},${mes},${d})"
-          style="border:none;background:${v==='P'?'#ebf5fb':v==='F'?'#f8d7da':'#fff3cd'};color:${cor};width:26px;height:26px;border-radius:5px;font-weight:700;font-size:0.72rem;cursor:pointer;transition:all 0.15s"
-          data-tip="${v==='P'?'Presente':v==='F'?'Falta':'Justificada'}">${v}</button></td>`;
+        const v2  = frequencia[a.id][mes][d] || 'P';
+        const bg2 = v2==='P'?'#ebf5fb':v2==='F'?'#f8d7da':'#fff3cd';
+        const co2 = v2==='P'?'#2e86c1':v2==='F'?'#c0392b':'#b8860b';
+        const ti2 = v2==='P'?'Presente':v2==='F'?'Falta':'Justificada';
+        return '<td style="text-align:center">'
+          + '<button class="freq-btn"'
+          + ' data-id="' + a.id + '"'
+          + ' data-mes="' + mes + '"'
+          + ' data-dia="' + d + '"'
+          + ' style="border:none;background:' + bg2 + ';color:' + co2 + ';width:26px;height:26px;border-radius:5px;font-weight:700;font-size:0.72rem;cursor:pointer"'
+          + ' title="' + ti2 + '">' + v2 + '</button>'
+          + '</td>';
       }).join('')}
       <td><div class="freq-cell ${cls}">
         <div class="freq-bar"><div class="freq-fill" style="width:${pct}%"></div></div>
         <span class="freq-pct">${pct}%</span>
       </div></td>
-      <td style="font-family:Consolas,monospace;font-size:0.78rem;color:${faltas>5?'var(--vermelho)':'var(--cinza-mid)'}">${numSeq(Math.round(faltas))}</td>
+      <td style="font-family:Consolas,monospace;font-size:0.78rem;text-align:center;color:${faltas>5?'var(--vermelho)':'var(--cinza-mid)'}">${numSeq(Math.round(faltas))}</td>
       <td style="white-space:nowrap">
         <button onclick="abrirEditarAluno(${a.id})" title="Editar aluno"
           style="border:none;background:rgba(36,113,163,0.12);color:var(--azul-principal);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:0.72rem;margin-right:3px">✏️</button>
@@ -3012,9 +3280,11 @@ function renderFrequencia() {
       </td>
     </tr>`;
   });
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   el.innerHTML = html;
+
 }
+
 
 function toggleFreq(alunoId, mes, dia) {
   if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
@@ -3739,7 +4009,7 @@ function renderDiario() {
           <div class="diario-entry-header" onclick="toggleDiarioEntry('${eid}')">
             <span class="diario-disc">${disc}</span>
             <span class="diario-entry-preview">${entry.conteudo ? entry.conteudo.substr(0,60)+'...' : 'Clique para registrar'}</span>
-            <span class="diario-toggle">▼</span>
+            <span class="diario-toggle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span>
           </div>
           <div class="diario-entry-body" id="deb_${eid}" style="display:none">
             <div class="form-group full" style="padding:12px 16px 0">
