@@ -3229,10 +3229,10 @@ function renderFrequencia() {
     <th class="fcol fcol-1" style="text-align:center">Nº</th>
     <th class="fcol fcol-2 left" style="font-size:0.85rem;font-weight:700;letter-spacing:0.04em;text-align:center">ALUNOS</th>
     <th class="fcol fcol-3 left">Matr.</th>
-    ${diasShow.map(d => `<th style="min-width:34px;text-align:center">${d}</th>`).join('')}
-    <th style="min-width:80px">% Freq.</th>
-    <th style="min-width:44px">Faltas</th>
-    <th style="min-width:70px">Ações</th>
+    ${diasShow.map(d => `<th style="min-width:34px;text-align:center;background:#ebf5fb;color:#1a5276;font-weight:600">${d}</th>`).join('')}
+    <th style="min-width:80px;background:#ebf5fb;color:#1a5276;font-weight:600">% Freq.</th>
+    <th style="min-width:44px;background:#ebf5fb;color:#1a5276;font-weight:600">Faltas</th>
+    <th style="min-width:70px;background:#ebf5fb;color:#1a5276;font-weight:600">Ações</th>
   </tr></thead><tbody>`;
 
   let anoAtual = null;
