@@ -460,40 +460,61 @@
   .freq-table-wrap {
     overflow-x: auto;
     position: relative;
+    width: 100%;
   }
   .freq-table-wrap table {
     border-collapse: separate;
     border-spacing: 0;
+    min-width: 100%;
   }
-  .freq-table-wrap th:nth-child(1),
-  .freq-table-wrap td:nth-child(1) {
+  /* Coluna Nº */
+  .freq-table-wrap th.col-num,
+  .freq-table-wrap td.col-num {
     position: sticky;
     left: 0;
     z-index: 3;
-    background: inherit;
+    min-width: 36px;
+    max-width: 36px;
+    width: 36px;
+    background: var(--branco);
   }
-  .freq-table-wrap th:nth-child(2),
-  .freq-table-wrap td:nth-child(2) {
+  /* Coluna Aluno */
+  .freq-table-wrap th.col-aluno,
+  .freq-table-wrap td.col-aluno {
     position: sticky;
     left: 36px;
     z-index: 3;
-    background: inherit;
+    min-width: 180px;
+    background: var(--branco);
   }
-  .freq-table-wrap th:nth-child(3),
-  .freq-table-wrap td:nth-child(3) {
+  /* Coluna Matrícula */
+  .freq-table-wrap th.col-mat,
+  .freq-table-wrap td.col-mat {
     position: sticky;
     left: 216px;
     z-index: 3;
-    background: inherit;
-    border-right: 2px solid #cbd5e1 !important;
+    min-width: 80px;
+    background: var(--branco);
+    border-right: 2px solid var(--cinza-border) !important;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.12);
   }
-  .freq-table-wrap thead th {
-    z-index: 4 !important;
+  /* Cabeçalho sticky — cor azul */
+  .freq-table-wrap thead th.col-num,
+  .freq-table-wrap thead th.col-aluno,
+  .freq-table-wrap thead th.col-mat {
     background: var(--azul-principal) !important;
+    color: white;
+    z-index: 5;
   }
-  .freq-table-wrap tr:nth-child(even) td { background: #f8fbff; }
-  .freq-table-wrap tr:nth-child(odd)  td { background: #ffffff; }
-  .freq-table-wrap .multi-section-divider td { background: #e8f0fe !important; }
+  /* Linhas alternadas — adaptadas ao tema */
+  .freq-table-wrap tbody tr:nth-child(even) td.col-num,
+  .freq-table-wrap tbody tr:nth-child(even) td.col-aluno,
+  .freq-table-wrap tbody tr:nth-child(even) td.col-mat { background: var(--azul-light); }
+  .freq-table-wrap tbody tr:nth-child(odd)  td.col-num,
+  .freq-table-wrap tbody tr:nth-child(odd)  td.col-aluno,
+  .freq-table-wrap tbody tr:nth-child(odd)  td.col-mat { background: var(--branco); }
+  /* Separador de ano (multisseriada) */
+  .freq-table-wrap .multi-section-divider td { background: var(--azul-light) !important; }
 
 /* FREQUÊNCIA — NOTA CELL */
 /* NOTA CELL */
@@ -3206,9 +3227,9 @@ function renderFrequencia() {
   const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
 
   let html = `<div class="freq-table-wrap"><table><thead><tr>
-    <th style="width:36px">Nº</th>
-    <th class="left" style="min-width:180px">Aluno</th>
-    <th class="left">Matrícula</th>
+    <th class="col-num" style="text-align:center">Nº</th>
+    <th class="col-aluno left">Aluno</th>
+    <th class="col-mat left">Matrícula</th>
     ${diasShow.map(d => `<th data-tip="Dia ${d}">${d}</th>`).join('')}
     <th>% Freq.</th><th>Faltas</th><th>Ações</th>
   </tr></thead><tbody>`;
@@ -3229,9 +3250,9 @@ function renderFrequencia() {
     }
 
     html += `<tr>
-      <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
-      <td class="left"><div class="aluno-nome">${a.nome}</div></td>
-      <td class="left"><span class="matricula">${a.matricula}</span></td>
+      <td class="col-num" style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
+      <td class="col-aluno left"><div class="aluno-nome">${a.nome}</div></td>
+      <td class="col-mat left"><span class="matricula">${a.matricula}</span></td>
       ${diasShow.map(d => {
         const v   = frequencia[a.id][mes][d] || 'P';
         const cor = v==='P' ? '#2e86c1' : v==='F' ? '#c0392b' : '#b8860b';
