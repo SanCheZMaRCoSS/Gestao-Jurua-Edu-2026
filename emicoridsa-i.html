@@ -479,8 +479,9 @@
     z-index: 2;
   }
   .freq-wrap thead th {
-    background: var(--azul-principal);
-    color: white;
+    background: #ebf5fb;
+    color: #1a5276;
+    font-weight: 600;
   }
   .freq-wrap thead .fcol {
     background: #ebf5fb !important;
@@ -2729,6 +2730,16 @@ function confirmarImportarDocx() {
 }
 
 // ===== INIT =====
+// Event delegation global para botões de frequência (persiste após re-render)
+document.addEventListener('click', function(ev) {
+  const btn = ev.target.closest('.freq-btn');
+  if (!btn) return;
+  const aid = parseInt(btn.dataset.id);
+  const m   = parseInt(btn.dataset.mes);
+  const d   = parseInt(btn.dataset.dia);
+  if (!isNaN(aid) && !isNaN(m) && !isNaN(d)) toggleFreq(aid, m, d);
+});
+
 async function init() {
   carregarConfig();
   aplicarNomeEscola();
@@ -3272,15 +3283,6 @@ function renderFrequencia() {
   html += '</tbody></table></div>';
   el.innerHTML = html;
 
-  // Event delegation — um único listener para todos os botões de frequência
-  el.querySelector('.freq-wrap').addEventListener('click', function(ev) {
-    const btn = ev.target.closest('.freq-btn');
-    if (!btn) return;
-    const aid = parseInt(btn.dataset.id);
-    const m   = parseInt(btn.dataset.mes);
-    const d   = parseInt(btn.dataset.dia);
-    toggleFreq(aid, m, d);
-  });
 }
 
 
