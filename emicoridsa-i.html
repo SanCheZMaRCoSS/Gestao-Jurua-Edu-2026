@@ -479,12 +479,13 @@
     z-index: 2;
   }
   .freq-wrap thead th {
-    background: var(--azul-principal) !important;
-    color: white !important;
+    background: var(--azul-principal);
+    color: white;
   }
   .freq-wrap thead .fcol {
-    background: var(--azul-principal) !important;
-    color: white !important;
+    background: #ebf5fb !important;
+    color: #1a5276 !important;
+    font-weight: 700;
     z-index: 4;
   }
   .freq-wrap thead th:not(.fcol) {
@@ -3242,14 +3243,18 @@ function renderFrequencia() {
       <td class="fcol fcol-2 left"><div class="aluno-nome">${a.nome}</div></td>
       <td class="fcol fcol-3 left"><span class="matricula">${a.matricula}</span></td>
       ${diasShow.map(d => {
-        const v   = frequencia[a.id][mes][d] || 'P';
-        const cor = v==='P' ? '#2e86c1' : v==='F' ? '#c0392b' : '#b8860b';
-        const bg  = v==='P'?'#ebf5fb':v==='F'?'#f8d7da':'#fff3cd';
-        const tip = v==='P'?'Presente':v==='F'?'Falta':'Justificada';
-        return '<td style="text-align:center"><button'
-          +' onclick="toggleFreq(' + a.id + ',' + mes + ',' + d + ')"'
-          +' style="border:none;background:' + bg + ';color:' + cor + ';width:26px;height:26px;border-radius:5px;font-weight:700;font-size:0.72rem;cursor:pointer;transition:all 0.15s"'
-          +' title="' + tip + '">' + v + '</button></td>';
+        const v2  = frequencia[a.id][mes][d] || 'P';
+        const bg2 = v2==='P'?'#ebf5fb':v2==='F'?'#f8d7da':'#fff3cd';
+        const co2 = v2==='P'?'#2e86c1':v2==='F'?'#c0392b':'#b8860b';
+        const ti2 = v2==='P'?'Presente':v2==='F'?'Falta':'Justificada';
+        return '<td style="text-align:center">'
+          + '<button class="freq-btn"'
+          + ' data-id="' + a.id + '"'
+          + ' data-mes="' + mes + '"'
+          + ' data-dia="' + d + '"'
+          + ' style="border:none;background:' + bg2 + ';color:' + co2 + ';width:26px;height:26px;border-radius:5px;font-weight:700;font-size:0.72rem;cursor:pointer"'
+          + ' title="' + ti2 + '">' + v2 + '</button>'
+          + '</td>';
       }).join('')}
       <td><div class="freq-cell ${cls}">
         <div class="freq-bar"><div class="freq-fill" style="width:${pct}%"></div></div>
@@ -3266,6 +3271,16 @@ function renderFrequencia() {
   });
   html += '</tbody></table></div>';
   el.innerHTML = html;
+
+  // Event delegation — um único listener para todos os botões de frequência
+  el.querySelector('.freq-wrap').addEventListener('click', function(ev) {
+    const btn = ev.target.closest('.freq-btn');
+    if (!btn) return;
+    const aid = parseInt(btn.dataset.id);
+    const m   = parseInt(btn.dataset.mes);
+    const d   = parseInt(btn.dataset.dia);
+    toggleFreq(aid, m, d);
+  });
 }
 
 
