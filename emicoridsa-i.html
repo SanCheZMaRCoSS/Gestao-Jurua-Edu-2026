@@ -456,7 +456,47 @@
   .freq-warn .freq-pct { color: var(--dourado); }
   .freq-bad .freq-pct { color: var(--vermelho); }
 
-  /* NOTA CELL */
+  /* FREQUÊNCIA — COLUNAS FIXAS (sticky) */
+  .freq-table-wrap {
+    overflow-x: auto;
+    position: relative;
+  }
+  .freq-table-wrap table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  .freq-table-wrap th:nth-child(1),
+  .freq-table-wrap td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: inherit;
+  }
+  .freq-table-wrap th:nth-child(2),
+  .freq-table-wrap td:nth-child(2) {
+    position: sticky;
+    left: 36px;
+    z-index: 3;
+    background: inherit;
+  }
+  .freq-table-wrap th:nth-child(3),
+  .freq-table-wrap td:nth-child(3) {
+    position: sticky;
+    left: 216px;
+    z-index: 3;
+    background: inherit;
+    border-right: 2px solid #cbd5e1 !important;
+  }
+  .freq-table-wrap thead th {
+    z-index: 4 !important;
+    background: var(--azul-principal) !important;
+  }
+  .freq-table-wrap tr:nth-child(even) td { background: #f8fbff; }
+  .freq-table-wrap tr:nth-child(odd)  td { background: #ffffff; }
+  .freq-table-wrap .multi-section-divider td { background: #e8f0fe !important; }
+
+/* FREQUÊNCIA — NOTA CELL */
+/* NOTA CELL */
   .nota-input {
     width: 58px;
     border: 1.5px solid transparent;
@@ -3165,7 +3205,7 @@ function renderFrequencia() {
   const diasShow = getDiasLetivos(mes);
   const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
 
-  let html = `<table><thead><tr>
+  let html = `<div class="freq-table-wrap"><table><thead><tr>
     <th style="width:36px">Nº</th>
     <th class="left" style="min-width:180px">Aluno</th>
     <th class="left">Matrícula</th>
@@ -3212,7 +3252,7 @@ function renderFrequencia() {
       </td>
     </tr>`;
   });
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   el.innerHTML = html;
 }
 
