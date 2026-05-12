@@ -1534,7 +1534,7 @@
         </select>
         <div style="margin-top:10px">
           <div class="field-label">Buscar Aluno</div>
-          <input type="text" id="buscaAluno" placeholder="🔍 Nome ou matrícula..." autocomplete="new-password" oninput="filtrarAlunos()">
+          <input type="text" id="buscaAluno" name="busca_hkscqwvz" placeholder="🔍 Nome ou matrícula..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="filtrarAlunos()">
         </div>
       </div>
     </div>
@@ -2730,6 +2730,14 @@ function confirmarImportarDocx() {
 }
 
 // ===== INIT =====
+// Limpar campo de busca — impede autocomplete do Chrome
+  const buscaEl = document.getElementById('buscaAluno');
+  if (buscaEl) {
+    buscaEl.value = '';
+    // Trocar name por valor aleatório para confundir autocomplete
+    buscaEl.setAttribute('name', 'x' + Math.random().toString(36).slice(2));
+  }
+
 // Event delegation global para botões de frequência (persiste após re-render)
 document.addEventListener('click', function(ev) {
   const btn = ev.target.closest('.freq-btn');
@@ -3281,7 +3289,13 @@ function renderFrequencia() {
     </tr>`;
   });
   html += '</tbody></table></div>';
+  // Preservar posição de rolagem horizontal
+  const freqWrap = el.querySelector('.freq-wrap');
+  const scrollX = freqWrap ? freqWrap.scrollLeft : 0;
   el.innerHTML = html;
+  // Restaurar posição após re-render
+  const freqWrapNovo = el.querySelector('.freq-wrap');
+  if (freqWrapNovo && scrollX > 0) freqWrapNovo.scrollLeft = scrollX;
 
 }
 
