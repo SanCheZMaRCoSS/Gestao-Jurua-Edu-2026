@@ -94,7 +94,7 @@ body {
    TOPBAR — gradiente azul igual ao header do SGE
    ============================================================ */
 .topbar {
-  background: linear-gradient(135deg, var(--azul-esc) 0%, var(--azul) 60%, var(--azul-mid) 100%);
+  background: #009cce;
   border-bottom: 3px solid var(--dourado);
   padding: 0 1.5rem;
   display: flex;
@@ -108,7 +108,8 @@ body {
 }
 .topbar-brand { display: flex; align-items: center; gap: 12px; }
 .brand-badge {
-  background: var(--dourado);
+  background: rgba(201,151,43,0.32);
+  border: 1px solid rgba(255,255,255,0.3);
   color: #fff;
   font-weight: 700;
   font-size: 10px;
@@ -1098,9 +1099,20 @@ tr:hover td { background: var(--azul-light); }
 // ESTADO GLOBAL
 // ============================
 let CONFIG = {
-  webAppUrl: localStorage.getItem('tce_url') || '',
+  webAppUrl: '',
   escolas: JSON.parse(localStorage.getItem('tce_escolas') || '[]')
 };
+
+function recuperarUrl() {
+  let url = '';
+  try { url = localStorage.getItem('tce_url') || ''; } catch(e){}
+  if (!url) { try { url = sessionStorage.getItem('tce_url') || ''; } catch(e){} }
+  if (!url) {
+    const m = document.cookie.match(/(?:^|; )tce_url=([^;]*)/);
+    if (m) url = decodeURIComponent(m[1]);
+  }
+  return url;
+}
 let DADOS = JSON.parse(localStorage.getItem('tce_dados') || '[]');
 let SHEETS = {}; // cache dos dados do SGE
 let chartInst = {};
@@ -1112,8 +1124,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Restaurar cache do SGE se existir
   const cache = localStorage.getItem('tce_sheets_cache');
   if (cache) { try { SHEETS = JSON.parse(cache); } catch(e){} }
+  // Recuperar URL de múltiplas fontes
+  CONFIG.webAppUrl = recuperarUrl();
   if (CONFIG.webAppUrl) {
-    document.getElementById('cfg-url').value = CONFIG.webAppUrl;
+    const cfgEl = document.getElementById('cfg-url');
+    if (cfgEl) cfgEl.value = CONFIG.webAppUrl;
     document.getElementById('config-banner').classList.add('hidden');
   }
   popularSelects();
@@ -1136,7 +1151,11 @@ function showPanel(id, btn) {
 // ============================
 function salvarConfig() {
   CONFIG.webAppUrl = document.getElementById('cfg-url').value.trim();
-  localStorage.setItem('tce_url', CONFIG.webAppUrl);
+  try { localStorage.setItem('tce_url', CONFIG.webAppUrl); } catch(e){}
+  try { sessionStorage.setItem('tce_url', CONFIG.webAppUrl); } catch(e){}
+  const exp = new Date(); exp.setFullYear(exp.getFullYear() + 1);
+  document.cookie = 'tce_url=' + encodeURIComponent(CONFIG.webAppUrl) +
+    '; expires=' + exp.toUTCString() + '; path=/; SameSite=Lax';
   if (CONFIG.webAppUrl) {
     document.getElementById('config-banner').classList.add('hidden');
   }
@@ -1292,13 +1311,19 @@ function processarDadosSGE() {
   // Registrar escolas encontradas no SGE automaticamente
   if (SHEETS['escolas'] && SHEETS['escolas'].length) {
     SHEETS['escolas'].forEach(e => {
-      const nome = e.escola || '';
-      if (nome && !CONFIG.escolas.find(x => normalizar(x.nome) === normalizar(nome))) {
-        // Detecta zona pelo código (heurística simples)
-        const zona = e.codigo && e.codigo.includes('RIB') ? 'ribeirinha' :
-                     e.codigo && (e.codigo.includes('RUR') || e.codigo.includes('FAZ')) ? 'rural' : 'urbana';
-        CONFIG.escolas.push({ nome, zona });
-      }
+      const nome = (e.escola || '').trim();
+      // Ignora linhas sem nome completo ou genéricas
+      if (!nome || nome.length < 10) return;
+      if (/^escola municipal$/i.test(nome)) return;
+      if (/^escola$/i.test(nome)) return;
+      // Ignora duplicatas por nome normalizado
+      if (CONFIG.escolas.find(x => normalizar(x.nome) === normalizar(nome))) return;
+      // Detecta zona pelo código
+      const cod = (e.codigo || '').toUpperCase();
+      const zona = cod.includes('IND') ? 'ribeirinha' :
+                   cod.includes('RIB') ? 'ribeirinha' :
+                   cod.includes('RUR') || cod.includes('FAZ') ? 'rural' : 'urbana';
+      CONFIG.escolas.push({ nome, zona });
     });
     salvarEscolas();
   }
