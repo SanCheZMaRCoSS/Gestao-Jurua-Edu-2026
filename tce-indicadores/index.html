@@ -1308,6 +1308,29 @@ function setSync(estado, msg) {
 function processarDadosSGE() {
   const periodo = detectarPeriodoAtual();
 
+  // Limpar entradas inválidas que possam estar salvas do localStorage
+  CONFIG.escolas = CONFIG.escolas.filter(e => {
+    const nome = (e.nome || '').trim();
+    if (!nome || nome.length < 10) return false;
+    if (/^escola municipal\s*$/i.test(nome)) return false;
+    if (/^escola\s*$/i.test(nome)) return false;
+    return true;
+  });
+  // Remover duplicatas pelo nome normalizado
+  const nomesVistos = new Set();
+  CONFIG.escolas = CONFIG.escolas.filter(e => {
+    const chave = normalizar(e.nome);
+    if (nomesVistos.has(chave)) return false;
+    nomesVistos.add(chave);
+    return true;
+  });
+  // Remover "EMDLITAIFF - 2026" se "Escola Municipal Dalila Litaiff" já existe
+  const temDalila = CONFIG.escolas.some(e => normalizar(e.nome).includes('dalila'));
+  if (temDalila) {
+    CONFIG.escolas = CONFIG.escolas.filter(e => !normalizar(e.nome).includes('emdlitaiff'));
+  }
+  salvarEscolas();
+
   // Registrar escolas encontradas no SGE automaticamente
   if (SHEETS['escolas'] && SHEETS['escolas'].length) {
     SHEETS['escolas'].forEach(e => {
