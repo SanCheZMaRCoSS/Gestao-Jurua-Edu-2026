@@ -3411,6 +3411,12 @@ function renderNotas() {
   const mediaMin = MEDIA_APROVACAO[seg];
   const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
 
+  // Aviso para turmas multisseriadas que misturam EI + EF
+  const temEI = isMultiRender && turmaAtual.anos &&
+    turmaAtual.anos.some(a => ['Creche','Pré'].includes(a));
+  const temEF = isMultiRender && turmaAtual.anos &&
+    turmaAtual.anos.some(a => !['Creche','Pré'].includes(a));
+
   if (seg === 'EI') {
     const niveisEI = ['NS','PS','S','PD'];
     let html = `
@@ -3445,6 +3451,16 @@ function renderNotas() {
     return;
   }
 
+  // Banner informativo para turmas mistas EI+EF
+  let htmlBannerMisto = '';
+  if (temEI && temEF) {
+    htmlBannerMisto = `<div style="padding:10px 16px;font-size:0.78rem;background:#fef9e7;border-bottom:2px solid #f9ca24;color:#7d6608;line-height:1.6;margin-bottom:4px">
+      ⚠️ <strong>Turma multisseriada com Educação Infantil e Ensino Fundamental.</strong><br>
+      Alunos da <strong>Creche/Pré</strong> → avaliação qualitativa por conceitos (NS · PS · S · PD).<br>
+      Alunos do <strong>EF</strong> → notas numéricas (0 a 10).
+    </div>`;
+  }
+
   const mediaLabel = mediaMin !== null ? `Média ≥ ${fmtNota(mediaMin)}` : 'Média';
   let html = `<table><thead>
     <tr>
@@ -3471,32 +3487,50 @@ function renderNotas() {
       html += `<tr><td colspan="99" class="multi-section-divider">🔀 ${a.ano}</td></tr>`;
     }
 
+    // Verificar se este aluno específico é EI (para turmas multisseriadas EIEF)
+    const segAluno   = (isMultiRender && a.ano) ? getSegmentoByAno(a.ano) : seg;
+    const isEIAluno  = segAluno === 'EI';
+    const niveisEI   = ['NS','PS','S','PD'];
+
     let soma = 0, cnt = 0;
     const cells = discAluno_.map(d => {
       const vReg = getNota(a.id, d, bim, 'reg');
       const vRec = getNota(a.id, d, bim, 'rec');
-      const ef   = calcNotaEfetivaBim(a.id, d, bim);
-      if (ef !== null) { soma += ef; cnt++; }
-      const recUsada = vRec !== '' && parseFloat(vRec) > parseFloat(vReg || 0);
-      return `<td style="background:#f9fbf9"><input class="nota-input" type="number" min="0" max="10" step="0.1"
-          value="${vReg}" onchange="setNota(${a.id},'${d}',${bim},this.value,'reg');calcularMedias()" placeholder="—"></td>
-        <td style="background:#fdf9ee"><input class="nota-input" type="number" min="0" max="10" step="0.1"
-          value="${vRec}" onchange="setNota(${a.id},'${d}',${bim},this.value,'rec');calcularMedias()" placeholder="—"
-          style="border-color:${recUsada?'var(--dourado)':'transparent'};color:${recUsada?'var(--dourado)':'inherit'}"></td>`;
+
+      if (isEIAluno) {
+        // Aluno de EI: dropdown de conceitos, sem recuperação
+        const val = vReg || '';
+        return `<td colspan="2" style="background:#f0fbf0;text-align:center">
+          <select onchange="setNotaEI(${a.id},'${d}',${bim},this.value)"
+            style="width:80px;font-size:0.75rem;border:1px solid #aed6f1;border-radius:4px;padding:2px 4px;background:white">
+            <option value="">—</option>
+            ${niveisEI.map(n => '<option value="' + n + '"' + (val===n?' selected':'') + '>' + n + '</option>').join('')}
+          </select></td>`;
+      } else {
+        // Aluno de EF: campos numéricos normais
+        const ef = calcNotaEfetivaBim(a.id, d, bim);
+        if (ef !== null) { soma += ef; cnt++; }
+        const recUsada = vRec !== '' && parseFloat(vRec) > parseFloat(vReg || 0);
+        return `<td style="background:#f9fbf9"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+            value="${vReg}" onchange="setNota(${a.id},'${d}',${bim},this.value,'reg');calcularMedias()" placeholder="—"></td>
+          <td style="background:#fdf9ee"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+            value="${vRec}" onchange="setNota(${a.id},'${d}',${bim},this.value,'rec');calcularMedias()" placeholder="—"
+            style="border-color:${recUsada?'var(--dourado)':'transparent'};color:${recUsada?'var(--dourado)':'inherit'}"></td>`;
+      }
     }).join('');
 
-    const media = cnt ? soma/cnt : null;
+    const media = (!isEIAluno && cnt) ? soma/cnt : null;
     const mA = mMinAluno || 6.0;
     const mediaCls = media===null?'':(media>=mA?'media-ap':media>=(mA-2)?'media-rec':'media-rep');
     html += `<tr>
       <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
       <td class="left"><div class="aluno-nome">${a.nome}${isMultiRender&&a.ano?`<span class="aluno-ano-badge">${a.ano}</span>`:''}</div><div class="matricula">${a.matricula}</div></td>
       ${cells}
-      <td><span class="media-badge ${mediaCls}">${media!==null?fmtNota(media):'—'}</span></td>
+      <td>${isEIAluno ? '<span style="font-size:0.72rem;color:#27ae60">Qualitativa</span>' : '<span class="media-badge ' + mediaCls + '">' + (media!==null?fmtNota(media):'—') + '</span>'}</td>
     </tr>`;
   });
   html += '</tbody></table>';
-  el.innerHTML = html;
+  el.innerHTML = htmlBannerMisto + html;
 }
 
 function setNotaEI(alunoId, disc, bim, val) {
