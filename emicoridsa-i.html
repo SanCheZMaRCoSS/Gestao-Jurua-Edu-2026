@@ -4932,32 +4932,6 @@ function _htmlRodapePrint(prof, pedagogo, legenda) {
     </div>
     ${legenda ? `<div class="leg"><b>Legenda:</b> ${legenda}</div>` : ''}
   </div>
-<!-- Overlay sidebar mobile -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
-<script>
-// ── SIDEBAR MOBILE ──────────────────────────────────────────
-function toggleSidebar() {
-  const sidebar  = document.querySelector('.sidebar');
-  const overlay  = document.getElementById('sidebarOverlay');
-  const aberta   = sidebar.classList.contains('aberta');
-  sidebar.classList.toggle('aberta', !aberta);
-  overlay.classList.toggle('ativo', !aberta);
-  document.body.style.overflow = aberta ? '' : 'hidden';
-}
-// Fechar sidebar ao selecionar turma (mobile)
-document.addEventListener('click', function(e) {
-  if (window.innerWidth <= 900) {
-    const sidebar = document.querySelector('.sidebar');
-    if (sidebar && sidebar.classList.contains('aberta')) {
-      // Se clicou num select de turma ou botão de turma rápida
-      if (e.target.closest('#selTurma') || e.target.closest('.turma-rapida-btn')) {
-        setTimeout(() => toggleSidebar(), 300);
-      }
-    }
-  }
-});
-</script>
 </body></html>`;
 }
 
