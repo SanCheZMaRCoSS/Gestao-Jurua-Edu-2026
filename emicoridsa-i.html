@@ -3409,8 +3409,10 @@ function renderNotas() {
   // Classificar cada aluno
   function ehEI(a) {
     if (seg === 'EI') return true;
-    if (a.ano && ['Creche','Pré'].includes(a.ano)) return true;
-    if (a.ano && !['Creche','Pré'].includes(a.ano)) return false;
+    // Normalizar: remover espaços e comparar sem case
+    const anoNorm = (a.ano || '').trim().toLowerCase();
+    if (anoNorm === 'creche' || anoNorm === 'pré' || anoNorm === 'pre') return true;
+    if (a.ano && a.ano.trim() !== '') return false; // tem ano definido e não é EI
     if (seg === 'EIEF') return true;
     return false;
   }
