@@ -3357,30 +3357,45 @@ function getSegmentoByAno(ano) {
 }
 
 function getNota(alunoId, disc, bim, tipo='reg') {
-  const key = tipo === 'rec' ? bim + '_rec' : bim;
+  // tipo: 'av1', 'av2', 'av3', 'rec'
+  const key = tipo === 'rec' ? bim + '_rec' : bim + '_' + tipo;
   return notas[alunoId]?.[disc]?.[key] ?? '';
 }
 
 function setNota(alunoId, disc, bim, val, tipo='reg') {
   if (turmaTemSenha() && !turmaEstaDesbloqueada()) {
-    pedirSenhaTurma(() => salvarNotaBimestre(alunoId, bim, tipo, val));
+    pedirSenhaTurma(() => setNota(alunoId, disc, bim, val, tipo));
     return;
   }
   if (!notas[alunoId]) notas[alunoId] = {};
   if (!notas[alunoId][disc]) notas[alunoId][disc] = {};
-  const key = tipo === 'rec' ? bim + '_rec' : bim;
+  // tipo: 'av1', 'av2', 'av3', 'rec'
+  const key = tipo === 'rec' ? bim + '_rec' : bim + '_' + tipo;
   notas[alunoId][disc][key] = val === '' ? '' : (parseFloat(val) || 0);
+  // Atualizar média em tempo real
+  atualizarMediaLinha(alunoId, bim);
   agendarAutoSave('Nota alterada...');
 }
 
+function calcMediaAvsBim(alunoId, disc, bim) {
+  // Média das 3 avaliações do bimestre
+  const v1 = notas[alunoId]?.[disc]?.[bim + '_av1'];
+  const v2 = notas[alunoId]?.[disc]?.[bim + '_av2'];
+  const v3 = notas[alunoId]?.[disc]?.[bim + '_av3'];
+  const vals = [v1, v2, v3]
+    .map(v => (v !== undefined && v !== '') ? parseFloat(v) : null)
+    .filter(v => v !== null);
+  if (!vals.length) return null;
+  return vals.reduce((s, v) => s + v, 0) / vals.length;
+}
+
 function calcNotaEfetivaBim(alunoId, disc, bim) {
-  const reg = notas[alunoId]?.[disc]?.[bim];
+  const mediaAvs = calcMediaAvsBim(alunoId, disc, bim);
   const rec = notas[alunoId]?.[disc]?.[bim + '_rec'];
-  const nReg = (reg !== undefined && reg !== '') ? parseFloat(reg) : null;
   const nRec = (rec !== undefined && rec !== '') ? parseFloat(rec) : null;
-  if (nReg === null) return null;
-  if (nRec !== null) return Math.max(nReg, nRec);
-  return nReg;
+  if (mediaAvs === null) return null;
+  if (nRec !== null) return Math.max(mediaAvs, nRec);
+  return mediaAvs;
 }
 
 function calcMediaBim(alunoId, disc, bim) { return calcNotaEfetivaBim(alunoId, disc, bim); }
@@ -3397,98 +3412,161 @@ function renderNotas() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><div>Selecione uma turma</div></div>';
     return;
   }
+
   const seg  = turmaAtual.segmento;
   const bim  = bimestreAtual;
-  const isMultiRender = (turmaAtual.multisseriada && turmaAtual.anos && turmaAtual.anos.length > 1) || seg === 'EIEF';
-  const discs    = DISCIPLINAS[seg];
-  const mediaMin = MEDIA_APROVACAO[seg];
   const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
+  const niveisEI      = ['NS','PS','S','PD'];
+  const discsEI       = DISCIPLINAS['EI'];
+  const discsEF       = DISCIPLINAS[seg] || DISCIPLINAS['EF1'];
+  const mediaMin      = MEDIA_APROVACAO[seg];
 
-  if (seg === 'EI') {
-    const niveisEI = ['NS','PS','S','PD'];
-    let html = `
-      <div style="padding:12px 16px 4px;font-size:0.75rem;background:#ebf5fb;border-bottom:1px solid #aed6f1;color:#1a5276;line-height:1.6">
-        🌱 <strong>Educação Infantil — Avaliação Qualitativa</strong><br>
-        Campos de Experiência (BNCC) — sem notas numéricas.
+  // Classificar cada aluno
+  function ehEI(a) {
+    if (seg === 'EI') return true;
+    // Normalizar: remover espaços e comparar sem case
+    const anoNorm = (a.ano || '').trim().toLowerCase();
+    if (anoNorm === 'creche' || anoNorm === 'pré' || anoNorm === 'pre') return true;
+    if (a.ano && a.ano.trim() !== '') return false; // tem ano definido e não é EI
+    if (seg === 'EIEF') return true;
+    return false;
+  }
+
+  const grupoEI = listaOrdenada.filter(a =>  ehEI(a));
+  const grupoEF = listaOrdenada.filter(a => !ehEI(a));
+
+  let html = '';
+
+  // ══════════════════════════════════════════════════════
+  // BLOCO 1 — EDUCAÇÃO INFANTIL (Campos de Experiência)
+  // ══════════════════════════════════════════════════════
+  if (grupoEI.length > 0) {
+    html += `
+    <div style="margin-bottom:8px">
+      <div style="padding:10px 16px;font-size:0.80rem;background:#ebf5fb;border-bottom:2px solid #aed6f1;color:#1a5276;font-weight:700;display:flex;align-items:center;gap:8px">
+        🌱 Educação Infantil — Avaliação Qualitativa
+        <span style="font-size:0.68rem;font-weight:400;opacity:0.8">Campos de Experiência (BNCC) — sem notas numéricas</span>
       </div>
+      <div style="overflow-x:auto">
       <table><thead><tr>
         <th style="width:36px">Nº</th>
         <th class="left" style="min-width:170px">Criança</th>
-        ${discs.map(d => `<th data-tip="${d}" style="min-width:110px;font-size:0.6rem">${d.length>14?d.substr(0,13)+'…':d}</th>`).join('')}
+        ${discsEI.map(d => `<th data-tip="${d}" style="min-width:115px;font-size:0.6rem;background:#ebf5fb;color:#1a5276">${d.length>15?d.substr(0,14)+'…':d}</th>`).join('')}
       </tr></thead><tbody>`;
-    listaOrdenada.forEach(a => {
+    grupoEI.forEach(a => {
       html += `<tr>
         <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
-        <td class="left"><div class="aluno-nome">${a.nome}</div><div class="matricula">${a.matricula}</div></td>
-        ${discs.map(d => {
+        <td class="left">
+          <div class="aluno-nome">${a.nome}</div>
+          ${a.ano ? `<span class="aluno-ano-badge">${a.ano}</span>` : ''}
+          <div class="matricula">${a.matricula}</div>
+        </td>
+        ${discsEI.map(d => {
           const val = notas[a.id]?.[d]?.['ei_'+bim] || '';
-          return `<td><select onchange="setNotaEI(${a.id},'${d}',${bim},this.value)"
-            style="width:100%;border:1.5px solid var(--cinza-border);border-radius:5px;padding:4px 5px;font-size:0.68rem;font-family:inherit;background:white;cursor:pointer">
-            <option value="">—</option>
-            ${niveisEI.map(n => `<option value="${n}" ${val===n?'selected':''}>${n}</option>`).join('')}
-          </select></td>`;
+          return `<td style="text-align:center;padding:6px 4px">
+            <select onchange="setNotaEI(${a.id},'${d}',${bim},this.value)"
+              style="width:72px;font-size:0.72rem;border:1.5px solid #aed6f1;border-radius:5px;padding:3px 4px;background:white;cursor:pointer;font-weight:600;color:#1a5276">
+              <option value="">—</option>
+              ${niveisEI.map(n => `<option value="${n}" ${val===n?' selected':''}>${n}</option>`).join('')}
+            </select>
+          </td>`;
         }).join('')}
       </tr>`;
     });
     html += `</tbody></table>
-      <div style="padding:8px 16px;font-size:0.68rem;color:var(--cinza-mid);border-top:1px solid var(--cinza-border)">
-        <strong>NS</strong> = Não Satisfatório &nbsp;|&nbsp; <strong>PS</strong> = Parcialmente Satisfatório &nbsp;|&nbsp; <strong>S</strong> = Satisfatório &nbsp;|&nbsp; <strong>PD</strong> = Plenamente Desenvolvido
-      </div>`;
-    el.innerHTML = html;
-    return;
+      </div>
+      <div style="padding:6px 16px;font-size:0.65rem;color:var(--cinza-mid);background:#f7fbff;border-top:1px solid #d4e9f7">
+        <strong>NS</strong> = Não Satisfatório &nbsp;·&nbsp; <strong>PS</strong> = Parcialmente Satisfatório &nbsp;·&nbsp; <strong>S</strong> = Satisfatório &nbsp;·&nbsp; <strong>PD</strong> = Plenamente Desenvolvido
+      </div>
+    </div>`;
   }
 
-  const mediaLabel = mediaMin !== null ? `Média ≥ ${fmtNota(mediaMin)}` : 'Média';
-  let html = `<table><thead>
-    <tr>
-      <th rowspan="2" style="width:36px;vertical-align:middle">Nº</th>
-      <th class="left" rowspan="2" style="min-width:170px;vertical-align:middle">Aluno</th>
-      ${discs.map(d => `<th colspan="2" data-tip="${d}" style="min-width:120px;border-bottom:1px solid rgba(36,113,163,0.15)">${d.length>10?d.substr(0,9)+'…':d}</th>`).join('')}
-      <th rowspan="2" style="vertical-align:middle;min-width:80px">${mediaLabel}</th>
-    </tr>
-    <tr>
-      ${discs.map(() => `
-        <th style="font-size:0.58rem;color:#555;font-weight:600;background:#f9fbf9;min-width:52px">Avaliação</th>
-        <th style="font-size:0.58rem;color:var(--dourado);font-weight:600;background:#fdf9ee;min-width:52px">Recuperação</th>
-      `).join('')}
-    </tr>
-  </thead><tbody>`;
+  // ══════════════════════════════════════════════════════
+  // BLOCO 2 — ENSINO FUNDAMENTAL (Notas numéricas)
+  // ══════════════════════════════════════════════════════
+  if (grupoEF.length > 0) {
+    const mediaLabel = mediaMin !== null ? `Média ≥ ${fmtNota(mediaMin)}` : 'Média';
 
-  let anoAtual = null;
-  listaOrdenada.forEach(a => {
-    const discAluno_ = (isMultiRender && a.ano) ? (DISCIPLINAS[getSegmentoByAno(a.ano)] || discs) : discs;
-    const mMinAluno  = (isMultiRender && a.ano) ? (MEDIA_APROVACAO[getSegmentoByAno(a.ano)] || mediaMin) : mediaMin;
+    html += `
+    <div>
+      ${grupoEI.length > 0 ? `<div style="padding:10px 16px;font-size:0.80rem;background:#f0f7e6;border-bottom:2px solid #b7d98b;color:#3d6b1a;font-weight:700;display:flex;align-items:center;gap:8px">
+        📗 Ensino Fundamental — Notas Bimestrais
+        <span style="font-size:0.68rem;font-weight:400;opacity:0.8">Escala 0 a 10</span>
+      </div>` : ''}
+      <div style="overflow-x:auto">
+      <table><thead>
+        <tr>
+          <th rowspan="2" style="width:36px;vertical-align:middle">Nº</th>
+          <th class="left" rowspan="2" style="min-width:170px;vertical-align:middle">Aluno</th>
+          ${discsEF.map(d => `<th colspan="4" data-tip="${d}" style="min-width:200px;border-bottom:1px solid rgba(36,113,163,0.15)">${d.length>10?d.substr(0,9)+'…':d}</th>`).join('')}
+          <th rowspan="2" style="vertical-align:middle;min-width:80px">${mediaLabel}</th>
+        </tr>
+        <tr>
+          ${discsEF.map(() => `
+            <th style="font-size:0.58rem;color:#1a6b3c;font-weight:600;background:#f0faf4;min-width:48px">AV1</th>
+            <th style="font-size:0.58rem;color:#1a6b3c;font-weight:600;background:#f0faf4;min-width:48px">AV2</th>
+            <th style="font-size:0.58rem;color:#1a6b3c;font-weight:600;background:#f0faf4;min-width:48px">AV3</th>
+            <th style="font-size:0.58rem;color:var(--dourado);font-weight:600;background:#fdf9ee;min-width:48px">Rec.</th>
+          `).join('')}
+        </tr>
+      </thead><tbody>`;
 
-    if (isMultiRender && a.ano && a.ano !== anoAtual) {
-      anoAtual = a.ano;
-      html += `<tr><td colspan="99" class="multi-section-divider">🔀 ${a.ano}</td></tr>`;
-    }
+    let anoAtual = null;
+    grupoEF.forEach(a => {
+      const discAluno = (turmaAtual.multisseriada && a.ano) ?
+        (DISCIPLINAS[getSegmentoByAno(a.ano)] || discsEF) : discsEF;
+      const mMinAluno = (turmaAtual.multisseriada && a.ano) ?
+        (MEDIA_APROVACAO[getSegmentoByAno(a.ano)] || mediaMin) : mediaMin;
 
-    let soma = 0, cnt = 0;
-    const cells = discAluno_.map(d => {
-      const vReg = getNota(a.id, d, bim, 'reg');
-      const vRec = getNota(a.id, d, bim, 'rec');
-      const ef   = calcNotaEfetivaBim(a.id, d, bim);
-      if (ef !== null) { soma += ef; cnt++; }
-      const recUsada = vRec !== '' && parseFloat(vRec) > parseFloat(vReg || 0);
-      return `<td style="background:#f9fbf9"><input class="nota-input" type="number" min="0" max="10" step="0.1"
-          value="${vReg}" onchange="setNota(${a.id},'${d}',${bim},this.value,'reg');calcularMedias()" placeholder="—"></td>
-        <td style="background:#fdf9ee"><input class="nota-input" type="number" min="0" max="10" step="0.1"
-          value="${vRec}" onchange="setNota(${a.id},'${d}',${bim},this.value,'rec');calcularMedias()" placeholder="—"
-          style="border-color:${recUsada?'var(--dourado)':'transparent'};color:${recUsada?'var(--dourado)':'inherit'}"></td>`;
-    }).join('');
+      if (turmaAtual.multisseriada && a.ano && a.ano !== anoAtual) {
+        anoAtual = a.ano;
+        html += `<tr><td colspan="99" class="multi-section-divider">🔀 ${a.ano}</td></tr>`;
+      }
 
-    const media = cnt ? soma/cnt : null;
-    const mA = mMinAluno || 6.0;
-    const mediaCls = media===null?'':(media>=mA?'media-ap':media>=(mA-2)?'media-rec':'media-rep');
-    html += `<tr>
-      <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
-      <td class="left"><div class="aluno-nome">${a.nome}${isMultiRender&&a.ano?`<span class="aluno-ano-badge">${a.ano}</span>`:''}</div><div class="matricula">${a.matricula}</div></td>
-      ${cells}
-      <td><span class="media-badge ${mediaCls}">${media!==null?fmtNota(media):'—'}</span></td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
+      let soma = 0, cnt = 0;
+      const cells = discAluno.map(d => {
+        const v1  = getNota(a.id, d, bim, 'av1');
+        const v2  = getNota(a.id, d, bim, 'av2');
+        const v3  = getNota(a.id, d, bim, 'av3');
+        const vRec = getNota(a.id, d, bim, 'rec');
+        const ef  = calcNotaEfetivaBim(a.id, d, bim);
+        if (ef !== null) { soma += ef; cnt++; }
+        const mediaAvs = calcMediaAvsBim(a.id, d, bim);
+        const recUsada = vRec !== '' && mediaAvs !== null && parseFloat(vRec) > mediaAvs;
+        return `
+          <td style="background:#f0faf4"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+            value="${v1}" onchange="setNota(${a.id},'${d}',${bim},this.value,'av1')" placeholder="—"></td>
+          <td style="background:#f0faf4"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+            value="${v2}" onchange="setNota(${a.id},'${d}',${bim},this.value,'av2')" placeholder="—"></td>
+          <td style="background:#f0faf4"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+            value="${v3}" onchange="setNota(${a.id},'${d}',${bim},this.value,'av3')" placeholder="—"></td>
+          <td style="background:#fdf9ee"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+            value="${vRec}" onchange="setNota(${a.id},'${d}',${bim},this.value,'rec')" placeholder="—"
+            style="border-color:${recUsada?'var(--dourado)':'transparent'};color:${recUsada?'var(--dourado)':'inherit'}"></td>`;
+      }).join('');
+
+      const media    = cnt ? soma/cnt : null;
+      const mA       = mMinAluno || 6.0;
+      const mediaCls = media===null?'':(media>=mA?'media-ap':media>=(mA-2)?'media-rec':'media-rep');
+      html += `<tr>
+        <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
+        <td class="left"><div class="aluno-nome">${a.nome}${a.ano?`<span class="aluno-ano-badge">${a.ano}</span>`:''}</div><div class="matricula">${a.matricula}</div></td>
+        ${cells}
+        <td><span class="media-badge ${mediaCls}" id="media_${a.id}">${media!==null?fmtNota(media):'—'}</span></td>
+      </tr>`;
+    });
+    html += `</tbody></table>
+      </div>
+    </div>`;
+  }
+
+  // ══════════════════════════════════════════════════════
+  // Turma pura de EI sem alunos no EF
+  // ══════════════════════════════════════════════════════
+  if (grupoEI.length === 0 && grupoEF.length === 0) {
+    html = '<div class="empty-state"><div class="empty-icon">📊</div><div>Sem alunos nesta turma.</div></div>';
+  }
+
   el.innerHTML = html;
 }
 
@@ -3500,6 +3578,23 @@ function setNotaEI(alunoId, disc, bim, val) {
 }
 
 function calcularMedias() { /* notas já atualizadas em memória */ }
+
+function atualizarMediaLinha(alunoId, bim) {
+  // Recalcula e exibe a média da linha de um aluno em tempo real
+  const discAluno = turmaAtual ? (DISCIPLINAS[turmaAtual.segmento] || []) : [];
+  let soma = 0, cnt = 0;
+  discAluno.forEach(d => {
+    const ef = calcNotaEfetivaBim(alunoId, d, bim);
+    if (ef !== null) { soma += ef; cnt++; }
+  });
+  const media = cnt ? soma / cnt : null;
+  const el = document.getElementById('media_' + alunoId);
+  if (!el) return;
+  const mA = MEDIA_APROVACAO[turmaAtual?.segmento] || 6.0;
+  const cls = media === null ? '' : media >= mA ? 'media-ap' : media >= (mA - 2) ? 'media-rec' : 'media-rep';
+  el.className = 'media-badge ' + cls;
+  el.textContent = media !== null ? fmtNota(media) : '—';
+}
 function calcularMediasFinais() { renderMediasFinal(); }
 
 function renderMediasFinal() {
@@ -4729,7 +4824,8 @@ function _htmlRodapePrint(prof, pedagogo, legenda) {
       <div>${pedagogo || 'Pedagogo(a)'}<br><small>Assinatura</small></div>
     </div>
     ${legenda ? `<div class="leg"><b>Legenda:</b> ${legenda}</div>` : ''}
-  </div></body></html>`;
+  </div>
+</body></html>`;
 }
 
 function _htmlRodapeAtaPrint(prof, pedagogo, diretor) {
