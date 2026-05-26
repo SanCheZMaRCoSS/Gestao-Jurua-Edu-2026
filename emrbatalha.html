@@ -2457,7 +2457,7 @@ async function carregarDoSheets() {
     const d = res.dados;
     turmas      = d.turmas      || [];
     alunos      = d.alunos      || [];
-    notas       = d.notas       || {};
+    notas       = migrarNotasAntigas(d.notas || {});
     frequencia  = d.frequencia  || {};
     observacoes = d.observacoes || [];
     diario      = normalizarChavesDiario(d.diario || {});
@@ -4403,7 +4403,7 @@ async function sincronizarAgora() {
 
     turmas      = turmasRecebidas;
     alunos      = alunosRecebidos;
-    notas       = d.notas       || {};
+    notas       = migrarNotasAntigas(d.notas || {});
     frequencia  = d.frequencia  || {};
     observacoes = d.observacoes || [];
     diario      = normalizarChavesDiario(d.diario || {});
@@ -5029,6 +5029,52 @@ function gerarBoletim() { showSection('relatorio', null, null); renderRelatorio(
 
 
 // Normaliza chaves de data do diário: converte 2026_03_10 → 2026-03-10
+function migrarNotasAntigas(notasRaw) {
+  // Converte notas do formato antigo (bim, bim_rec) para o novo (bim_av1, bim_rec1)
+  // Formato antigo: notas[alunoId][disc][1] = 7.5  e  notas[alunoId][disc]['1_rec'] = 8.0
+  // Formato novo:   notas[alunoId][disc]['1_av1'] = 7.5
+  const resultado = {};
+  Object.keys(notasRaw).forEach(alunoId => {
+    resultado[alunoId] = {};
+    Object.keys(notasRaw[alunoId]).forEach(disc => {
+      resultado[alunoId][disc] = {};
+      const d = notasRaw[alunoId][disc];
+      Object.keys(d).forEach(key => {
+        const val = d[key];
+        // Chave numérica pura (1,2,3,4) → era a nota de avaliação única
+        if (/^[1-4]$/.test(String(key))) {
+          // Migrar para av1 (assumir como primeira avaliação)
+          const novaKey = String(key) + '_av1';
+          if (!resultado[alunoId][disc][novaKey]) {
+            resultado[alunoId][disc][novaKey] = val;
+          }
+        }
+        // Chave "N_rec" → era recuperação única, migrar para rec1
+        else if (/^[1-4]_rec$/.test(String(key))) {
+          const bimNum = key.split('_')[0];
+          const novaKey = bimNum + '_rec1';
+          if (!resultado[alunoId][disc][novaKey]) {
+            resultado[alunoId][disc][novaKey] = val;
+          }
+        }
+        // Chave "ei_N" → mantém (avaliação EI)
+        else if (/^ei_[1-4]$/.test(String(key))) {
+          resultado[alunoId][disc][key] = val;
+        }
+        // Chaves já no novo formato → mantém
+        else if (/^[1-4]_(av[1-3]|rec[1-3])$/.test(String(key))) {
+          resultado[alunoId][disc][key] = val;
+        }
+        // Qualquer outro formato → mantém
+        else {
+          resultado[alunoId][disc][key] = val;
+        }
+      });
+    });
+  });
+  return resultado;
+}
+
 function normalizarChavesDiario(diarioRaw) {
   const resultado = {};
   Object.keys(diarioRaw).forEach(turmaId => {
