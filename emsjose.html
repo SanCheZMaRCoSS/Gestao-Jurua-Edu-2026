@@ -3397,15 +3397,36 @@ function renderNotas() {
     el.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><div>Selecione uma turma</div></div>';
     return;
   }
+
   const seg  = turmaAtual.segmento;
   const bim  = bimestreAtual;
-  const isMultiRender = (turmaAtual.multisseriada && turmaAtual.anos && turmaAtual.anos.length > 1) || seg === 'EIEF';
-  const discs    = DISCIPLINAS[seg];
-  const mediaMin = MEDIA_APROVACAO[seg];
   const listaOrdenada = ordenarAlunosTurma(alunosFiltrados, turmaAtual);
+  const niveisEI = ['NS','PS','S','PD'];
 
-  if (seg === 'EI') {
-    const niveisEI = ['NS','PS','S','PD'];
+  // Função auxiliar: determinar se um aluno específico é de EI
+  function alunoEhEI(aluno) {
+    // 1. Segmento puro EI
+    if (seg === 'EI') return true;
+    // 2. Aluno com ano definido
+    if (aluno.ano) {
+      const s = getSegmentoByAno(aluno.ano);
+      if (s === 'EI') return true;
+      if (s !== null) return false;
+    }
+    // 3. Turma EIEF sem ano definido no aluno → assume EI (seguro para escolas rurais)
+    if (seg === 'EIEF') return true;
+    return false;
+  }
+
+  // Verificar composição da turma
+  const todosEI = listaOrdenada.every(a => alunoEhEI(a));
+  const algumEI = listaOrdenada.some(a => alunoEhEI(a));
+  const algumEF = listaOrdenada.some(a => !alunoEhEI(a));
+  const ehMisto = algumEI && algumEF;
+
+  // ── CASO 1: Turma pura de EI (ou EIEF sem alunos de EF) ──────
+  if (todosEI) {
+    const discsEI = DISCIPLINAS['EI'];
     let html = `
       <div style="padding:12px 16px 4px;font-size:0.75rem;background:#ebf5fb;border-bottom:1px solid #aed6f1;color:#1a5276;line-height:1.6">
         🌱 <strong>Educação Infantil — Avaliação Qualitativa</strong><br>
@@ -3414,13 +3435,13 @@ function renderNotas() {
       <table><thead><tr>
         <th style="width:36px">Nº</th>
         <th class="left" style="min-width:170px">Criança</th>
-        ${discs.map(d => `<th data-tip="${d}" style="min-width:110px;font-size:0.6rem">${d.length>14?d.substr(0,13)+'…':d}</th>`).join('')}
+        ${discsEI.map(d => `<th data-tip="${d}" style="min-width:110px;font-size:0.6rem">${d.length>14?d.substr(0,13)+'…':d}</th>`).join('')}
       </tr></thead><tbody>`;
     listaOrdenada.forEach(a => {
       html += `<tr>
         <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
-        <td class="left"><div class="aluno-nome">${a.nome}</div><div class="matricula">${a.matricula}</div></td>
-        ${discs.map(d => {
+        <td class="left"><div class="aluno-nome">${a.nome}${a.ano?`<span class="aluno-ano-badge">${a.ano}</span>`:''}</div><div class="matricula">${a.matricula}</div></td>
+        ${discsEI.map(d => {
           const val = notas[a.id]?.[d]?.['ei_'+bim] || '';
           return `<td><select onchange="setNotaEI(${a.id},'${d}',${bim},this.value)"
             style="width:100%;border:1.5px solid var(--cinza-border);border-radius:5px;padding:4px 5px;font-size:0.68rem;font-family:inherit;background:white;cursor:pointer">
@@ -3438,7 +3459,20 @@ function renderNotas() {
     return;
   }
 
+  // ── CASO 2: Turma mista EI + EF ou pura EF ───────────────────
+  const discs    = DISCIPLINAS[seg] || DISCIPLINAS['EF1'];
+  const mediaMin = MEDIA_APROVACAO[seg];
   const mediaLabel = mediaMin !== null ? `Média ≥ ${fmtNota(mediaMin)}` : 'Média';
+
+  let htmlBannerMisto = '';
+  if (ehMisto) {
+    htmlBannerMisto = `<div style="padding:10px 16px;font-size:0.78rem;background:#fef9e7;border-bottom:2px solid #f9ca24;color:#7d6608;line-height:1.6;margin-bottom:4px">
+      ⚠️ <strong>Turma multisseriada com Educação Infantil e Ensino Fundamental.</strong><br>
+      Alunos da <strong>Creche/Pré</strong> → avaliação qualitativa por conceitos (NS · PS · S · PD).<br>
+      Alunos do <strong>EF</strong> → notas numéricas (0 a 10).
+    </div>`;
+  }
+
   let html = `<table><thead>
     <tr>
       <th rowspan="2" style="width:36px;vertical-align:middle">Nº</th>
@@ -3456,40 +3490,76 @@ function renderNotas() {
 
   let anoAtual = null;
   listaOrdenada.forEach(a => {
-    const discAluno_ = (isMultiRender && a.ano) ? (DISCIPLINAS[getSegmentoByAno(a.ano)] || discs) : discs;
-    const mMinAluno  = (isMultiRender && a.ano) ? (MEDIA_APROVACAO[getSegmentoByAno(a.ano)] || mediaMin) : mediaMin;
+    const ehEI = alunoEhEI(a);
+    // Disciplinas e média mínima deste aluno
+    const discAluno = ehEI ? DISCIPLINAS['EI'] :
+      ((turmaAtual.multisseriada && a.ano) ? (DISCIPLINAS[getSegmentoByAno(a.ano)] || discs) : discs);
+    const mMinAluno = ehEI ? null :
+      ((turmaAtual.multisseriada && a.ano) ? (MEDIA_APROVACAO[getSegmentoByAno(a.ano)] || mediaMin) : mediaMin);
 
-    if (isMultiRender && a.ano && a.ano !== anoAtual) {
+    // Separador por ano em turmas multisseriadas
+    if (turmaAtual.multisseriada && a.ano && a.ano !== anoAtual) {
       anoAtual = a.ano;
       html += `<tr><td colspan="99" class="multi-section-divider">🔀 ${a.ano}</td></tr>`;
     }
 
-    let soma = 0, cnt = 0;
-    const cells = discAluno_.map(d => {
-      const vReg = getNota(a.id, d, bim, 'reg');
-      const vRec = getNota(a.id, d, bim, 'rec');
-      const ef   = calcNotaEfetivaBim(a.id, d, bim);
-      if (ef !== null) { soma += ef; cnt++; }
-      const recUsada = vRec !== '' && parseFloat(vRec) > parseFloat(vReg || 0);
-      return `<td style="background:#f9fbf9"><input class="nota-input" type="number" min="0" max="10" step="0.1"
-          value="${vReg}" onchange="setNota(${a.id},'${d}',${bim},this.value,'reg');calcularMedias()" placeholder="—"></td>
-        <td style="background:#fdf9ee"><input class="nota-input" type="number" min="0" max="10" step="0.1"
-          value="${vRec}" onchange="setNota(${a.id},'${d}',${bim},this.value,'rec');calcularMedias()" placeholder="—"
-          style="border-color:${recUsada?'var(--dourado)':'transparent'};color:${recUsada?'var(--dourado)':'inherit'}"></td>`;
-    }).join('');
-
-    const media = cnt ? soma/cnt : null;
-    const mA = mMinAluno || 6.0;
-    const mediaCls = media===null?'':(media>=mA?'media-ap':media>=(mA-2)?'media-rec':'media-rep');
-    html += `<tr>
-      <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
-      <td class="left"><div class="aluno-nome">${a.nome}${isMultiRender&&a.ano?`<span class="aluno-ano-badge">${a.ano}</span>`:''}</div><div class="matricula">${a.matricula}</div></td>
-      ${cells}
-      <td><span class="media-badge ${mediaCls}">${media!==null?fmtNota(media):'—'}</span></td>
-    </tr>`;
+    if (ehEI) {
+      // ── Aluno de EI: dropdowns de conceitos ──────────────────
+      const discsEI = DISCIPLINAS['EI'];
+      const celulasConceitoEI = discs.map((d, idx) => {
+        // Para cada disciplina do EF, verificar se há correspondente em EI
+        const dEI = discsEI[idx] || null;
+        if (!dEI) return `<td colspan="2" style="background:#f0fbf0;text-align:center;font-size:0.65rem;color:#aaa">—</td>`;
+        const val = notas[a.id]?.[dEI]?.['ei_'+bim] || '';
+        return `<td colspan="2" style="background:#f0fbf0;text-align:center">
+          <select onchange="setNotaEI(${a.id},'${dEI}',${bim},this.value)"
+            title="${dEI}"
+            style="width:90px;font-size:0.72rem;border:1px solid #aed6f1;border-radius:4px;padding:2px 4px;background:white;cursor:pointer">
+            <option value="">—</option>
+            ${niveisEI.map(n => `<option value="${n}" ${val===n?' selected':''}>${n}</option>`).join('')}
+          </select>
+          <div style="font-size:0.55rem;color:#27ae60;margin-top:1px">${dEI.substr(0,12)}…</div>
+        </td>`;
+      }).join('');
+      html += `<tr>
+        <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
+        <td class="left">
+          <div class="aluno-nome">${a.nome}${a.ano?`<span class="aluno-ano-badge">${a.ano}</span>`:''}</div>
+          <div class="matricula">${a.matricula}</div>
+          <div style="font-size:0.6rem;color:#27ae60;font-weight:600;margin-top:2px">🌱 Avaliação Qualitativa</div>
+        </td>
+        ${celulasConceitoEI}
+        <td><span style="font-size:0.65rem;color:#27ae60;font-weight:600">Qualitativa</span></td>
+      </tr>`;
+    } else {
+      // ── Aluno de EF: campos numéricos ────────────────────────
+      let soma = 0, cnt = 0;
+      const cells = discAluno.map(d => {
+        const vReg = getNota(a.id, d, bim, 'reg');
+        const vRec = getNota(a.id, d, bim, 'rec');
+        const ef   = calcNotaEfetivaBim(a.id, d, bim);
+        if (ef !== null) { soma += ef; cnt++; }
+        const recUsada = vRec !== '' && parseFloat(vRec) > parseFloat(vReg || 0);
+        return `<td style="background:#f9fbf9"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+            value="${vReg}" onchange="setNota(${a.id},'${d}',${bim},this.value,'reg');calcularMedias()" placeholder="—"></td>
+          <td style="background:#fdf9ee"><input class="nota-input" type="number" min="0" max="10" step="0.1"
+            value="${vRec}" onchange="setNota(${a.id},'${d}',${bim},this.value,'rec');calcularMedias()" placeholder="—"
+            style="border-color:${recUsada?'var(--dourado)':'transparent'};color:${recUsada?'var(--dourado)':'inherit'}"></td>`;
+      }).join('');
+      const media    = cnt ? soma/cnt : null;
+      const mA       = mMinAluno || 6.0;
+      const mediaCls = media===null?'':(media>=mA?'media-ap':media>=(mA-2)?'media-rec':'media-rep');
+      html += `<tr>
+        <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
+        <td class="left"><div class="aluno-nome">${a.nome}${a.ano?`<span class="aluno-ano-badge">${a.ano}</span>`:''}</div><div class="matricula">${a.matricula}</div></td>
+        ${cells}
+        <td><span class="media-badge ${mediaCls}">${media!==null?fmtNota(media):'—'}</span></td>
+      </tr>`;
+    }
   });
+
   html += '</tbody></table>';
-  el.innerHTML = html;
+  el.innerHTML = htmlBannerMisto + html;
 }
 
 function setNotaEI(alunoId, disc, bim, val) {
@@ -4729,7 +4799,8 @@ function _htmlRodapePrint(prof, pedagogo, legenda) {
       <div>${pedagogo || 'Pedagogo(a)'}<br><small>Assinatura</small></div>
     </div>
     ${legenda ? `<div class="leg"><b>Legenda:</b> ${legenda}</div>` : ''}
-  </div></body></html>`;
+  </div>
+</body></html>`;
 }
 
 function _htmlRodapeAtaPrint(prof, pedagogo, diretor) {
