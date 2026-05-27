@@ -1478,7 +1478,7 @@
 
       <!-- ── LINHA 2: Nuvem + Status + Documentos + Senhas + Salvar ── -->
       <div class="header-row">
-        <button class="btn-header nuvem" onclick="openModal('modalCarregarNuvem')" title="Carregar dados do Google Sheets">☁️ Carregar</button>
+        <button class="btn-header nuvem" onclick="carregarDoSheetsComConfirmacao()" title="Carregar dados do Google Sheets">☁️ Carregar</button>
         <button class="btn-header nuvem" onclick="sincronizarAgora()" id="btnSync" title="Sincronizar com Google Sheets">🔄 Sincronizar</button>
         <div class="btn-group-sep"></div>
         <div id="syncStatus" class="sync-status" title="Status de conexão com o Google Sheets">
@@ -4381,57 +4381,57 @@ async function sincronizarAgora() {
     showToast('⚠️ Configure o script em ⚙️ Escola antes de sincronizar.', 'gold');
     return;
   }
-  setSyncStatus('syncing', 'Sincronizando...');
+  setSyncStatus('syncing', 'Salvando...');
   try {
-    // 1. Carregar dados do Sheets PRIMEIRO
+    // 1. SALVAR dados locais primeiro — nunca perder o que está na tela
+    const payload = montarPayload();
+    const resSave = await chamarScript('SAVE', { data: payload });
+    if (!resSave.ok) throw new Error(resSave.msg || 'Erro ao salvar');
+
+    const horaSync = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    setSyncStatus('online', `Salvo · ${horaSync}`);
+    showToast('✅ Dados salvos no Google Sheets!');
+  } catch(e) {
+    setSyncStatus('offline', 'Erro: ' + e.message.substring(0, 30));
+    showToast('❌ Erro ao salvar: ' + e.message, 'red');
+  }
+}
+
+async function carregarDoSheetsComConfirmacao() {
+  // Carregar do Sheets com aviso — pode sobrescrever dados locais não salvos
+  if (!cloudConfig.ativo || !cloudConfig.scriptUrl) {
+    showToast('⚠️ Configure o script em ⚙️ Escola antes de carregar.', 'gold');
+    return;
+  }
+  setSyncStatus('syncing', 'Carregando...');
+  try {
     const resLoad = await chamarScript('LOAD', { escolaCode: cloudConfig.escolaCode });
     if (!resLoad.ok) throw new Error(resLoad.msg || 'Erro ao carregar');
-
     const d = resLoad.dados;
-
-    // Proteção: só atualiza se os dados recebidos forem válidos
-    // Não sobrescreve dados locais com objeto vazio do Sheets
     const turmasRecebidas = d.turmas || [];
-    const alunosRecebidos = d.alunos || [];
-
     if (turmasRecebidas.length === 0 && turmas.length > 0) {
-      // Sheets retornou vazio mas temos dados locais — não sobrescrever
       showToast('⚠️ Sheets sem dados — mantendo dados locais.', 'gold');
       setSyncStatus('online', 'Dados locais mantidos');
       return;
     }
-
     turmas      = turmasRecebidas;
-    alunos      = alunosRecebidos;
+    alunos      = d.alunos      || [];
     notas       = migrarNotasAntigas(d.notas || {});
     frequencia  = d.frequencia  || {};
     observacoes = d.observacoes || [];
     diario      = normalizarChavesDiario(d.diario || {});
     senhasMapa  = d.senhas      || {};
     turmasDesbloqueadas = new Set();
-
     if (d.nomeEscola)      nomeEscola      = d.nomeEscola;
     if (d.municipioEscola) municipioEscola = d.municipioEscola;
     if (d.configEscola)    Object.assign(configEscola, d.configEscola);
-
-    // 2. Salvar dados locais no Sheets
-    const payload = montarPayload();
-    const resSave = await chamarScript('SAVE', { data: payload });
-    if (!resSave.ok) throw new Error(resSave.msg || 'Erro ao salvar');
-
     const horaSync = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
     setSyncStatus('online', `Carregado · ${horaSync}`);
-    showToast('✅ Sincronizado com Google Sheets!');
-
-    populaTurmaSelects();
-    renderTurmasRapidas();
-    atualizarSelectAlunos();
-    renderSecaoAtual();
-    atualizarStats();
-    aplicarNomeEscola();
+    showToast('✅ Dados carregados do Google Sheets!');
+    atualizarInterfaceCompleta();
   } catch(e) {
     setSyncStatus('offline', 'Erro: ' + e.message.substring(0, 30));
-    showToast('❌ Erro: ' + e.message, 'red');
+    showToast('❌ Erro ao carregar: ' + e.message, 'red');
   }
 }
 async function salvarTudo() { await salvarNoSheets(); }
