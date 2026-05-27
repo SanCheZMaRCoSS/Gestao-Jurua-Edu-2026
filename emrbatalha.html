@@ -4280,8 +4280,7 @@ function abrirConfigEscola() {
   document.getElementById('cfgScriptUrl').value     = cloudConfig.scriptUrl   || '';
   document.getElementById('cfgSemedUrl').value      = cloudConfig.semedScriptUrl || '';
   document.getElementById('cfgEscolaCode').value    = cloudConfig.escolaCode  || '';
-  document.getElementById('cfgCloudAtivo').checked  = cloudConfig.ativo;
-  document.getElementById('cfgSemedAtivo').checked  = cloudConfig.semedAtivo;
+  // cfgCloudAtivo e cfgSemedAtivo removidos do modal — ativo é inferido pela presença da URL
   atualizarCloudPill();
   openModal('modalEscola');
 }
@@ -4296,8 +4295,8 @@ function salvarConfigEscola() {
   cloudConfig.scriptUrl      = document.getElementById('cfgScriptUrl').value.trim();
   cloudConfig.semedScriptUrl = document.getElementById('cfgSemedUrl').value.trim();
   cloudConfig.escolaCode     = document.getElementById('cfgEscolaCode').value.trim();
-  cloudConfig.ativo          = document.getElementById('cfgCloudAtivo').checked;
-  cloudConfig.semedAtivo     = document.getElementById('cfgSemedAtivo').checked;
+  cloudConfig.ativo          = !!cloudConfig.scriptUrl;
+  cloudConfig.semedAtivo     = !!cloudConfig.semedScriptUrl;
   salvarConfig();
   aplicarNomeEscola();
   atualizarCloudPill();
