@@ -2505,8 +2505,11 @@ async function salvarNoSheets() {
     return false;
   }
   setSyncStatus('syncing', 'Salvando...');
+  // Detectar se é auto-save ou manual pelo flag
+  const isAutoSave = salvarNoSheets._isAuto || false;
+  salvarNoSheets._isAuto = false;
   try {
-    const payload = montarPayload();
+    const payload = montarPayload(!isAutoSave); // completo só no manual
     const res = await chamarScript('SAVE', { data: payload });
     if (!res.ok) throw new Error(res.msg || 'Erro ao salvar');
 
@@ -2549,19 +2552,26 @@ async function notificarSemed(payload) {
   });
 }
 
-function montarPayload() {
-  return {
+function montarPayload(completo = true) {
+  const base = {
     nomeEscola, municipioEscola, configEscola,
     escolaCode: cloudConfig.escolaCode,
-    turmas, alunos, notas, frequencia, observacoes, diario
+    turmas, alunos
   };
+  if (completo) {
+    // Payload completo — usado ao salvar manualmente (botão Salvar)
+    return { ...base, notas, frequencia, observacoes, diario };
+  } else {
+    // Payload reduzido — usado no auto-save (sem diário completo)
+    return { ...base, notas, frequencia, observacoes, diario: {} };
+  }
 }
 
 // Auto-save com debounce — evita salvar a cada tecla
 function agendarAutoSave(msg = '') {
   clearTimeout(autoSaveTimer);
   setSyncStatus('syncing', msg || 'Aguardando...');
-  autoSaveTimer = setTimeout(() => salvarNoSheets(), 3000);
+  autoSaveTimer = setTimeout(() => { salvarNoSheets._isAuto = true; salvarNoSheets(); }, 45000); // 45s
 }
 
 
