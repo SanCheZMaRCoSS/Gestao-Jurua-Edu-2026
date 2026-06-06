@@ -1467,6 +1467,8 @@
         <button class="btn-header cadastro" onclick="abrirCadastroAluno()"        title="Cadastrar novo aluno">➕ Aluno</button>
         <button class="btn-header cadastro" onclick="abrirImportarDocx()" title="Importar alunos de arquivo Word (.docx)">📄 Importar Word</button>
         <input type="file" id="inputDocxAlunos" accept=".docx" style="display:none" onchange="processarDocxAlunos(event)">
+        <button class="btn-header cadastro" onclick="abrirImportarNotasExcel()" title="Importar notas de planilha Excel do professor">📊 Importar Notas</button>
+        <input type="file" id="inputNotasExcel" accept=".xlsx,.xls" style="display:none" onchange="processarNotasExcel(event)">
         <button class="btn-header cadastro" onclick="openModal('modalObs')"        title="Registrar observação">📝 Observação</button>
         <button class="btn-header cadastro" onclick="openModal('modalEscola')"     title="Configurar dados da escola">⚙️ Escola</button>
         <div class="btn-group-sep"></div>
@@ -2505,11 +2507,8 @@ async function salvarNoSheets() {
     return false;
   }
   setSyncStatus('syncing', 'Salvando...');
-  // Detectar se é auto-save ou manual pelo flag
-  const isAutoSave = salvarNoSheets._isAuto || false;
-  salvarNoSheets._isAuto = false;
   try {
-    const payload = montarPayload(!isAutoSave); // completo só no manual
+    const payload = montarPayload();
     const res = await chamarScript('SAVE', { data: payload });
     if (!res.ok) throw new Error(res.msg || 'Erro ao salvar');
 
@@ -2552,26 +2551,19 @@ async function notificarSemed(payload) {
   });
 }
 
-function montarPayload(completo = true) {
-  const base = {
+function montarPayload() {
+  return {
     nomeEscola, municipioEscola, configEscola,
     escolaCode: cloudConfig.escolaCode,
-    turmas, alunos
+    turmas, alunos, notas, frequencia, observacoes, diario
   };
-  if (completo) {
-    // Payload completo — usado ao salvar manualmente (botão Salvar)
-    return { ...base, notas, frequencia, observacoes, diario };
-  } else {
-    // Payload reduzido — usado no auto-save (sem diário completo)
-    return { ...base, notas, frequencia, observacoes, diario: {} };
-  }
 }
 
 // Auto-save com debounce — evita salvar a cada tecla
 function agendarAutoSave(msg = '') {
   clearTimeout(autoSaveTimer);
   setSyncStatus('syncing', msg || 'Aguardando...');
-  autoSaveTimer = setTimeout(() => { salvarNoSheets._isAuto = true; salvarNoSheets(); }, 45000); // 45s
+  autoSaveTimer = setTimeout(() => salvarNoSheets(), 3000);
 }
 
 
@@ -4893,6 +4885,26 @@ function _htmlRodapePrint(prof, pedagogo, legenda) {
     </div>
     ${legenda ? `<div class="leg"><b>Legenda:</b> ${legenda}</div>` : ''}
   </div>
+
+<!-- MODAL: IMPORTAR NOTAS EXCEL -->
+<div class="modal-overlay" id="modalImportarNotas" style="display:none">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">📊 Importar Notas do Excel</div>
+    <p style="font-size:0.82rem;color:var(--cinza-mid);margin-bottom:14px;line-height:1.5">
+      Selecione a planilha mensal do professor. O sistema detectará automaticamente a turma,
+      o componente curricular e o bimestre, e importará as notas dos alunos pelo nome.
+    </p>
+    <div id="importNotasInfo" style="background:var(--bg-card);border-radius:8px;padding:12px;margin-bottom:14px;font-size:0.83rem;display:none">
+      <div id="importNotasDetalhes"></div>
+    </div>
+    <div id="importNotasResultado" style="max-height:220px;overflow-y:auto;font-size:0.82rem;display:none"></div>
+    <div class="modal-footer" style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-sm" onclick="closeModal('modalImportarNotas')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btnConfirmarImportNotas" onclick="confirmarImportarNotas()" style="display:none">✅ Confirmar Importação</button>
+    </div>
+  </div>
+</div>
+
 </body></html>`;
 }
 
@@ -4903,7 +4915,9 @@ function _htmlRodapeAtaPrint(prof, pedagogo, diretor) {
       <div>${pedagogo || 'Pedagogo(a)'}<br><small>Assinatura</small></div>
       <div>${diretor || 'Diretor(a)'}<br><small>Assinatura</small></div>
     </div>
-  </div></body></html>`;
+  </div>
+
+</body></html>`;
 }
 
 function _abrirJanelaPrint(html) {
@@ -5220,7 +5234,9 @@ function gerarBoletimPDF() {
     <title>Escola Municipal Dalila Litaiff — Sistema de Gestão Escolar · 2026</title>${estilos}</head><body>
     ${paginasHtml}
     ${rodape}
-  </body></html>`;
+  
+
+</body></html>`;
 
   _abrirJanelaPrint(htmlFinal);
   closeModal('modalDocumentos');
@@ -5301,6 +5317,203 @@ try {
 } catch(e) {}
 
 init();
+
+// ═══════════════════════════════════════════════════════════════
+// IMPORTAR NOTAS DO EXCEL (Diário do Professor)
+// ═══════════════════════════════════════════════════════════════
+
+// Bimestres de Juruá/AM 2026
+const BIMESTRES_2026 = [
+  { bim: 1, ini: new Date(2026,2,9),  fim: new Date(2026,4,14) },
+  { bim: 2, ini: new Date(2026,4,18), fim: new Date(2026,6,23) },
+  { bim: 3, ini: new Date(2026,6,27), fim: new Date(2026,8,29) },
+  { bim: 4, ini: new Date(2026,9,1),  fim: new Date(2026,11,15) },
+];
+
+const MESES_PT = { janeiro:1,fevereiro:2,'março':3,marco:3,abril:4,maio:5,junho:6,
+  julho:7,agosto:8,setembro:9,outubro:10,novembro:11,dezembro:12 };
+
+let _importNotasDados = null; // dados pendentes de confirmação
+
+function abrirImportarNotasExcel() {
+  document.getElementById('inputNotasExcel').value = '';
+  document.getElementById('inputNotasExcel').click();
+}
+
+function normNome(s) {
+  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+}
+
+function bimPorMes(mes) {
+  const m = MESES_PT[normNome(mes)];
+  if (!m) return null;
+  // Usar o primeiro dia do mês para determinar o bimestre
+  const d = new Date(2026, m-1, 1);
+  for (const b of BIMESTRES_2026) {
+    if (d >= b.ini && d <= b.fim) return b.bim;
+  }
+  // Maio tem dois bimestres: até dia 14 = 1º, a partir de 18 = 2º
+  // Usar o meio do mês como referência
+  const dmid = new Date(2026, m-1, 15);
+  for (const b of BIMESTRES_2026) {
+    if (dmid >= b.ini && dmid <= b.fim) return b.bim;
+  }
+  return null;
+}
+
+async function processarNotasExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  showToast('⏳ Lendo planilha...', 'blue');
+
+  try {
+    const buf = await file.arrayBuffer();
+    const wb  = XLSX.read(buf, { type: 'array', cellDates: true });
+
+    // Encontrar aba de diário (ignora CAPA, Termo, etc.)
+    const abasDiario = wb.SheetNames.filter(n => /diário|diario/i.test(n));
+    if (!abasDiario.length) throw new Error('Nenhuma aba de diário encontrada na planilha.');
+
+    // Processar cada aba encontrada (pode ter vários meses)
+    let resultados = [];
+    for (const nomeAba of abasDiario) {
+      const ws   = wb.Sheets[nomeAba];
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+
+      // Extrair cabeçalho
+      let mes='', turma='', disc='', prof='';
+      for (let i=0; i<15; i++) {
+        const r = rows[i] || [];
+        const linha = r.join('\t');
+        if (/MÊS|MES/i.test(linha))   mes  = linha.replace(/.*MÊS[^:]*:/i,'').replace(/.*MES[^:]*:/i,'').trim().split('\t')[0].trim();
+        if (/TURMA/i.test(linha))      turma= linha.replace(/.*TURMA[^:]*:/i,'').trim().split('\t')[0].trim();
+        if (/COMPONENTE|CURRICULAR/i.test(linha)) disc = linha.replace(/.*CURRICULAR[^:]*:/i,'').trim().split('\t')[0].trim();
+        if (/PROFESSOR/i.test(linha))  prof = linha.replace(/.*PROFESSOR[^(]*[):]*/i,'').replace(/\(.\)/,'').trim().split('\t')[0].trim();
+      }
+
+      const bim = bimPorMes(mes);
+      if (!bim) { resultados.push({ aba: nomeAba, erro: 'Mês não identificado: ' + mes }); continue; }
+
+      // Encontrar coluna das notas (AV1, AV2, AV3, RP1, RP2, RP3)
+      let colAv1=-1, colAv2=-1, colAv3=-1, colRp1=-1, colRp2=-1, colRp3=-1, linhaInicio=-1;
+      for (let i=0; i<rows.length; i++) {
+        const r = rows[i];
+        for (let c=0; c<r.length; c++) {
+          const v = String(r[c]||'').trim();
+          if (v==='AV1' && colAv1<0) colAv1=c;
+          if (v==='AV2' && colAv2<0) colAv2=c;
+          if (v==='AV3' && colAv3<0) colAv3=c;
+          if (v==='RP1' && colRp1<0) colRp1=c;
+          if (v==='RP2' && colRp2<0) colRp2=c;
+          if (v==='RP3' && colRp3<0) colRp3=c;
+        }
+        if (colAv1>=0 && linhaInicio<0) linhaInicio=i+1;
+      }
+      if (colAv1<0) { resultados.push({ aba: nomeAba, erro: 'Colunas AV1/AV2/AV3 não encontradas.' }); continue; }
+
+      // Mapear alunos da ferramenta pelo nome normalizado
+      const mapaAlunos = {};
+      alunos.forEach(a => { mapaAlunos[normNome(a.nome)] = a; });
+
+      // Processar linhas de alunos
+      const importados = [], naoEncontrados = [];
+      for (let i=linhaInicio; i<rows.length; i++) {
+        const r = rows[i];
+        const nome = String(r[1]||'').trim();
+        if (!nome) continue;
+        const numLinha = r[0];
+        if (!nome || isNaN(parseInt(numLinha))) continue;
+
+        const av1 = r[colAv1]!=='' ? parseFloat(r[colAv1]) : null;
+        const av2 = colAv2>=0 && r[colAv2]!=='' ? parseFloat(r[colAv2]) : null;
+        const av3 = colAv3>=0 && r[colAv3]!=='' ? parseFloat(r[colAv3]) : null;
+        const rp1 = colRp1>=0 && r[colRp1]!=='' ? parseFloat(r[colRp1]) : null;
+        const rp2 = colRp2>=0 && r[colRp2]!=='' ? parseFloat(r[colRp2]) : null;
+        const rp3 = colRp3>=0 && r[colRp3]!=='' ? parseFloat(r[colRp3]) : null;
+
+        const aluno = mapaAlunos[normNome(nome)];
+        if (!aluno) { naoEncontrados.push(nome); continue; }
+
+        importados.push({ aluno, disc, bim, av1, av2, av3, rp1, rp2, rp3 });
+      }
+
+      resultados.push({ aba: nomeAba, mes, turma, disc, prof, bim, importados, naoEncontrados });
+    }
+
+    _importNotasDados = resultados;
+    mostrarResultadoImport(resultados);
+
+  } catch(e) {
+    showToast('❌ Erro ao ler planilha: ' + e.message, 'red');
+    console.error(e);
+  }
+}
+
+function mostrarResultadoImport(resultados) {
+  const divInfo = document.getElementById('importNotasInfo');
+  const divRes  = document.getElementById('importNotasResultado');
+  const btnConf = document.getElementById('btnConfirmarImportNotas');
+
+  let htmlInfo = '', htmlRes = '', totalImport = 0;
+
+  for (const r of resultados) {
+    if (r.erro) {
+      htmlRes += `<div style="color:red;margin-bottom:8px">⚠️ <b>${r.aba}:</b> ${r.erro}</div>`;
+      continue;
+    }
+    htmlInfo += `<div style="margin-bottom:6px">
+      <b>Turma:</b> ${r.turma} &nbsp;|&nbsp; <b>Disciplina:</b> ${r.disc} &nbsp;|&nbsp;
+      <b>${r.bim}º Bimestre</b> &nbsp;|&nbsp; <b>Professor:</b> ${r.prof}
+    </div>`;
+    totalImport += r.importados.length;
+    htmlRes += `<div style="margin-bottom:10px">
+      <b>${r.aba} — ${r.mes}</b><br>
+      ✅ <b>${r.importados.length}</b> aluno(s) encontrado(s) e prontos para importar.<br>
+      ${r.naoEncontrados.length ? '⚠️ Não encontrados: ' + r.naoEncontrados.join(', ') : ''}
+    </div>`;
+  }
+
+  divInfo.innerHTML = htmlInfo;
+  divInfo.style.display = htmlInfo ? 'block' : 'none';
+  divRes.innerHTML  = htmlRes;
+  divRes.style.display = 'block';
+  btnConf.style.display = totalImport > 0 ? 'inline-block' : 'none';
+
+  openModal('modalImportarNotas');
+}
+
+function confirmarImportarNotas() {
+  if (!_importNotasDados) return;
+  let total = 0;
+
+  for (const r of _importNotasDados) {
+    if (!r.importados) continue;
+    for (const { aluno, disc, bim, av1, av2, av3, rp1, rp2, rp3 } of r.importados) {
+      if (!notas[aluno.id]) notas[aluno.id] = {};
+      if (!notas[aluno.id][disc]) notas[aluno.id][disc] = {};
+      const nd = notas[aluno.id][disc];
+      if (av1 !== null && !isNaN(av1)) nd[bim+'_av1'] = av1;
+      if (av2 !== null && !isNaN(av2)) nd[bim+'_av2'] = av2;
+      if (av3 !== null && !isNaN(av3)) nd[bim+'_av3'] = av3;
+      if (rp1 !== null && !isNaN(rp1)) nd[bim+'_rec1'] = rp1;
+      if (rp2 !== null && !isNaN(rp2)) nd[bim+'_rec2'] = rp2;
+      if (rp3 !== null && !isNaN(rp3)) nd[bim+'_rec3'] = rp3;
+      total++;
+    }
+  }
+
+  closeModal('modalImportarNotas');
+  _importNotasDados = null;
+  salvarLocal();
+  renderNotas();
+  agendarAutoSave('Notas importadas...');
+  showToast('✅ ' + total + ' aluno(s) importado(s) com sucesso!');
+}
+
 </script>
+
+
 </body>
 </html>
