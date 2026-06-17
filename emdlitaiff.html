@@ -1440,6 +1440,9 @@
 
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -2455,26 +2458,54 @@ function salvarConfig() {
 }
 
 // ===== API: COMUNICAÇÃO COM GOOGLE SHEETS =====
-async function chamarScript(action, dados = {}) {
-  if (!cloudConfig.scriptUrl) throw new Error('Script não configurado.');
-  const body = JSON.stringify({ action, ...dados });
-  const resp = await fetch(cloudConfig.scriptUrl, {
-    method: 'POST',
-    body,
-    headers: { 'Content-Type': 'text/plain' }
-  });
-  if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
-  return await resp.json();
+// ═══════════════════════════════════════════════════════════════
+// FIREBASE REALTIME DATABASE — Backend principal
+// ═══════════════════════════════════════════════════════════════
+const _fbConfig = {
+  apiKey:            "AIzaSyDFCHeMPbRRh-1Ozomjc03u2_q3aaFnxRo",
+  authDomain:        "sge-jurua-2026.firebaseapp.com",
+  databaseURL:       "https://sge-jurua-2026-default-rtdb.firebaseio.com",
+  projectId:         "sge-jurua-2026",
+  storageBucket:     "sge-jurua-2026.firebasestorage.app",
+  messagingSenderId: "206331839984",
+  appId:             "1:206331839984:web:f7d9c8ab153ee9c9d58935"
+};
+
+// Inicializar Firebase (evitar re-inicialização)
+if (!firebase.apps.length) firebase.initializeApp(_fbConfig);
+const _db = firebase.database();
+
+function fbRef(path) {
+  return _db.ref(path);
 }
 
-// Carregar TODOS os dados do Sheets para a memória
+// Salvar um nó no Firebase
+async function fbSet(path, data) {
+  await fbRef(path).set(data);
+}
+
+// Ler um nó do Firebase
+async function fbGet(path) {
+  const snap = await fbRef(path).get();
+  return snap.exists() ? snap.val() : null;
+}
+
+// Caminho base da escola no Firebase
+function fbEscolaPath() {
+  return 'escolas/' + (cloudConfig.escolaCode || 'ESCOLA');
+}
+
+// ── Carregar dados do Firebase ──────────────────────────────────
 async function carregarDoSheets() {
   setSyncStatus('syncing', 'Carregando...');
   try {
-    const res = await chamarScript('LOAD', { escolaCode: cloudConfig.escolaCode });
-    if (!res.ok) throw new Error(res.msg || 'Erro ao carregar');
+    const d = await fbGet(fbEscolaPath());
+    if (!d) {
+      setSyncStatus('offline', 'Sem dados no Firebase');
+      showToast('ℹ️ Nenhum dado encontrado no Firebase para esta escola.', 'gold');
+      return false;
+    }
 
-    const d = res.dados;
     turmas      = d.turmas      || [];
     alunos      = d.alunos      || [];
     notas       = migrarNotasAntigas(d.notas || {});
@@ -2487,9 +2518,7 @@ async function carregarDoSheets() {
     if (d.municipioEscola) municipioEscola = d.municipioEscola;
     if (d.configEscola)    Object.assign(configEscola, d.configEscola);
 
-    // Resetar desbloqueios ao recarregar
     turmasDesbloqueadas = new Set();
-
     salvarConfig();
     setSyncStatus('online', 'Carregado · ' + new Date().toLocaleTimeString('pt-BR'));
     return true;
@@ -2500,25 +2529,23 @@ async function carregarDoSheets() {
   }
 }
 
-// Salvar dados completos no Sheets
+// ── Salvar dados no Firebase ────────────────────────────────────
 async function salvarNoSheets() {
-  if (!cloudConfig.scriptUrl) {
-    showToast('⚠️ Configure o script em ⚙️ Escola antes de salvar.', 'gold');
-    return false;
-  }
   setSyncStatus('syncing', 'Salvando...');
   try {
     const payload = montarPayload();
-    const res = await chamarScript('SAVE', { data: payload });
-    if (!res.ok) throw new Error(res.msg || 'Erro ao salvar');
+    await fbSet(fbEscolaPath(), {
+      ...payload,
+      _ts: new Date().toISOString()
+    });
 
-    // Notificar SEMED se configurado
-    if (cloudConfig.semedAtivo && cloudConfig.semedScriptUrl) {
-      notificarSemed(payload).catch(() => {});
+    // Backup no Sheets (opcional, em segundo plano)
+    if (cloudConfig.scriptUrl && cloudConfig.ativo) {
+      _backupSheets(payload).catch(() => {});
     }
 
     setSyncStatus('online', 'Salvo · ' + new Date().toLocaleTimeString('pt-BR'));
-    showToast('✅ Dados salvos no Google Sheets!');
+    showToast('✅ Dados salvos!');
     return true;
   } catch(e) {
     setSyncStatus('offline', 'Erro ao salvar');
@@ -2527,23 +2554,47 @@ async function salvarNoSheets() {
   }
 }
 
-// Salvar apenas um registro específico (turma, aluno, frequência, nota)
-// Para operações pontuais sem reenviar tudo
+// ── Salvar parcial (notas de um aluno específico) ───────────────
 async function salvarParcial(tipo, dados) {
-  if (!cloudConfig.scriptUrl) return false;
   try {
-    const res = await chamarScript('SAVE_PARTIAL', { tipo, dados,
-      escolaCode: cloudConfig.escolaCode,
-      nomeEscola, municipioEscola, configEscola
-    });
-    return res && res.ok;
+    const base = fbEscolaPath();
+    if (tipo === 'notas' && dados.alunoId) {
+      await fbSet(base + '/notas/' + dados.alunoId, dados.notas);
+    } else if (tipo === 'frequencia' && dados.alunoId) {
+      await fbSet(base + '/frequencia/' + dados.alunoId, dados.frequencia);
+    } else {
+      await salvarNoSheets();
+    }
+    return true;
   } catch(e) {
-    console.warn('Erro no salvamento parcial, enviando completo:', e);
+    console.warn('Erro no salvamento parcial:', e);
     return false;
   }
 }
 
+// ── Backup silencioso no Google Sheets ─────────────────────────
+async function _backupSheets(payload) {
+  if (!cloudConfig.scriptUrl) return;
+  await fetch(cloudConfig.scriptUrl, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'SAVE', data: payload }),
+    headers: { 'Content-Type': 'text/plain' }
+  });
+}
+
+async function chamarScript(action, dados = {}) {
+  if (!cloudConfig.scriptUrl) throw new Error('Script não configurado.');
+  const body = JSON.stringify({ action, ...dados });
+  const resp = await fetch(cloudConfig.scriptUrl, {
+    method: 'POST', body,
+    headers: { 'Content-Type': 'text/plain' }
+  });
+  if (!resp.ok) throw new Error('Erro HTTP ' + resp.status);
+  return await resp.json();
+}
+
 async function notificarSemed(payload) {
+  if (!cloudConfig.semedScriptUrl) return;
   await fetch(cloudConfig.semedScriptUrl, {
     method: 'POST',
     body: JSON.stringify({ action: 'SEMED_UPDATE', data: payload }),
@@ -2559,11 +2610,11 @@ function montarPayload() {
   };
 }
 
-// Auto-save com debounce — evita salvar a cada tecla
+// Auto-save com debounce — 10s para reduzir chamadas
 function agendarAutoSave(msg = '') {
   clearTimeout(autoSaveTimer);
   setSyncStatus('syncing', msg || 'Aguardando...');
-  autoSaveTimer = setTimeout(() => salvarNoSheets(), 3000);
+  autoSaveTimer = setTimeout(() => salvarNoSheets(), 10000);
 }
 
 
