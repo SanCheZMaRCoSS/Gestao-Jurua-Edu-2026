@@ -2479,15 +2479,47 @@ function fbRef(path) {
   return _db.ref(path);
 }
 
+// Sanitizar chaves para Firebase (não aceita . # $ / [ ])
+function fbSanitize(obj) {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(fbSanitize);
+  const out = {};
+  for (const k of Object.keys(obj)) {
+    const sk = k.replace(/[.#$\/\[\]]/g, '_');
+    out[sk] = fbSanitize(obj[k]);
+  }
+  return out;
+}
+
+// Restaurar chaves sanitizadas de volta ao formato original
+function fbRestore(obj) {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(fbRestore);
+  const out = {};
+  // Mapa de chaves sanitizadas para originais
+  const DISC_MAP = {
+    'Ed_ Física': 'Ed. Física',
+    'L_E_M_': 'L.E.M.',
+    'L_E_M': 'L.E.M.',
+  };
+  for (const k of Object.keys(obj)) {
+    const rk = DISC_MAP[k] || k;
+    out[rk] = fbRestore(obj[k]);
+  }
+  return out;
+}
+
 // Salvar um nó no Firebase
 async function fbSet(path, data) {
-  await fbRef(path).set(data);
+  await fbRef(path).set(fbSanitize(data));
 }
 
 // Ler um nó do Firebase
 async function fbGet(path) {
   const snap = await fbRef(path).get();
-  return snap.exists() ? snap.val() : null;
+  return snap.exists() ? fbRestore(snap.val()) : null;
 }
 
 // Caminho base da escola no Firebase
