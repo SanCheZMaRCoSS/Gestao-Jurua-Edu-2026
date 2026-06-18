@@ -5485,68 +5485,104 @@ async function processarNotasExcel(event) {
 
   try {
     const buf = await file.arrayBuffer();
-    const wb  = XLSX.read(buf, { type: 'array', cellDates: true });
+    const wb  = XLSX.read(buf, { type: 'array', cellDates: false });
 
-    // Encontrar aba de diário (ignora CAPA, Termo, etc.)
+    // Encontrar abas de diário
     const abasDiario = wb.SheetNames.filter(n => /diário|diario/i.test(n));
     if (!abasDiario.length) throw new Error('Nenhuma aba de diário encontrada na planilha.');
 
-    // Processar cada aba encontrada (pode ter vários meses)
     let resultados = [];
     for (const nomeAba of abasDiario) {
       const ws   = wb.Sheets[nomeAba];
-      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+      const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', raw:true });
+      if (!rows || rows.length < 12) continue;
 
-      // Extrair cabeçalho
+      // ── Cabeçalho nas primeiras 15 linhas ──
       let mes='', turma='', disc='', prof='';
       for (let i=0; i<15; i++) {
         const r = rows[i] || [];
-        const linha = r.join('\t');
-        if (/MÊS|MES/i.test(linha))   mes  = linha.replace(/.*MÊS[^:]*:/i,'').replace(/.*MES[^:]*:/i,'').trim().split('\t')[0].trim();
-        if (/TURMA/i.test(linha))      turma= linha.replace(/.*TURMA[^:]*:/i,'').trim().split('\t')[0].trim();
-        if (/COMPONENTE|CURRICULAR/i.test(linha)) disc = linha.replace(/.*CURRICULAR[^:]*:/i,'').trim().split('\t')[0].trim();
-        if (/PROFESSOR/i.test(linha))  prof = linha.replace(/.*PROFESSOR[^(]*[):]*/i,'').replace(/\(.\)/,'').trim().split('\t')[0].trim();
+        // Procurar em todas as células (planilha tem células mescladas)
+        for (let c=0; c<r.length; c++) {
+          const v = String(r[c]||'').trim();
+          if (/^MÊS DE REFERÊNCIA:/i.test(v))      mes   = v.replace(/^MÊS DE REFERÊNCIA:\s*/i,'').trim();
+          else if (/MÊS/i.test(v) && !mes)         mes   = v.replace(/.*MÊS[^:]*:\s*/i,'').trim();
+          if (/^TURMA:/i.test(v))                   turma = v.replace(/^TURMA:\s*/i,'').trim();
+          else if (/TURMA/i.test(v) && !turma)      turma = v.replace(/.*TURMA[^:]*:\s*/i,'').trim();
+          if (/^COMPONENTE CURRICULAR:/i.test(v))   disc  = v.replace(/^COMPONENTE CURRICULAR:\s*/i,'').trim();
+          else if (/COMPONENTE|CURRICULAR/i.test(v) && !disc) disc = v.replace(/.*CURRICULAR[^:]*:\s*/i,'').trim();
+          if (/^PROFESSOR/i.test(v))                prof  = v.replace(/^PROFESSOR[^:]*:\s*/i,'').replace(/\(.\)/,'').trim();
+        }
+        // Também testar a linha inteira concatenada (formato anterior)
+        const linha = r.join('	');
+        if (!mes   && /MÊS/i.test(linha))    mes   = linha.replace(/.*MÊS[^:]*:\s*/i,'').split('	')[0].trim();
+        if (!turma && /TURMA/i.test(linha))   turma = linha.replace(/.*TURMA[^:]*:\s*/i,'').split('	')[0].trim();
+        if (!disc  && /CURRICULAR/i.test(linha)) disc = linha.replace(/.*CURRICULAR[^:]*:\s*/i,'').split('	')[0].trim();
+        if (!prof  && /PROFESSOR/i.test(linha))  prof = linha.replace(/.*PROFESSOR[^(]*[):]*/i,'').trim().split('	')[0].trim();
       }
 
       const bim = bimPorMes(mes);
-      if (!bim) { resultados.push({ aba: nomeAba, erro: 'Mês não identificado: ' + mes }); continue; }
+      if (!bim) { resultados.push({ aba: nomeAba, erro: 'Mês não identificado: "' + mes + '"' }); continue; }
 
-      // Encontrar coluna das notas (AV1, AV2, AV3, RP1, RP2, RP3)
-      let colAv1=-1, colAv2=-1, colAv3=-1, colRp1=-1, colRp2=-1, colRp3=-1, linhaInicio=-1;
+      // ── Encontrar colunas AV1/AV2/AV3/RP1/RP2/RP3 ──
+      // Varrer TODAS as linhas até encontrar (planilha tem linha de cabeçalho por volta da L12)
+      let colAv1=-1, colAv2=-1, colAv3=-1, colRp1=-1, colRp2=-1, colRp3=-1;
+      let linhaInicio = -1;
       for (let i=0; i<rows.length; i++) {
-        const r = rows[i];
+        const r = rows[i] || [];
+        let found = false;
         for (let c=0; c<r.length; c++) {
           const v = String(r[c]||'').trim();
-          if (v==='AV1' && colAv1<0) colAv1=c;
-          if (v==='AV2' && colAv2<0) colAv2=c;
-          if (v==='AV3' && colAv3<0) colAv3=c;
-          if (v==='RP1' && colRp1<0) colRp1=c;
-          if (v==='RP2' && colRp2<0) colRp2=c;
-          if (v==='RP3' && colRp3<0) colRp3=c;
+          if (v==='AV1' && colAv1<0) { colAv1=c; found=true; }
+          if (v==='AV2' && colAv2<0) { colAv2=c; found=true; }
+          if (v==='AV3' && colAv3<0) { colAv3=c; found=true; }
+          if (v==='RP1' && colRp1<0) { colRp1=c; found=true; }
+          if (v==='RP2' && colRp2<0) { colRp2=c; found=true; }
+          if (v==='RP3' && colRp3<0) { colRp3=c; found=true; }
         }
-        if (colAv1>=0 && linhaInicio<0) linhaInicio=i+1;
+        // Linha de início dos alunos: primeira linha após o cabeçalho onde col[0] é número
+        if (colAv1>=0 && linhaInicio<0) {
+          // Pular linhas vazias e encontrar primeira linha com número na col 0
+          for (let j=i+1; j<rows.length; j++) {
+            const nr = rows[j] || [];
+            if (!isNaN(parseInt(String(nr[0]||'').trim())) && String(nr[1]||'').trim()) {
+              linhaInicio = j;
+              break;
+            }
+          }
+        }
+        if (colAv1>=0 && linhaInicio>=0) break;
       }
-      if (colAv1<0) { resultados.push({ aba: nomeAba, erro: 'Colunas AV1/AV2/AV3 não encontradas.' }); continue; }
 
-      // Mapear alunos da ferramenta pelo nome normalizado
+      if (colAv1<0) { resultados.push({ aba: nomeAba, erro: 'Colunas AV1/AV2/AV3 não encontradas na aba.' }); continue; }
+      if (linhaInicio<0) { resultados.push({ aba: nomeAba, erro: 'Linhas de alunos não encontradas.' }); continue; }
+
+      // ── Mapear alunos da ferramenta ──
       const mapaAlunos = {};
       alunos.forEach(a => { mapaAlunos[normNome(a.nome)] = a; });
 
-      // Processar linhas de alunos
+      // ── Processar linhas de alunos ──
       const importados = [], naoEncontrados = [];
       for (let i=linhaInicio; i<rows.length; i++) {
-        const r = rows[i];
-        const nome = String(r[1]||'').trim();
-        if (!nome) continue;
-        const numLinha = r[0];
-        if (!nome || isNaN(parseInt(numLinha))) continue;
+        const r = rows[i] || [];
+        const numCol = String(r[0]||'').trim();
+        const nome   = String(r[1]||'').trim();
+        if (!nome || !numCol || isNaN(parseInt(numCol))) continue;
 
-        const av1 = r[colAv1]!=='' ? parseFloat(r[colAv1]) : null;
-        const av2 = colAv2>=0 && r[colAv2]!=='' ? parseFloat(r[colAv2]) : null;
-        const av3 = colAv3>=0 && r[colAv3]!=='' ? parseFloat(r[colAv3]) : null;
-        const rp1 = colRp1>=0 && r[colRp1]!=='' ? parseFloat(r[colRp1]) : null;
-        const rp2 = colRp2>=0 && r[colRp2]!=='' ? parseFloat(r[colRp2]) : null;
-        const rp3 = colRp3>=0 && r[colRp3]!=='' ? parseFloat(r[colRp3]) : null;
+        const parseVal = (v) => {
+          if (v==='' || v===null || v===undefined) return null;
+          const n = parseFloat(String(v).replace(',','.'));
+          return isNaN(n) ? null : n;
+        };
+
+        const av1 = parseVal(r[colAv1]);
+        const av2 = colAv2>=0 ? parseVal(r[colAv2]) : null;
+        const av3 = colAv3>=0 ? parseVal(r[colAv3]) : null;
+        const rp1 = colRp1>=0 ? parseVal(r[colRp1]) : null;
+        const rp2 = colRp2>=0 ? parseVal(r[colRp2]) : null;
+        const rp3 = colRp3>=0 ? parseVal(r[colRp3]) : null;
+
+        // Só incluir se tiver pelo menos uma nota
+        if (av1===null && av2===null && av3===null) continue;
 
         const aluno = mapaAlunos[normNome(nome)];
         if (!aluno) { naoEncontrados.push(nome); continue; }
