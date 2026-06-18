@@ -411,6 +411,28 @@
     width: 100%;
     -webkit-overflow-scrolling: touch; /* scroll suave no iOS */
   }
+  /* Sticky nas colunas Nº e Aluno da tabela de notas */
+  #tabelaNotas th.col-sticky-num,
+  #tabelaNotas td.col-sticky-num {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: var(--bg-card, #fff);
+    border-right: 1px solid rgba(36,113,163,0.15);
+  }
+  #tabelaNotas th.col-sticky-nome,
+  #tabelaNotas td.col-sticky-nome {
+    position: sticky;
+    left: 36px;
+    z-index: 3;
+    background: var(--bg-card, #fff);
+    border-right: 2px solid rgba(36,113,163,0.25);
+  }
+  #tabelaNotas thead th.col-sticky-num,
+  #tabelaNotas thead th.col-sticky-nome {
+    z-index: 4;
+    background: #ebf5fb;
+  }
   table {
     width: 100%;
     border-collapse: collapse;
@@ -1592,13 +1614,13 @@
         <div class="stat-icon">✅</div>
         <div class="stat-label">Freq. Média</div>
         <div class="stat-value" id="statFreq">—</div>
-        <div class="stat-desc">presença no período</div>
+        <div class="stat-desc">período · <span id="statFreqBim" style="font-weight:600">—</span> bim. atual</div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">📊</div>
         <div class="stat-label">Média Geral</div>
         <div class="stat-value gold" id="statMedia">—</div>
-        <div class="stat-desc">todas as disciplinas</div>
+        <div class="stat-desc">Port: <span id="statMediaPort" style="font-weight:600">—</span> · Mat: <span id="statMediaMat" style="font-weight:600">—</span></div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">⚠️</div>
@@ -3216,20 +3238,44 @@ function atualizarStats() {
   document.getElementById('statTotal').textContent     = al.length;
   document.getElementById('statTurmaDesc').textContent = turmaAtual.nome;
 
+  // ── Frequência: período + bimestre atual ──
   let somaFreq = 0, countFreq = 0;
-  al.forEach(a => { somaFreq += getFreqAluno(a.id).pct; countFreq++; });
+  let somaFreqBim = 0, countFreqBim = 0;
+  const bimAtual = BIMESTRES_2026.find(b => b.bim === bimestreAtual) || BIMESTRES_2026[0];
+  al.forEach(a => {
+    somaFreq += getFreqAluno(a.id).pct;
+    countFreq++;
+    // Frequência do bimestre atual (apenas meses dentro do intervalo)
+    let totBim = 0, presBim = 0;
+    const fa = frequencia[a.id] || {};
+    Object.entries(fa).forEach(([mes, dias]) => {
+      Object.entries(dias).forEach(([dia, v]) => {
+        const d = new Date(2026, parseInt(mes)-1, parseInt(dia));
+        if (d >= bimAtual.ini && d <= bimAtual.fim) {
+          totBim++;
+          if (v === 'P') presBim++;
+          if (v === 'J') presBim += 0.5;
+        }
+      });
+    });
+    if (totBim > 0) { somaFreqBim += Math.round(presBim/totBim*100); countFreqBim++; }
+  });
   const freqMedia = countFreq ? somaFreq / countFreq : 0;
+  const freqBim   = countFreqBim ? somaFreqBim / countFreqBim : null;
   const elFreq = document.getElementById('statFreq');
   elFreq.textContent = countFreq ? freqMedia.toFixed(0) + '%' : '—';
   elFreq.className   = 'stat-value ' + (freqMedia >= 75 ? 'green' : freqMedia >= 60 ? 'gold' : 'red');
+  const elFreqBim = document.getElementById('statFreqBim');
+  if (elFreqBim) elFreqBim.textContent = freqBim !== null ? freqBim.toFixed(0) + '%' : '—';
 
-  const discs = DISCIPLINAS[turmaAtual.segmento];
+  // ── Médias: geral + Português + Matemática ──
+  const discs = DISCIPLINAS[turmaAtual.segmento] || [];
   const mAp   = MEDIA_APROVACAO[turmaAtual.segmento];
   let somaMedia = 0, countMedia = 0;
-  // Usar média do bimestre atual (ou qualquer bimestre com dados)
+  let somaPort = 0, countPort = 0;
+  let somaMat  = 0, countMat  = 0;
   al.forEach(a => {
     discs.forEach(d => {
-      // Tentar bimestre atual primeiro, depois qualquer bimestre com dados
       let med = calcMediaAvsBim(a.id, d, bimestreAtual);
       if (med === null) {
         for (let b = 1; b <= 4; b++) {
@@ -3237,11 +3283,22 @@ function atualizarStats() {
           if (med !== null) break;
         }
       }
-      if (med !== null) { somaMedia += med; countMedia++; }
+      if (med !== null) {
+        somaMedia += med; countMedia++;
+        const dn = d.toLowerCase();
+        if (dn.includes('portugu')) { somaPort += med; countPort++; }
+        if (dn.includes('matem'))   { somaMat  += med; countMat++;  }
+      }
     });
   });
   const statMediaEl = document.getElementById('statMedia');
   statMediaEl.textContent = (mAp === null || !countMedia) ? '—' : (somaMedia/countMedia).toFixed(1);
+
+  // Médias de Port e Mat como percentual da nota máxima (10)
+  const elPort = document.getElementById('statMediaPort');
+  const elMat  = document.getElementById('statMediaMat');
+  if (elPort) elPort.textContent = countPort ? (somaPort/countPort/10*100).toFixed(0)+'%' : '—';
+  if (elMat)  elMat.textContent  = countMat  ? (somaMat /countMat /10*100).toFixed(0)+'%' : '—';
 
   const risco = al.filter(a => getFreqAluno(a.id).pct < 75).length;
   document.getElementById('statRisco').textContent = risco;
@@ -3558,7 +3615,7 @@ function renderNotas() {
         🌱 Educação Infantil — Avaliação Qualitativa
         <span style="font-size:0.68rem;font-weight:400;opacity:0.8">Campos de Experiência (BNCC) — sem notas numéricas</span>
       </div>
-      <div style="overflow-x:auto">
+      <div id="notasTableWrap" style="overflow-x:auto;position:relative">
       <table><thead><tr>
         <th style="width:36px">Nº</th>
         <th class="left" style="min-width:170px">Criança</th>
@@ -3604,11 +3661,11 @@ function renderNotas() {
         📗 Ensino Fundamental — Notas Bimestrais
         <span style="font-size:0.68rem;font-weight:400;opacity:0.8">Escala 0 a 10</span>
       </div>` : ''}
-      <div style="overflow-x:auto">
+      <div id="notasTableWrap" style="overflow-x:auto;position:relative">
       <table><thead>
         <tr>
-          <th rowspan="2" style="width:36px;vertical-align:middle">Nº</th>
-          <th class="left" rowspan="2" style="min-width:170px;vertical-align:middle">Aluno</th>
+          <th rowspan="2" class="col-sticky-num" style="width:36px;vertical-align:middle">Nº</th>
+          <th class="left col-sticky-nome" rowspan="2" style="min-width:170px;vertical-align:middle">Aluno</th>
           ${discsEF.map(d => `<th colspan="7" data-tip="${d}" style="min-width:330px;border-bottom:1px solid rgba(36,113,163,0.15)">${d.length>10?d.substr(0,9)+'…':d}</th>`).join('')}
         </tr>
         <tr>
@@ -3675,8 +3732,8 @@ function renderNotas() {
       }).join('');
 
       html += `<tr>
-        <td style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
-        <td class="left"><div class="aluno-nome">${a.nome}${a.ano?`<span class="aluno-ano-badge">${a.ano}</span>`:''}</div><div class="matricula">${a.matricula}</div></td>
+        <td class="col-sticky-num" style="text-align:center;font-family:Consolas,monospace;font-size:0.75rem;color:var(--cinza-mid)">${numSeq(a._seq)}</td>
+        <td class="left col-sticky-nome"><div class="aluno-nome">${a.nome}${a.ano?`<span class="aluno-ano-badge">${a.ano}</span>`:''}</div><div class="matricula">${a.matricula}</div></td>
         ${cells}
       </tr>`;
     });
