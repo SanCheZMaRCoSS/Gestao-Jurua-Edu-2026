@@ -4961,24 +4961,7 @@ function _htmlRodapePrint(prof, pedagogo, legenda) {
     ${legenda ? `<div class="leg"><b>Legenda:</b> ${legenda}</div>` : ''}
   </div>
 
-<!-- MODAL: IMPORTAR NOTAS EXCEL -->
-<div class="modal-overlay" id="modalImportarNotas" style="display:none">
-  <div class="modal" style="max-width:560px">
-    <div class="modal-title">📊 Importar Notas do Excel</div>
-    <p style="font-size:0.82rem;color:var(--cinza-mid);margin-bottom:14px;line-height:1.5">
-      Selecione a planilha mensal do professor. O sistema detectará automaticamente a turma,
-      o componente curricular e o bimestre, e importará as notas dos alunos pelo nome.
-    </p>
-    <div id="importNotasInfo" style="background:var(--bg-card);border-radius:8px;padding:12px;margin-bottom:14px;font-size:0.83rem;display:none">
-      <div id="importNotasDetalhes"></div>
-    </div>
-    <div id="importNotasResultado" style="max-height:220px;overflow-y:auto;font-size:0.82rem;display:none"></div>
-    <div class="modal-footer" style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn btn-sm" onclick="closeModal('modalImportarNotas')">Cancelar</button>
-      <button class="btn btn-primary btn-sm" id="btnConfirmarImportNotas" onclick="confirmarImportarNotas()" style="display:none">✅ Confirmar Importação</button>
-    </div>
-  </div>
-</div>
+
 
 </body></html>`;
 }
@@ -5590,5 +5573,24 @@ function confirmarImportarNotas() {
 </script>
 
 
+
+<!-- MODAL: IMPORTAR NOTAS EXCEL -->
+<div class="modal-overlay" id="modalImportarNotas" style="display:none">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">📊 Importar Notas do Excel</div>
+    <p style="font-size:0.82rem;color:var(--cinza-mid);margin-bottom:14px;line-height:1.5">
+      Selecione a planilha mensal do professor. O sistema detectará automaticamente a turma,
+      o componente curricular e o bimestre, e importará as notas dos alunos pelo nome.
+    </p>
+    <div id="importNotasInfo" style="background:var(--bg-card);border-radius:8px;padding:12px;margin-bottom:14px;font-size:0.83rem;display:none">
+      <div id="importNotasDetalhes"></div>
+    </div>
+    <div id="importNotasResultado" style="max-height:220px;overflow-y:auto;font-size:0.82rem;display:none"></div>
+    <div class="modal-footer" style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-sm" onclick="closeModal('modalImportarNotas')">Cancelar</button>
+      <button class="btn btn-primary btn-sm" id="btnConfirmarImportNotas" onclick="confirmarImportarNotas()" style="display:none">✅ Confirmar Importação</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
