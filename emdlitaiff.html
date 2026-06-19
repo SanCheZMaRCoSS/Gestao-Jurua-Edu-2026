@@ -5602,9 +5602,34 @@ async function processarNotasExcel(event) {
 }
 
 function mostrarResultadoImport(resultados) {
-  const divInfo = document.getElementById('importNotasInfo');
-  const divRes  = document.getElementById('importNotasResultado');
-  const btnConf = document.getElementById('btnConfirmarImportNotas');
+  // Garantir que o modal existe — se não, criar dinamicamente
+  let divInfo = document.getElementById('importNotasInfo');
+  let divRes  = document.getElementById('importNotasResultado');
+  let btnConf = document.getElementById('btnConfirmarImportNotas');
+
+  if (!divInfo || !divRes || !btnConf) {
+    // Modal não encontrado — criar inline
+    let modalEl = document.getElementById('modalImportarNotas');
+    if (!modalEl) {
+      modalEl = document.createElement('div');
+      modalEl.className = 'modal-overlay';
+      modalEl.id = 'modalImportarNotas';
+      modalEl.innerHTML = `
+        <div class="modal" style="max-width:560px">
+          <div class="modal-title">📊 Importar Notas do Excel</div>
+          <div id="importNotasInfo" style="background:var(--bg-card);border-radius:8px;padding:12px;margin-bottom:14px;font-size:0.83rem"></div>
+          <div id="importNotasResultado" style="max-height:220px;overflow-y:auto;font-size:0.82rem;margin-bottom:14px"></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button class="btn btn-sm" onclick="closeModal('modalImportarNotas')">Cancelar</button>
+            <button class="btn btn-primary btn-sm" id="btnConfirmarImportNotas" onclick="confirmarImportarNotas()">✅ Confirmar Importação</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modalEl);
+    }
+    divInfo = document.getElementById('importNotasInfo');
+    divRes  = document.getElementById('importNotasResultado');
+    btnConf = document.getElementById('btnConfirmarImportNotas');
+  }
 
   let htmlInfo = '', htmlRes = '', totalImport = 0;
 
