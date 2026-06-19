@@ -5480,117 +5480,116 @@ function bimPorMes(mes) {
 async function processarNotasExcel(event) {
   const file = event.target.files[0];
   if (!file) return;
-
   showToast('⏳ Lendo planilha...', 'blue');
-
   try {
     const buf = await file.arrayBuffer();
-    const wb  = XLSX.read(buf, { type: 'array', cellDates: false });
-
-    // Encontrar abas de diário
-    const abasDiario = wb.SheetNames.filter(n => /diário|diario/i.test(n));
-    if (!abasDiario.length) throw new Error('Nenhuma aba de diário encontrada na planilha.');
+    const wb  = XLSX.read(buf, { type: 'array', raw: true });
 
     let resultados = [];
-    for (const nomeAba of abasDiario) {
+
+    for (const nomeAba of wb.SheetNames) {
       const ws   = wb.Sheets[nomeAba];
       const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'', raw:true });
-      if (!rows || rows.length < 12) continue;
+      if (!rows || rows.length < 7) continue;
 
-      // ── Cabeçalho nas primeiras 15 linhas ──
-      let mes='', turma='', disc='', prof='';
-      for (let i=0; i<15; i++) {
-        const r = rows[i] || [];
-        // Procurar em todas as células (planilha tem células mescladas)
-        for (let c=0; c<r.length; c++) {
-          const v = String(r[c]||'').trim();
-          if (/^MÊS DE REFERÊNCIA:/i.test(v))      mes   = v.replace(/^MÊS DE REFERÊNCIA:\s*/i,'').trim();
-          else if (/MÊS/i.test(v) && !mes)         mes   = v.replace(/.*MÊS[^:]*:\s*/i,'').trim();
-          if (/^TURMA:/i.test(v))                   turma = v.replace(/^TURMA:\s*/i,'').trim();
-          else if (/TURMA/i.test(v) && !turma)      turma = v.replace(/.*TURMA[^:]*:\s*/i,'').trim();
-          if (/^COMPONENTE CURRICULAR:/i.test(v))   disc  = v.replace(/^COMPONENTE CURRICULAR:\s*/i,'').trim();
-          else if (/COMPONENTE|CURRICULAR/i.test(v) && !disc) disc = v.replace(/.*CURRICULAR[^:]*:\s*/i,'').trim();
-          if (/^PROFESSOR/i.test(v))                prof  = v.replace(/^PROFESSOR[^:]*:\s*/i,'').replace(/\(.\)/,'').trim();
+      // ── Ler cabeçalho (linhas 2-5, índices 1-4) ──
+      const getCel = (linha, col=0) => String(rows[linha]?.[col] || '').trim();
+      const getRow = (linha) => (rows[linha] || []).map(v => String(v||'').trim());
+
+      // Varrer L2-L6 buscando os campos pelo prefixo
+      let escola='', turma='', bimStr='', disc='';
+      for (let i=0; i<8; i++) {
+        const r = getRow(i);
+        for (const cel of r) {
+          if (/^ANO:/i.test(cel))        turma  = cel.replace(/^ANO:\s*/i,'').trim();
+          if (/^BIMESTRE:/i.test(cel))   bimStr = cel.replace(/^BIMESTRE:\s*/i,'').trim();
+          if (/^DISCIPLINA:/i.test(cel)) disc   = cel.replace(/^DISCIPLINA:\s*/i,'').trim();
         }
-        // Também testar a linha inteira concatenada (formato anterior)
-        const linha = r.join('	');
-        if (!mes   && /MÊS/i.test(linha))    mes   = linha.replace(/.*MÊS[^:]*:\s*/i,'').split('	')[0].trim();
-        if (!turma && /TURMA/i.test(linha))   turma = linha.replace(/.*TURMA[^:]*:\s*/i,'').split('	')[0].trim();
-        if (!disc  && /CURRICULAR/i.test(linha)) disc = linha.replace(/.*CURRICULAR[^:]*:\s*/i,'').split('	')[0].trim();
-        if (!prof  && /PROFESSOR/i.test(linha))  prof = linha.replace(/.*PROFESSOR[^(]*[):]*/i,'').trim().split('	')[0].trim();
+        // Escola costuma estar na L2 sem prefixo
+        if (i===1 && !escola) {
+          const v = r.find(c => c.length > 5 && !/^ANO:|^BIM|^DISC/i.test(c));
+          if (v) escola = v;
+        }
       }
 
-      const bim = bimPorMes(mes);
-      if (!bim) { resultados.push({ aba: nomeAba, erro: 'Mês não identificado: "' + mes + '"' }); continue; }
+      // Converter bimestre por extenso para número
+      const BIM_MAP = {
+        'primeiro':1, '1':1, '1º':1, '1o':1,
+        'segundo':2,  '2':2, '2º':2, '2o':2,
+        'terceiro':3, '3':3, '3º':3, '3o':3,
+        'quarto':4,   '4':4, '4º':4, '4o':4,
+      };
+      const bim = BIM_MAP[bimStr.toLowerCase().replace(/[°º]/g,'').trim()] || null;
+      if (!bim) { resultados.push({ aba: nomeAba, erro: 'Bimestre não identificado: "' + bimStr + '"' }); continue; }
+      if (!disc) { resultados.push({ aba: nomeAba, erro: 'Disciplina não encontrada.' }); continue; }
 
-      // ── Encontrar colunas AV1/AV2/AV3/RP1/RP2/RP3 ──
-      // Varrer TODAS as linhas até encontrar (planilha tem linha de cabeçalho por volta da L12)
-      let colAv1=-1, colAv2=-1, colAv3=-1, colRp1=-1, colRp2=-1, colRp3=-1;
-      let linhaInicio = -1;
+      // ── Encontrar linha de cabeçalho das colunas (AV1, REC, AV2...) ──
+      let colAv1=-1, colAv2=-1, colAv3=-1, colRec1=-1, colRec2=-1, colRec3=-1;
+      let linhaAlunos = -1;
       for (let i=0; i<rows.length; i++) {
-        const r = rows[i] || [];
-        let found = false;
+        const r = getRow(i);
+        let avCount = 0;
+        let recIdx = [];
         for (let c=0; c<r.length; c++) {
-          const v = String(r[c]||'').trim();
-          if (v==='AV1' && colAv1<0) { colAv1=c; found=true; }
-          if (v==='AV2' && colAv2<0) { colAv2=c; found=true; }
-          if (v==='AV3' && colAv3<0) { colAv3=c; found=true; }
-          if (v==='RP1' && colRp1<0) { colRp1=c; found=true; }
-          if (v==='RP2' && colRp2<0) { colRp2=c; found=true; }
-          if (v==='RP3' && colRp3<0) { colRp3=c; found=true; }
+          const v = r[c].replace(/\s+/g,'').toUpperCase();
+          if (v==='AV1'||v==='AV 1') { colAv1=c; avCount++; }
+          if (v==='AV2'||v==='AV 2') { colAv2=c; avCount++; }
+          if (v==='AV3'||v==='AV 3') { colAv3=c; avCount++; }
+          if (v==='REC'||v==='REC.') recIdx.push(c);
         }
-        // Linha de início dos alunos: primeira linha após o cabeçalho onde col[0] é número
-        if (colAv1>=0 && linhaInicio<0) {
-          // Pular linhas vazias e encontrar primeira linha com número na col 0
+        if (avCount >= 1) {
+          // Atribuir REC às AVs em ordem
+          if (recIdx[0]!==undefined) colRec1 = recIdx[0];
+          if (recIdx[1]!==undefined) colRec2 = recIdx[1];
+          if (recIdx[2]!==undefined) colRec3 = recIdx[2];
+          // Linha de alunos começa após a linha ALUNO (próxima linha não vazia)
           for (let j=i+1; j<rows.length; j++) {
-            const nr = rows[j] || [];
-            if (!isNaN(parseInt(String(nr[0]||'').trim())) && String(nr[1]||'').trim()) {
-              linhaInicio = j;
+            const nr = getRow(j);
+            const nome = nr[0];
+            if (nome && !/^ALUNO/i.test(nome) && nome.length > 2) {
+              linhaAlunos = j;
               break;
             }
           }
+          break;
         }
-        if (colAv1>=0 && linhaInicio>=0) break;
       }
 
-      if (colAv1<0) { resultados.push({ aba: nomeAba, erro: 'Colunas AV1/AV2/AV3 não encontradas na aba.' }); continue; }
-      if (linhaInicio<0) { resultados.push({ aba: nomeAba, erro: 'Linhas de alunos não encontradas.' }); continue; }
+      if (colAv1<0) { resultados.push({ aba: nomeAba, erro: 'Colunas AV1/AV2/AV3 não encontradas.' }); continue; }
+      if (linhaAlunos<0) { resultados.push({ aba: nomeAba, erro: 'Linhas de alunos não encontradas.' }); continue; }
 
       // ── Mapear alunos da ferramenta ──
       const mapaAlunos = {};
       alunos.forEach(a => { mapaAlunos[normNome(a.nome)] = a; });
 
-      // ── Processar linhas de alunos ──
+      // ── Processar alunos ──
       const importados = [], naoEncontrados = [];
-      for (let i=linhaInicio; i<rows.length; i++) {
+      const parseVal = v => {
+        if (v===''||v===null||v===undefined) return null;
+        const n = parseFloat(String(v).replace(',','.'));
+        return isNaN(n) ? null : n;
+      };
+
+      for (let i=linhaAlunos; i<rows.length; i++) {
         const r = rows[i] || [];
-        const numCol = String(r[0]||'').trim();
-        const nome   = String(r[1]||'').trim();
-        if (!nome || !numCol || isNaN(parseInt(numCol))) continue;
+        const nome = String(r[0]||'').trim();
+        if (!nome || nome.length < 2) continue;
 
-        const parseVal = (v) => {
-          if (v==='' || v===null || v===undefined) return null;
-          const n = parseFloat(String(v).replace(',','.'));
-          return isNaN(n) ? null : n;
-        };
+        const av1  = parseVal(r[colAv1]);
+        const av2  = colAv2>=0  ? parseVal(r[colAv2])  : null;
+        const av3  = colAv3>=0  ? parseVal(r[colAv3])  : null;
+        const rec1 = colRec1>=0 ? parseVal(r[colRec1]) : null;
+        const rec2 = colRec2>=0 ? parseVal(r[colRec2]) : null;
+        const rec3 = colRec3>=0 ? parseVal(r[colRec3]) : null;
 
-        const av1 = parseVal(r[colAv1]);
-        const av2 = colAv2>=0 ? parseVal(r[colAv2]) : null;
-        const av3 = colAv3>=0 ? parseVal(r[colAv3]) : null;
-        const rp1 = colRp1>=0 ? parseVal(r[colRp1]) : null;
-        const rp2 = colRp2>=0 ? parseVal(r[colRp2]) : null;
-        const rp3 = colRp3>=0 ? parseVal(r[colRp3]) : null;
-
-        // Só incluir se tiver pelo menos uma nota
         if (av1===null && av2===null && av3===null) continue;
 
         const aluno = mapaAlunos[normNome(nome)];
         if (!aluno) { naoEncontrados.push(nome); continue; }
-
-        importados.push({ aluno, disc, bim, av1, av2, av3, rp1, rp2, rp3 });
+        importados.push({ aluno, disc, bim, av1, av2, av3, rp1:rec1, rp2:rec2, rp3:rec3 });
       }
 
-      resultados.push({ aba: nomeAba, mes, turma, disc, prof, bim, importados, naoEncontrados });
+      resultados.push({ aba: nomeAba, mes: bimStr, turma, disc, prof:'', bim, importados, naoEncontrados });
     }
 
     _importNotasDados = resultados;
