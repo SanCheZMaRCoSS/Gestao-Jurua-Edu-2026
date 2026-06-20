@@ -192,6 +192,7 @@
     display: grid;
     grid-template-columns: 280px 1fr;
     gap: 24px;
+    min-height: calc(100vh - 88px);
     align-items: start;
     min-width: 0;
     overflow: hidden;
@@ -222,16 +223,7 @@
     position: sticky;
     top: 16px;
     align-self: start;
-    max-height: calc(100vh - 120px);
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(26,107,60,0.3) transparent;
-    padding-right: 4px;
   }
-  .sidebar::-webkit-scrollbar { width: 4px; }
-  .sidebar::-webkit-scrollbar-track { background: transparent; }
-  .sidebar::-webkit-scrollbar-thumb { background: rgba(26,107,60,0.3); border-radius: 4px; }
 
   .sidebar-card {
     background: white;
