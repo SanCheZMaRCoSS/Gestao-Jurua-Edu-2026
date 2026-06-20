@@ -3426,17 +3426,18 @@ function renderFrequencia() {
       <td class="fcol fcol-2 left"><div class="aluno-nome">${a.nome}</div></td>
       <td class="fcol fcol-3 left"><span class="matricula">${a.matricula}</span></td>
       ${diasShow.map(d => {
-        const v2  = frequencia[a.id][mes][d] || 'P';
-        const bg2 = v2==='P'?'#ebf5fb':v2==='F'?'#f8d7da':'#fff3cd';
-        const co2 = v2==='P'?'#2e86c1':v2==='F'?'#c0392b':'#b8860b';
-        const ti2 = v2==='P'?'Presente':v2==='F'?'Falta':'Justificada';
+        const v2  = frequencia[a.id]?.[mes]?.[d] || '';
+        const bg2 = v2==='P'?'#d4edda':v2==='F'?'#f8d7da':v2==='J'?'#fff3cd':'#ebf5fb';
+        const co2 = v2==='P'?'#155724':v2==='F'?'#c0392b':v2==='J'?'#b8860b':'#2e86c1';
+        const ti2 = v2==='P'?'Presente':v2==='F'?'Falta':v2==='J'?'Justificada':'Clique para marcar';
+        const lbl2 = v2 || '·';
         return '<td style="text-align:center">'
           + '<button class="freq-btn"'
           + ' data-id="' + a.id + '"'
           + ' data-mes="' + mes + '"'
           + ' data-dia="' + d + '"'
           + ' style="border:none;background:' + bg2 + ';color:' + co2 + ';width:26px;height:26px;border-radius:5px;font-weight:700;font-size:0.72rem;cursor:pointer"'
-          + ' title="' + ti2 + '">' + v2 + '</button>'
+          + ' title="' + ti2 + '">' + lbl2 + '</button>'
           + '</td>';
       }).join('')}
       <td><div class="freq-cell ${cls}">
@@ -3471,8 +3472,15 @@ function toggleFreq(alunoId, mes, dia) {
   }
   if (!frequencia[alunoId]) frequencia[alunoId] = {};
   if (!frequencia[alunoId][mes]) frequencia[alunoId][mes] = {};
-  const ciclo = { P:'F', F:'J', J:'P' };
-  frequencia[alunoId][mes][dia] = ciclo[frequencia[alunoId][mes][dia] || 'P'];
+  // Ciclo: vazio→P (verde)→F (vermelho)→J (amarelo)→vazio
+  const atual = frequencia[alunoId][mes][dia];
+  const ciclo = { undefined:'P', '':'P', P:'F', F:'J', J:'' };
+  const proximo = ciclo[atual] ?? 'P';
+  if (proximo === '') {
+    delete frequencia[alunoId][mes][dia];
+  } else {
+    frequencia[alunoId][mes][dia] = proximo;
+  }
   renderFrequencia();
   atualizarStats();
   agendarAutoSave('Frequência alterada...');
@@ -5572,7 +5580,12 @@ async function processarNotasExcel(event) {
 
       for (let i=linhaAlunos; i<rows.length; i++) {
         const r = rows[i] || [];
-        const nome = String(r[0]||'').trim();
+        // Nome pode estar na col A (índice 0) ou col B (índice 1) — detectar automaticamente
+        let nome = String(r[0]||'').trim();
+        // Se col A é número (sequencial), nome está na col B
+        if (!isNaN(parseFloat(nome)) || /^\d+$/.test(nome)) {
+          nome = String(r[1]||'').trim();
+        }
         if (!nome || nome.length < 2) continue;
 
         const av1  = parseVal(r[colAv1]);
@@ -5586,7 +5599,9 @@ async function processarNotasExcel(event) {
 
         const aluno = mapaAlunos[normNome(nome)];
         if (!aluno) { naoEncontrados.push(nome); continue; }
-        importados.push({ aluno, disc, bim, av1, av2, av3, rp1:rec1, rp2:rec2, rp3:rec3 });
+        importados.push({ aluno, disc, bim,
+          av1, av2, av3,
+          rp1: rec1, rp2: rec2, rp3: rec3 });
       }
 
       resultados.push({ aba: nomeAba, mes: bimStr, turma, disc, prof:'', bim, importados, naoEncontrados });
