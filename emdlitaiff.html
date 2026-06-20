@@ -3427,10 +3427,10 @@ function renderFrequencia() {
       <td class="fcol fcol-3 left"><span class="matricula">${a.matricula}</span></td>
       ${diasShow.map(d => {
         const v2  = frequencia[a.id]?.[mes]?.[d] || '';
-        const bg2 = v2==='P'?'#d4edda':v2==='F'?'#f8d7da':v2==='J'?'#fff3cd':'#ebf5fb';
-        const co2 = v2==='P'?'#155724':v2==='F'?'#c0392b':v2==='J'?'#b8860b':'#2e86c1';
-        const ti2 = v2==='P'?'Presente':v2==='F'?'Falta':v2==='J'?'Justificada':'Clique para marcar';
-        const lbl2 = v2 || '·';
+        const bg2 = v2==='P'?'#d4edda':v2==='F'?'#f8d7da':v2==='J'?'#fff3cd':'#d6eaf8';
+        const co2 = v2==='P'?'#155724':v2==='F'?'#c0392b':v2==='J'?'#b8860b':'#5dade2';
+        const ti2 = v2==='P'?'Presente':v2==='F'?'Falta':v2==='J'?'Justificada':'Clique para marcar Presente';
+        const lbl2 = v2 || '';
         return '<td style="text-align:center">'
           + '<button class="freq-btn"'
           + ' data-id="' + a.id + '"'
