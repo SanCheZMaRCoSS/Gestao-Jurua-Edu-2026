@@ -193,13 +193,13 @@
     grid-template-columns: 280px 1fr;
     gap: 24px;
     min-height: calc(100vh - 88px);
-    /* Impede que o conteúdo interno empurre a página para fora */
+    align-items: start;
     min-width: 0;
     overflow: hidden;
   }
 
   .main-content {
-    min-width: 0; /* permite que o grid encolha sem vazar */
+    min-width: 0;
     overflow: hidden;
   }
 
@@ -220,7 +220,18 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 104px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(26,107,60,0.3) transparent;
+    padding-right: 4px;
   }
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: rgba(26,107,60,0.3); border-radius: 4px; }
 
   .sidebar-card {
     background: white;
