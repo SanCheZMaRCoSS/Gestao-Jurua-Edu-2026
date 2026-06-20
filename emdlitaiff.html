@@ -3411,7 +3411,7 @@ function renderFrequencia() {
   listaOrdenada.forEach(a => {
     if (!frequencia[a.id]) frequencia[a.id] = {};
     if (!frequencia[a.id][mes]) frequencia[a.id][mes] = {};
-    diasShow.forEach(d => { if (!frequencia[a.id][mes][d]) frequencia[a.id][mes][d] = 'P'; });
+    // Não preencher P automaticamente — estado vazio = azul (sem registro)
 
     const { pct, faltas } = getFreqAluno(a.id);
     const cls = pct >= 75 ? 'freq-good' : pct >= 60 ? 'freq-warn' : 'freq-bad';
