@@ -1468,6 +1468,7 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -2499,7 +2500,24 @@ const _fbConfig = {
 
 // Inicializar Firebase (evitar re-inicialização)
 if (!firebase.apps.length) firebase.initializeApp(_fbConfig);
-const _db = firebase.database();
+const _db   = firebase.database();
+const _auth = firebase.auth();
+
+// Autenticação anônima — necessária para acesso ao Realtime Database
+let _fbPronto = false;
+_auth.signInAnonymously()
+  .then(() => { _fbPronto = true; })
+  .catch(e => console.warn('Firebase auth:', e.message));
+
+// Aguardar autenticação antes de operar
+async function fbAguardarAuth() {
+  if (_fbPronto) return;
+  await new Promise(resolve => {
+    const unsubscribe = _auth.onAuthStateChanged(user => {
+      if (user) { unsubscribe(); resolve(); }
+    });
+  });
+}
 
 function fbRef(path) {
   return _db.ref(path);
@@ -2557,6 +2575,7 @@ function fbEscolaPath() {
 async function carregarDoSheets() {
   setSyncStatus('syncing', 'Carregando...');
   try {
+    await fbAguardarAuth();
     const d = await fbGet(fbEscolaPath());
     if (!d) {
       setSyncStatus('offline', 'Sem dados no Firebase');
@@ -2591,6 +2610,7 @@ async function carregarDoSheets() {
 async function salvarNoSheets() {
   setSyncStatus('syncing', 'Salvando...');
   try {
+    await fbAguardarAuth();
     const payload = montarPayload();
     await fbSet(fbEscolaPath(), {
       ...payload,
