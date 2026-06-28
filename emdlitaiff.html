@@ -1326,6 +1326,10 @@
       --shadow-sm:      0 1px 3px rgba(0,0,0,0.4);
       --shadow-md:      0 4px 16px rgba(0,0,0,0.5);
       --shadow-lg:      0 8px 32px rgba(0,0,0,0.6);
+      /* Tabela de notas/frequência */
+      --freq-th-bg:     #1a2e3d;
+      --freq-th-color:  #4a9fd4;
+      --rec-th-bg:      #2a2010;
     }
 
     body { background: #111827; color: #e5e7eb; }
@@ -3493,10 +3497,10 @@ function renderFrequencia() {
     <th class="fcol fcol-1" style="text-align:center">Nº</th>
     <th class="fcol fcol-2 left" style="font-size:0.85rem;font-weight:700;letter-spacing:0.04em;text-align:center">ALUNOS</th>
     <th class="fcol fcol-3 left">Matr.</th>
-    ${diasShow.map(d => `<th style="min-width:34px;text-align:center;background:#ebf5fb;color:#1a5276;font-weight:600">${d}</th>`).join('')}
-    <th style="min-width:80px;background:#ebf5fb;color:#1a5276;font-weight:600">% Freq.</th>
-    <th style="min-width:44px;background:#ebf5fb;color:#1a5276;font-weight:600">Faltas</th>
-    <th style="min-width:70px;background:#ebf5fb;color:#1a5276;font-weight:600">Ações</th>
+    ${diasShow.map(d => `<th style="min-width:34px;text-align:center;background:var(--freq-th-bg,#ebf5fb);color:var(--freq-th-color,#1a5276);font-weight:600">${d}</th>`).join('')}
+    <th style="min-width:80px;background:var(--freq-th-bg,#ebf5fb);color:var(--freq-th-color,#1a5276);font-weight:600">% Freq.</th>
+    <th style="min-width:44px;background:var(--freq-th-bg,#ebf5fb);color:var(--freq-th-color,#1a5276);font-weight:600">Faltas</th>
+    <th style="min-width:70px;background:var(--freq-th-bg,#ebf5fb);color:var(--freq-th-color,#1a5276);font-weight:600">Ações</th>
   </tr></thead><tbody>`;
 
   let anoAtual = null;
@@ -3711,7 +3715,7 @@ function renderNotas() {
   if (grupoEI.length > 0) {
     html += `
     <div style="margin-bottom:8px">
-      <div style="padding:10px 16px;font-size:0.80rem;background:#ebf5fb;border-bottom:2px solid #aed6f1;color:#1a5276;font-weight:700;display:flex;align-items:center;gap:8px">
+      <div style="padding:10px 16px;font-size:0.80rem;background:var(--freq-th-bg,#ebf5fb);border-bottom:2px solid #aed6f1;color:var(--freq-th-color,#1a5276);font-weight:700;display:flex;align-items:center;gap:8px">
         🌱 Educação Infantil — Avaliação Qualitativa
         <span style="font-size:0.68rem;font-weight:400;opacity:0.8">Campos de Experiência (BNCC) — sem notas numéricas</span>
       </div>
@@ -3719,7 +3723,7 @@ function renderNotas() {
       <table><thead><tr>
         <th style="width:36px">Nº</th>
         <th class="left" style="min-width:170px">Criança</th>
-        ${discsEI.map(d => `<th data-tip="${d}" style="min-width:115px;font-size:0.6rem;background:#ebf5fb;color:#1a5276">${d.length>15?d.substr(0,14)+'…':d}</th>`).join('')}
+        ${discsEI.map(d => `<th data-tip="${d}" style="min-width:115px;font-size:0.6rem;background:var(--freq-th-bg,#ebf5fb);color:var(--freq-th-color,#1a5276)">${d.length>15?d.substr(0,14)+'…':d}</th>`).join('')}
       </tr></thead><tbody>`;
     grupoEI.forEach(a => {
       html += `<tr>
@@ -3733,7 +3737,7 @@ function renderNotas() {
           const val = notas[a.id]?.[d]?.['ei_'+bim] || '';
           return `<td style="text-align:center;padding:6px 4px">
             <select onchange="setNotaEI(${a.id},'${d}',${bim},this.value)"
-              style="width:72px;font-size:0.72rem;border:1.5px solid #aed6f1;border-radius:5px;padding:3px 4px;background:white;cursor:pointer;font-weight:600;color:#1a5276">
+              style="width:72px;font-size:0.72rem;border:1.5px solid #aed6f1;border-radius:5px;padding:3px 4px;background:var(--off-white,white);cursor:pointer;font-weight:600;color:var(--freq-th-color,#1a5276)">
               <option value="">—</option>
               ${niveisEI.map(n => `<option value="${n}" ${val===n?' selected':''}>${n}</option>`).join('')}
             </select>
@@ -3771,12 +3775,12 @@ function renderNotas() {
         <tr>
           ${discsEF.map(() => `
             <th style="font-size:0.57rem;color:#1a6b3c;font-weight:600;background:#f0faf4;min-width:44px">AV1</th>
-            <th style="font-size:0.57rem;color:#c97a00;font-weight:600;background:#fdf9ee;min-width:44px">Rec1</th>
+            <th style="font-size:0.57rem;color:#c97a00;font-weight:600;background:var(--rec-th-bg,#fdf9ee);min-width:44px">Rec1</th>
             <th style="font-size:0.57rem;color:#1a6b3c;font-weight:600;background:#f0faf4;min-width:44px">AV2</th>
-            <th style="font-size:0.57rem;color:#c97a00;font-weight:600;background:#fdf9ee;min-width:44px">Rec2</th>
+            <th style="font-size:0.57rem;color:#c97a00;font-weight:600;background:var(--rec-th-bg,#fdf9ee);min-width:44px">Rec2</th>
             <th style="font-size:0.57rem;color:#1a6b3c;font-weight:600;background:#f0faf4;min-width:44px">AV3</th>
-            <th style="font-size:0.57rem;color:#c97a00;font-weight:600;background:#fdf9ee;min-width:44px">Rec3</th>
-            <th style="font-size:0.57rem;color:#1a5276;font-weight:700;background:#ebf5fb;min-width:52px">Méd.</th>
+            <th style="font-size:0.57rem;color:#c97a00;font-weight:600;background:var(--rec-th-bg,#fdf9ee);min-width:44px">Rec3</th>
+            <th style="font-size:0.57rem;color:#1a5276;font-weight:700;background:var(--freq-th-bg,#ebf5fb);min-width:52px">Méd.</th>
           `).join('')}
         </tr>
       </thead><tbody>`;
@@ -3826,7 +3830,7 @@ function renderNotas() {
           <td style="background:#fdf9ee"><input class="nota-input" type="number" min="0" max="10" step="0.1"
             value="${r3}" onchange="setNota(${a.id},'${d}',${bim},this.value,'rec3')" placeholder="—"
             style="border-color:${r3Usada?'var(--dourado)':'transparent'};color:${r3Usada?'var(--dourado)':'inherit'}"></td>
-          <td style="background:#ebf5fb;text-align:center;font-family:Consolas,monospace;font-size:0.78rem;${medCls}">
+          <td style="background:var(--freq-th-bg,#ebf5fb);text-align:center;font-family:Consolas,monospace;font-size:0.78rem;${medCls}">
             <span id="medbim_${a.id}_${d.replace(/[^a-z]/gi,'')}_${bim}">${med!==null?fmtNota(med):'—'}</span>
           </td>`;
       }).join('');
