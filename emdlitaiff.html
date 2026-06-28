@@ -420,7 +420,7 @@
     position: sticky;
     left: 0;
     z-index: 3;
-    background: var(--bg-card, #fff);
+    background: var(--off-white, #fff);
     border-right: 1px solid rgba(36,113,163,0.15);
   }
   #tabelaNotas th.col-sticky-nome,
@@ -428,7 +428,7 @@
     position: sticky;
     left: 36px;
     z-index: 3;
-    background: var(--bg-card, #fff);
+    background: var(--off-white, #fff);
     border-right: 2px solid rgba(36,113,163,0.25);
   }
   #tabelaNotas thead th.col-sticky-num,
@@ -1461,6 +1461,75 @@
 
     /* Separador multisseriado */
     .multi-section-divider { background: #1a2e3d !important; color: #9ca3af !important; }
+
+    /* ── Colunas sticky (Nº e Aluno) nas tabelas de Notas e Frequência ── */
+    #tabelaNotas th.col-sticky-num,
+    #tabelaNotas td.col-sticky-num,
+    #tabelaNotas th.col-sticky-nome,
+    #tabelaNotas td.col-sticky-nome {
+      background: #1f2937 !important;
+      color: #e5e7eb !important;
+    }
+    #tabelaNotas thead th.col-sticky-num,
+    #tabelaNotas thead th.col-sticky-nome {
+      background: #1a2e3d !important;
+      color: var(--azul-principal) !important;
+    }
+    tr:nth-child(even) #tabelaNotas td.col-sticky-num,
+    tr:nth-child(even) #tabelaNotas td.col-sticky-nome {
+      background: #243040 !important;
+    }
+
+    /* ── Cabeçalhos de tabela com cores fixas ── */
+    th[style*="#ebf5fb"], th[style*="background:#ebf5fb"] {
+      background: #1a2e3d !important;
+      color: var(--azul-principal) !important;
+    }
+    th[style*="background:#1a5276"] {
+      background: #0f2640 !important;
+    }
+
+    /* ── Botão Presente: verde no modo escuro também ── */
+    .dia-btn.presente {
+      background: #1a3d28 !important;
+      border-color: #27ae60 !important;
+      color: #4cd98a !important;
+    }
+
+    /* ── Linhas alternadas das tabelas ── */
+    tr:nth-child(even) td {
+      background: #182030 !important;
+    }
+    tr:nth-child(odd) td {
+      background: #1f2937 !important;
+    }
+
+    /* ── Nome do aluno nas colunas sticky ── */
+    .aluno-nome { color: #e5e7eb !important; }
+    .aluno-ano-badge { background: #1a2e3d !important; color: var(--azul-principal) !important; }
+
+    /* ── Tabela de frequência: cabeçalho dos dias ── */
+    .freq-header-dia {
+      background: #1a2e3d !important;
+      color: var(--azul-principal) !important;
+    }
+
+    /* ── Médias Finais: células ── */
+    .media-cell { color: #e5e7eb !important; }
+    td[style*="background:#f0fff4"], td[style*="background:#f0f8ff"] {
+      background: #1a2e3d !important;
+    }
+
+    /* ── Wrapper de tabelas ── */
+    .table-wrapper, .table-container {
+      background: #1f2937 !important;
+    }
+
+    /* ── Cabeçalho sticky das colunas de frequência ── */
+    .freq-sticky-col {
+      background: #1f2937 !important;
+      color: #e5e7eb !important;
+    }
   }
 
 </style>
