@@ -325,17 +325,20 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   atualizarBadgeReuniao();
-  setStatus('loading', 'Autenticando...');
+  setStatus("loading", "Autenticando...");
   try {
-    await auth.signInAnonymously();
-    setStatus('loading', 'Buscando dados...');
+    console.log("[PAINEL] Iniciando auth anonima...");
+    const cred = await auth.signInAnonymously();
+    console.log("[PAINEL] Auth OK uid:", cred.user.uid);
+    setStatus("loading", "Buscando dados em /escolas...");
     await carregarDados();
     await carregarBuscaAtiva();
   } catch(e) {
-    setStatus('err', 'Erro: ' + e.message);
-    document.getElementById('loadingScreen').innerHTML =
-      `<div style="color:#B91C1C;text-align:center;padding:20px">
-        ⚠️ Não foi possível conectar ao Firebase.<br><small>${e.message}</small><br><br>
+    console.error("[PAINEL] ERRO:", e.code, e.message, e);
+    setStatus("err", (e.code || "Erro") + ": " + e.message);
+    document.getElementById("mainContent").innerHTML =
+      `<div style="color:#B91C1C;text-align:center;padding:40px;font-size:14px">
+        ⚠️ <b>${e.code||"Erro"}</b><br>${e.message}<br><br>
         <button class="btn btn-primary" onclick="location.reload()">↻ Tentar novamente</button>
        </div>`;
   }
@@ -358,9 +361,10 @@ function atualizarBadgeReuniao() {
 async function carregarDados() {
   dadosEscolas = {};
   try {
+    console.log("[PAINEL] Lendo /escolas no Firebase...");
     // Estrutura do Firebase: /escolas/{escolaCode}/
     const snap = await db.ref('/escolas').get();
-    if (!snap.exists()) { setStatus('err','Nenhum dado em /escolas no Firebase'); renderVazio(); return; }
+    console.log("[PAINEL] snap.exists:", snap.exists()); if (!snap.exists()) { setStatus('err','Nenhum dado em /escolas no Firebase'); renderVazio(); return; }
 
     const root = snap.val();
     for (const [key, val] of Object.entries(root)) {
