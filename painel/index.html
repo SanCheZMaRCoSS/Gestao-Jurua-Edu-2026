@@ -1,1 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Monitoramento — SEMED Juruá</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+<style>
+  :root {
+    --azul:       #1565C0;
+    --azul-esc:   #003366;
+    --azul-cl:    #E3EEFF;
+    --verde:      #1B7A3E;
+    --verde-cl:   #E6F4EC;
+    --amarelo:    #B45309;
+    --amarelo-cl: #FEF3C7;
+    --vermelho:   #B91C1C;
+    --vermelho-cl:#FEE2E2;
+    --cinza:      #F4F6FA;
+    --borda:      #DDE3EF;
+    --texto:      #1A2035;
+    --sub:        #5A6480;
+    --branco:     #FFFFFF;
+    --sombra:     0 2px 8px rgba(21,101,192,.10);
+    --sombra-lg:  0 4px 20px rgba(21,101,192,.14);
+    --radius:     10px;
+    --radius-lg:  16px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--cinza); color: var(--texto); min-height: 100vh; }
+
+  .header {
+    background: linear-gradient(135deg, var(--azul-esc) 0%, var(--azul) 100%);
+    color: #fff; padding: 0 28px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    min-height: 64px; box-shadow: var(--sombra-lg);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo {
+    width: 38px; height: 38px; border-radius: 8px;
+    background: rgba(255,255,255,.18);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .header h1 { font-size: 15px; font-weight: 700; line-height: 1.2; }
+  .header p  { font-size: 11px; opacity: .80; margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .badge-reuniao {
+    background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
+    border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .btn {
+    border: none; cursor: pointer; border-radius: 8px;
+    font-size: 13px; font-weight: 600; padding: 8px 16px; transition: all .18s;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .btn-white { background: #fff; color: var(--azul-esc); }
+  .btn-white:hover { background: #e8f0ff; }
+  .btn-ghost { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.3); }
+  .btn-ghost:hover { background: rgba(255,255,255,.25); }
+  .btn-primary { background: var(--azul); color: #fff; }
+  .btn-primary:hover { background: var(--azul-esc); }
+  .btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+
+  .toolbar {
+    background: var(--branco); border-bottom: 1px solid var(--borda);
+    padding: 12px 28px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .toolbar label { font-size: 12px; font-weight: 600; color: var(--sub); }
+  select, input[type=number] {
+    border: 1px solid var(--borda); border-radius: 7px; padding: 7px 12px;
+    font-size: 13px; color: var(--texto); background: var(--branco); outline: none; transition: border .15s;
+  }
+  select:focus, input:focus { border-color: var(--azul); }
+  .sep { width: 1px; height: 28px; background: var(--borda); }
+  #statusBar { margin-left: auto; font-size: 12px; color: var(--sub); display: flex; align-items: center; gap: 7px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #9ca3af; flex-shrink: 0; }
+  .dot.ok  { background: var(--verde); }
+  .dot.err { background: var(--vermelho); }
+  .dot.loading { background: var(--amarelo); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  .main { padding: 24px 28px; max-width: 1600px; margin: 0 auto; }
+
+  .cards-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 16px; margin-bottom: 28px;
+  }
+  .card {
+    background: var(--branco); border-radius: var(--radius-lg); padding: 20px;
+    box-shadow: var(--sombra); border: 1px solid var(--borda);
+    position: relative; overflow: hidden; transition: box-shadow .2s;
+  }
+  .card:hover { box-shadow: var(--sombra-lg); }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+  .card.verde::before   { background: var(--verde); }
+  .card.amarelo::before { background: #F59E0B; }
+  .card.vermelho::before{ background: var(--vermelho); }
+  .card.azul::before    { background: var(--azul); }
+  .card.cinza::before   { background: #64748b; }
+  .card-icon  { font-size: 26px; margin-bottom: 8px; }
+  .card-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--sub); margin-bottom: 4px; }
+  .card-value { font-size: 32px; font-weight: 800; line-height: 1; color: var(--texto); }
+  .card-meta  { font-size: 11px; color: var(--sub); margin-top: 6px; }
+  .card-meta b{ color: var(--texto); }
+  .card-pct   { font-size: 13px; font-weight: 700; margin-top: 2px; }
+  .card-pct.ok  { color: var(--verde); }
+  .card-pct.warn{ color: var(--amarelo); }
+  .card-pct.bad { color: var(--vermelho); }
+
+  .section-title {
+    font-size: 14px; font-weight: 700; color: var(--azul-esc);
+    letter-spacing: .04em; text-transform: uppercase;
+    margin-bottom: 14px; margin-top: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--borda); }
+
+  .table-wrap {
+    background: var(--branco); border-radius: var(--radius-lg);
+    border: 1px solid var(--borda); box-shadow: var(--sombra);
+    overflow: hidden; margin-bottom: 28px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: var(--azul-esc); color: #fff; }
+  thead th {
+    padding: 11px 14px; text-align: left;
+    font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap;
+  }
+  thead th:first-child { padding-left: 20px; }
+  tbody tr { border-bottom: 1px solid var(--borda); transition: background .12s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--azul-cl); }
+  tbody td { padding: 11px 14px; vertical-align: middle; }
+  tbody td:first-child { padding-left: 20px; font-weight: 600; }
+
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .pill-ok   { background: var(--verde-cl);   color: var(--verde); }
+  .pill-warn { background: var(--amarelo-cl); color: var(--amarelo); }
+  .pill-bad  { background: var(--vermelho-cl);color: var(--vermelho); }
+  .pill-neu  { background: var(--azul-cl);    color: var(--azul); }
+
+  .risco-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px; margin-bottom: 28px;
+  }
+  .risco-card { background: var(--branco); border-radius: var(--radius-lg); border: 1px solid var(--borda); box-shadow: var(--sombra); overflow: hidden; }
+  .risco-header { background: var(--vermelho-cl); border-bottom: 1px solid #fca5a5; padding: 12px 16px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--vermelho); }
+  .risco-list { list-style: none; }
+  .risco-item { padding: 10px 16px; border-bottom: 1px solid var(--borda); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .risco-item:last-child { border-bottom: none; }
+  .risco-nome  { font-size: 13px; font-weight: 600; }
+  .risco-turma { font-size: 11px; color: var(--sub); }
+  .risco-pct   { font-size: 13px; font-weight: 800; color: var(--vermelho); white-space: nowrap; }
+
+  .busca-panel { background: var(--branco); border-radius: var(--radius-lg); border: 1px solid var(--borda); box-shadow: var(--sombra); margin-bottom: 28px; overflow: hidden; }
+  .busca-header { background: var(--azul-esc); color: #fff; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .busca-header h3 { font-size: 14px; }
+
+  .loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; gap: 16px; color: var(--sub); }
+  .spinner { width: 40px; height: 40px; border: 4px solid var(--borda); border-top-color: var(--azul); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { text-align: center; padding: 40px; color: var(--sub); font-size: 14px; }
+
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 999; align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #fff; border-radius: var(--radius-lg); padding: 28px; width: 90%; max-width: 500px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+  .modal h3 { font-size: 16px; margin-bottom: 16px; color: var(--azul-esc); }
+  .modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+  .field label { font-size: 11px; font-weight: 700; color: var(--sub); }
+  .field input, .field select { width: 100%; }
+
+  /* AVISO file:// */
+  .aviso-local {
+    background: #FEF3C7; border: 1px solid #F59E0B; border-radius: var(--radius);
+    padding: 14px 20px; margin-bottom: 20px;
+    display: flex; align-items: flex-start; gap: 12px; font-size: 13px; color: #92400E;
+  }
+  .aviso-local strong { display: block; margin-bottom: 4px; }
+
+  @media print {
+    .header, .toolbar, .busca-panel, .btn, .risco-card, .aviso-local { display: none !important; }
+    .main { padding: 0; }
+  }
+  @media (max-width: 640px) {
+    .header { padding: 10px 14px; }
+    .main { padding: 14px; }
+    .toolbar { padding: 10px 14px; }
+    .cards-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">📊</div>
+    <div>
+      <h1>Painel de Monitoramento de Indicadores</h1>
+      <p>Secretaria Municipal de Educação de Juruá — AM · TCE pela Educação</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="badge-reuniao" id="badgeReuniao">—</span>
+    <button class="btn btn-ghost" onclick="window.print()">🖨️ Imprimir</button>
+    <button class="btn btn-white" onclick="carregarDados()">↻ Atualizar</button>
+  </div>
+</header>
+
+<div class="toolbar">
+  <label>Bimestre:</label>
+  <select id="selBimestre" onchange="recalcular()">
+    <option value="1">1º Bimestre</option>
+    <option value="2">2º Bimestre</option>
+    <option value="3">3º Bimestre</option>
+    <option value="4">4º Bimestre</option>
+    <option value="0">Acumulado (ano)</option>
+  </select>
+  <div class="sep"></div>
+  <label>Meta Frequência (%):</label>
+  <input type="number" id="metaFreq" value="90" min="50" max="100" step="1" onchange="recalcular()">
+  <div class="sep"></div>
+  <label>Meta Evasão (%):</label>
+  <input type="number" id="metaEvasao" value="2" min="0" max="20" step="0.5" onchange="recalcular()">
+  <div id="statusBar">
+    <div class="dot loading" id="dotStatus"></div>
+    <span id="txtStatus">Conectando...</span>
+  </div>
+</div>
+
+<main class="main" id="mainContent">
+  <div class="loading-screen" id="loadingScreen">
+    <div class="spinner"></div>
+    <div>Carregando dados da rede escolar...</div>
+  </div>
+</main>
+
+<!-- MODAL BUSCA ATIVA -->
+<div class="modal-bg" id="modalBusca">
+  <div class="modal">
+    <h3>📋 Registrar Ocorrência — Busca Ativa</h3>
+    <div class="field"><label>Escola</label><select id="baEscola"></select></div>
+    <div class="field"><label>Nome do Aluno</label><input type="text" id="baAluno" placeholder="Nome completo"></div>
+    <div class="field"><label>Turma</label><input type="text" id="baTurma" placeholder="Ex: 5º A"></div>
+    <div class="field">
+      <label>Situação</label>
+      <select id="baSituacao">
+        <option value="acionado">Acionado — aguardando retorno</option>
+        <option value="reintegrado">Reintegrado com sucesso</option>
+        <option value="transferido">Transferido para outra escola</option>
+        <option value="nao_localizado">Não localizado</option>
+        <option value="desistencia">Desistência confirmada</option>
+      </select>
+    </div>
+    <div class="field"><label>Observação</label><input type="text" id="baObs" placeholder="Motivo, parceiros acionados, etc."></div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarBusca()">✔ Salvar Ocorrência</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// FIREBASE CONFIG — mesmo projeto do SGE
+// ═══════════════════════════════════════════════════════════
+const fbConfig = {
+  apiKey:            "AIzaSyDFCHeMPbRRh-1Ozomjc03u2_q3aaFnxRo",
+  authDomain:        "sge-jurua-2026.firebaseapp.com",
+  databaseURL:       "https://sge-jurua-2026-default-rtdb.firebaseio.com",
+  projectId:         "sge-jurua-2026",
+  storageBucket:     "sge-jurua-2026.firebasestorage.app",
+  messagingSenderId: "206331839984",
+  appId:             "1:206331839984:web:f7d9c8ab153ee9c9d58935"
+};
+if (!firebase.apps.length) firebase.initializeApp(fbConfig);
+const db   = firebase.database();
+const auth = firebase.auth();
+
+// ═══════════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════════
+let dadosEscolas = {};
+let buscaAtiva   = [];
+let bimestre     = 1;
+let metaFreq     = 90;
+let metaEvasao   = 2;
+
+const REUNIOES = [
+  { label:'R-01 — Fev (diagnóstico)',    mes:2  },
+  { label:'R-02 — Mar (frequência)',     mes:3  },
+  { label:'R-03 — Mai (monitoramento)', mes:5  },
+  { label:'R-04 — Jun (intervenção)',   mes:6  },
+  { label:'R-05 — Ago (semestral)',     mes:8  },
+  { label:'R-06 — Set (acompanhamento)',mes:9  },
+  { label:'R-07 — Nov (anual)',         mes:11 },
+  { label:'R-08 — Dez (relatório)',     mes:12 },
+];
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', async () => {
+  // Detectar se está rodando via file:// e avisar
+  if (location.protocol === 'file:') {
+    document.getElementById('mainContent').innerHTML = `
+      <div class="aviso-local">
+        <span style="font-size:24px">⚠️</span>
+        <div>
+          <strong>Este painel precisa ser acessado via GitHub Pages</strong>
+          Abrir pelo arquivo local (file://) bloqueia a conexão com o Firebase.<br>
+          Acesse em: <a href="https://sanchezmarcoss.github.io/Gestao-Jurua-Edu-2026/painel/" target="_blank" style="color:var(--azul);font-weight:600">
+          sanchezmarcoss.github.io/Gestao-Jurua-Edu-2026/painel/</a>
+        </div>
+      </div>`;
+    setStatus('err', 'Acesse via GitHub Pages');
+    return;
+  }
+
+  atualizarBadgeReuniao();
+  setStatus('loading', 'Autenticando...');
+  try {
+    await auth.signInAnonymously();
+    setStatus('loading', 'Buscando dados...');
+    await carregarDados();
+    await carregarBuscaAtiva();
+  } catch(e) {
+    setStatus('err', 'Erro: ' + e.message);
+    document.getElementById('loadingScreen').innerHTML =
+      `<div style="color:#B91C1C;text-align:center;padding:20px">
+        ⚠️ Não foi possível conectar ao Firebase.<br><small>${e.message}</small><br><br>
+        <button class="btn btn-primary" onclick="location.reload()">↻ Tentar novamente</button>
+       </div>`;
+  }
+});
+
+function setStatus(tipo, msg) {
+  document.getElementById('dotStatus').className = 'dot ' + (tipo==='ok'?'ok':tipo==='err'?'err':'loading');
+  document.getElementById('txtStatus').textContent = msg;
+}
+
+function atualizarBadgeReuniao() {
+  const mes = new Date().getMonth() + 1;
+  const prox = REUNIOES.find(r => r.mes >= mes);
+  document.getElementById('badgeReuniao').textContent = prox ? 'Próxima: ' + prox.label : 'Ciclo 2026 encerrado';
+}
+
+// ═══════════════════════════════════════════════════════════
+// CARGA DE DADOS
+// ═══════════════════════════════════════════════════════════
+async function carregarDados() {
+  dadosEscolas = {};
+  try {
+    const snap = await db.ref('/').get();
+    if (!snap.exists()) { setStatus('err','Nenhum dado no Firebase'); renderVazio(); return; }
+
+    const root = snap.val();
+
+    // Percorre estrutura: pode ser { escolaCode: { turmas, alunos... } }
+    // ou um nível mais fundo
+    for (const [key, val] of Object.entries(root)) {
+      if (key === 'painel_busca_ativa') continue; // pular nó próprio do painel
+      if (val && typeof val === 'object' && (val.turmas || val.alunos || val.frequencia || val.nomeEscola)) {
+        dadosEscolas[key] = val;
+      } else if (val && typeof val === 'object') {
+        for (const [k2, v2] of Object.entries(val)) {
+          if (v2 && typeof v2 === 'object' && (v2.turmas || v2.alunos || v2.frequencia || v2.nomeEscola)) {
+            dadosEscolas[k2] = v2;
+          }
+        }
+      }
+    }
+
+    // Fallback: raiz é uma escola só
+    if (Object.keys(dadosEscolas).length === 0 && (root.turmas || root.alunos)) {
+      dadosEscolas['_escola'] = root;
+    }
+
+    const n = Object.keys(dadosEscolas).length;
+    setStatus(n > 0 ? 'ok' : 'err',
+      n > 0
+        ? `${n} escola(s) carregada(s) — ${new Date().toLocaleTimeString('pt-BR')}`
+        : 'Nenhuma escola encontrada no banco');
+    recalcular();
+  } catch(e) {
+    setStatus('err', 'Erro: ' + e.message);
+    console.error(e);
+    document.getElementById('loadingScreen').innerHTML =
+      `<div style="color:#B91C1C;text-align:center;padding:20px">
+        ⚠️ ${e.message}<br><br>
+        <button class="btn btn-primary" onclick="carregarDados()">↻ Tentar novamente</button>
+       </div>`;
+  }
+}
+
+async function carregarBuscaAtiva() {
+  try {
+    const snap = await db.ref('/painel_busca_ativa').get();
+    if (snap.exists()) {
+      const val = snap.val();
+      buscaAtiva = Array.isArray(val) ? val : Object.values(val);
+    }
+  } catch(e) { console.warn('busca ativa:', e); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// CÁLCULO
+// ═══════════════════════════════════════════════════════════
+function recalcular() {
+  bimestre   = parseInt(document.getElementById('selBimestre').value);
+  metaFreq   = parseFloat(document.getElementById('metaFreq').value)   || 90;
+  metaEvasao = parseFloat(document.getElementById('metaEvasao').value) || 2;
+
+  const escolas = Object.keys(dadosEscolas);
+  if (!escolas.length) { renderVazio(); return; }
+  renderDashboard(escolas.map(c => calcularEscola(c, dadosEscolas[c])));
+}
+
+function calcularEscola(code, dados) {
+  const turmas   = toArr(dados.turmas);
+  const alunos   = toArr(dados.alunos);
+  const freqData = dados.frequencia || {};
+  const nome     = dados.nomeEscola || dados.configEscola?.nomeEscola || code;
+
+  const alunosAtivos = alunos.filter(a => a && a.nome);
+  const totalAlunos  = alunosAtivos.length;
+
+  // Frequência por aluno
+  const fr = {}; // { id: { p,f,j,total } }
+  for (const [tid, tDados] of Object.entries(freqData)) {
+    if (!tDados || typeof tDados !== 'object') continue;
+    for (const [bimKey, bimDados] of Object.entries(tDados)) {
+      const bimNum = parseInt(String(bimKey).replace(/\D/g,'')) || 0;
+      if (bimestre !== 0 && bimNum !== bimestre) continue;
+      if (!bimDados || typeof bimDados !== 'object') continue;
+      for (const [, diaDados] of Object.entries(bimDados)) {
+        if (!diaDados || typeof diaDados !== 'object') continue;
+        for (const [aid, status] of Object.entries(diaDados)) {
+          if (!fr[aid]) fr[aid] = {p:0,f:0,j:0,total:0};
+          fr[aid].total++;
+          if (status==='P') fr[aid].p++;
+          else if (status==='F') fr[aid].f++;
+          else if (status==='J') fr[aid].j++;
+        }
+      }
+    }
+  }
+
+  let totalDias=0, totalP=0;
+  for (const v of Object.values(fr)) { totalDias+=v.total; totalP+=v.p; }
+  const taxaFreq = totalDias > 0 ? (totalP/totalDias)*100 : null;
+
+  // Alunos em risco (≥15% faltas)
+  const emRisco = [];
+  for (const aluno of alunosAtivos) {
+    const fid = fr[aluno.id] || fr[String(aluno.id)];
+    if (!fid || fid.total===0) continue;
+    const pct = (fid.f/fid.total)*100;
+    if (pct >= 15) {
+      const turma = turmas.find(t => String(t.id)===String(aluno.turmaId));
+      emRisco.push({ nome:aluno.nome, turma:turma?.nome||aluno.turmaId||'—', pct:pct.toFixed(1), faltas:fid.f, total:fid.total });
+    }
+  }
+  emRisco.sort((a,b) => b.pct - a.pct);
+
+  // Evasão: alunos sem nenhum registro no período
+  let semReg = 0;
+  if (totalDias > 0) {
+    for (const aluno of alunosAtivos) {
+      const fid = fr[aluno.id] || fr[String(aluno.id)];
+      if (!fid || fid.total===0) semReg++;
+    }
+  }
+  const taxaEvasao = totalAlunos > 0 ? (semReg/totalAlunos)*100 : 0;
+
+  // Distorção idade-série
+  let distCount=0, distTotal=0;
+  for (const aluno of alunosAtivos) {
+    if (!aluno.nasc) continue;
+    const turma = turmas.find(t => String(t.id)===String(aluno.turmaId));
+    if (!turma) continue;
+    const anoEsp = parseInt(String(turma.ano||'').replace(/\D/g,''));
+    if (!anoEsp) continue;
+    const partes = String(aluno.nasc).split('/');
+    if (partes.length < 3) continue;
+    const anoNasc = parseInt(partes[2]);
+    if (isNaN(anoNasc)) continue;
+    distTotal++;
+    if ((2026 - anoNasc) > (6 + anoEsp - 1 + 2)) distCount++;
+  }
+  const distorcao = distTotal > 0 ? (distCount/distTotal)*100 : null;
+
+  const buscaEsc   = buscaAtiva.filter(b => b.escola===code || b.escola===nome);
+  const reintegrados = buscaEsc.filter(b => b.situacao==='reintegrado').length;
+
+  return { code, nome, totalAlunos, totalTurmas:turmas.length,
+    taxaFreq, taxaEvasao, emRisco, semReg, distorcao,
+    buscaEsc, reintegrados, comDados: totalDias>0 };
+}
+
+function toArr(v) {
+  if (!v) return [];
+  return Array.isArray(v) ? v : Object.values(v);
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════
+function renderVazio() {
+  document.getElementById('mainContent').innerHTML =
+    `<div class="empty">⚠️ Nenhum dado encontrado para o período selecionado.<br>
+     Verifique se as escolas enviaram dados ao Firebase.</div>`;
+}
+
+function renderDashboard(escolas) {
+  const totalAlunos  = escolas.reduce((s,e)=>s+e.totalAlunos,0);
+  const totalTurmas  = escolas.reduce((s,e)=>s+e.totalTurmas,0);
+  const comDados     = escolas.filter(e=>e.comDados);
+  const freqVals     = comDados.map(e=>e.taxaFreq).filter(v=>v!==null);
+  const mediaFreq    = freqVals.length ? freqVals.reduce((a,b)=>a+b,0)/freqVals.length : null;
+  const totalRisco   = escolas.reduce((s,e)=>s+e.emRisco.length,0);
+  const totalSemReg  = escolas.reduce((s,e)=>s+e.semReg,0);
+  const txEvasaoRede = totalAlunos>0 ? (totalSemReg/totalAlunos)*100 : 0;
+  const totalBusca   = buscaAtiva.length;
+  const totalReint   = buscaAtiva.filter(b=>b.situacao==='reintegrado').length;
+
+  const fc = mediaFreq===null?'cinza':mediaFreq>=metaFreq?'verde':mediaFreq>=metaFreq-10?'amarelo':'vermelho';
+  const ec = txEvasaoRede<=metaEvasao?'verde':txEvasaoRede<=metaEvasao*2?'amarelo':'vermelho';
+
+  let h = `<div class="cards-grid">
+    <div class="card azul">
+      <div class="card-icon">🏫</div>
+      <div class="card-label">Escolas com dados</div>
+      <div class="card-value">${comDados.length}<span style="font-size:18px;color:var(--sub)"> / ${escolas.length}</span></div>
+      <div class="card-meta">${totalAlunos} alunos · ${totalTurmas} turmas</div>
+    </div>
+    <div class="card ${fc}">
+      <div class="card-icon">📅</div>
+      <div class="card-label">Frequência Média da Rede</div>
+      <div class="card-value">${mediaFreq!==null?mediaFreq.toFixed(1)+'%':'—'}</div>
+      <div class="card-pct ${fc==='verde'?'ok':fc==='amarelo'?'warn':'bad'}">
+        Meta: ≥ ${metaFreq}% ${mediaFreq!==null?(mediaFreq>=metaFreq?'✔':'✘'):''}
+      </div>
+    </div>
+    <div class="card ${ec}">
+      <div class="card-icon">🚪</div>
+      <div class="card-label">Evasão Estimada</div>
+      <div class="card-value">${txEvasaoRede.toFixed(1)}%</div>
+      <div class="card-pct ${ec==='verde'?'ok':ec==='amarelo'?'warn':'bad'}">
+        ${totalSemReg} aluno(s) sem registro · Meta: &lt; ${metaEvasao}%
+      </div>
+    </div>
+    <div class="card ${totalRisco>0?'vermelho':'verde'}">
+      <div class="card-icon">⚠️</div>
+      <div class="card-label">Em Risco (≥15% faltas)</div>
+      <div class="card-value">${totalRisco}</div>
+      <div class="card-meta">Em ${comDados.length} escola(s) monitorada(s)</div>
+    </div>
+    <div class="card azul">
+      <div class="card-icon">🔍</div>
+      <div class="card-label">Busca Ativa</div>
+      <div class="card-value">${totalBusca}</div>
+      <div class="card-meta"><b>${totalReint}</b> reintegrados · ${totalBusca-totalReint} pendentes</div>
+    </div>
+    <div class="card cinza">
+      <div class="card-icon">📊</div>
+      <div class="card-label">Período Analisado</div>
+      <div class="card-value" style="font-size:20px">${bimestre===0?'Acumulado':bimestre+'º Bim'}</div>
+      <div class="card-meta">${new Date().toLocaleString('pt-BR')}</div>
+    </div>
+  </div>`;
+
+  // Tabela escolas
+  h += `<div class="section-title">📋 Situação por Escola</div>
+  <div class="table-wrap"><table>
+    <thead><tr>
+      <th>Escola</th><th>Alunos</th><th>Frequência</th>
+      <th>Evasão Est.</th><th>Em Risco</th><th>Busca Ativa</th><th>Situação</th>
+    </tr></thead>
+    <tbody>`;
+
+  for (const e of [...escolas].sort((a,b)=>(a.taxaFreq||100)-(b.taxaFreq||100))) {
+    const fq = e.taxaFreq;
+    const fp = fq===null?'<span class="pill pill-neu">Sem dados</span>'
+              :fq>=metaFreq?`<span class="pill pill-ok">${fq.toFixed(1)}%</span>`
+              :fq>=metaFreq-10?`<span class="pill pill-warn">${fq.toFixed(1)}%</span>`
+              :`<span class="pill pill-bad">${fq.toFixed(1)}%</span>`;
+    const ev = e.taxaEvasao;
+    const ep = ev<=metaEvasao?`<span class="pill pill-ok">${ev.toFixed(1)}%</span>`
+              :ev<=metaEvasao*2?`<span class="pill pill-warn">${ev.toFixed(1)}%</span>`
+              :`<span class="pill pill-bad">${ev.toFixed(1)}%</span>`;
+    const rp = e.emRisco.length===0?`<span class="pill pill-ok">0</span>`
+              :`<span class="pill pill-bad">${e.emRisco.length}</span>`;
+    const sit = !e.comDados?'<span class="pill pill-neu">Aguardando dados</span>'
+               :fq>=metaFreq&&ev<=metaEvasao?'<span class="pill pill-ok">Regular</span>'
+               :fq<metaFreq-10||ev>metaEvasao*2?'<span class="pill pill-bad">Atenção urgente</span>'
+               :'<span class="pill pill-warn">Monitorar</span>';
+    h += `<tr>
+      <td>${e.nome}</td><td>${e.totalAlunos}</td><td>${fp}</td>
+      <td>${ep}</td><td>${rp}</td>
+      <td><span class="pill pill-neu">${e.buscaEsc.length} (${e.reintegrados} reint.)</span></td>
+      <td>${sit}</td>
+    </tr>`;
+  }
+  h += `</tbody></table></div>`;
+
+  // Alunos em risco
+  const comRisco = escolas.filter(e=>e.emRisco.length>0);
+  if (comRisco.length) {
+    h += `<div class="section-title">🚨 Alunos em Risco de Evasão (≥ 15% de faltas)</div><div class="risco-grid">`;
+    for (const e of comRisco) {
+      h += `<div class="risco-card">
+        <div class="risco-header">⚠️ ${e.nome} — ${e.emRisco.length} aluno(s)</div>
+        <ul class="risco-list">`;
+      for (const a of e.emRisco.slice(0,10)) {
+        h += `<li class="risco-item">
+          <div><div class="risco-nome">${a.nome}</div>
+          <div class="risco-turma">${a.turma} · ${a.faltas} falta(s) de ${a.total} dia(s)</div></div>
+          <div class="risco-pct">${a.pct}%</div></li>`;
+      }
+      if (e.emRisco.length>10) h += `<li class="risco-item" style="color:var(--sub);font-size:12px">...e mais ${e.emRisco.length-10} aluno(s)</li>`;
+      h += `</ul></div>`;
+    }
+    h += `</div>`;
+  }
+
+  // Busca ativa
+  h += renderBuscaAtivaHtml(escolas);
+
+  document.getElementById('mainContent').innerHTML = h;
+
+  // Popular select do modal
+  const sel = document.getElementById('baEscola');
+  if (sel) sel.innerHTML = escolas.map(e=>`<option value="${e.code}">${e.nome}</option>`).join('');
+}
+
+function renderBuscaAtivaHtml(escolas) {
+  const total = buscaAtiva.length;
+  const reint = buscaAtiva.filter(b=>b.situacao==='reintegrado').length;
+  const pend  = buscaAtiva.filter(b=>b.situacao==='acionado').length;
+  const pills = { acionado:'pill-warn', reintegrado:'pill-ok', transferido:'pill-neu', nao_localizado:'pill-bad', desistencia:'pill-bad' };
+  const labels= { acionado:'Acionado', reintegrado:'Reintegrado', transferido:'Transferido', nao_localizado:'Não localizado', desistencia:'Desistência' };
+
+  let rows = [...buscaAtiva].reverse().slice(0,50).map(b=>`<tr>
+    <td>${b.escola||'—'}</td><td>${b.aluno||'—'}</td><td>${b.turma||'—'}</td>
+    <td><span class="pill ${pills[b.situacao]||'pill-neu'}">${labels[b.situacao]||b.situacao}</span></td>
+    <td style="font-size:12px;color:var(--sub)">${b.obs||'—'}</td>
+    <td style="font-size:11px;color:var(--sub)">${b.data||'—'}</td>
+  </tr>`).join('');
+  if (!rows) rows = `<tr><td colspan="6" class="empty">Nenhuma ocorrência registrada ainda.</td></tr>`;
+
+  return `<div class="busca-panel">
+    <div class="busca-header">
+      <h3>🔍 Busca Ativa — Registro de Ocorrências</h3>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:12px;opacity:.8">${total} total · ${reint} reintegrados · ${pend} pendentes</span>
+        <button class="btn btn-white btn-sm" onclick="abrirModal()">+ Nova Ocorrência</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Escola</th><th>Aluno</th><th>Turma</th><th>Situação</th><th>Observação</th><th>Data</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// BUSCA ATIVA — MODAL
+// ═══════════════════════════════════════════════════════════
+function abrirModal()  { document.getElementById('modalBusca').classList.add('open'); }
+function fecharModal() { document.getElementById('modalBusca').classList.remove('open'); }
+
+async function salvarBusca() {
+  const aluno = document.getElementById('baAluno').value.trim();
+  if (!aluno) { alert('Informe o nome do aluno.'); return; }
+  const reg = {
+    escola:    document.getElementById('baEscola').value,
+    aluno,
+    turma:     document.getElementById('baTurma').value.trim(),
+    situacao:  document.getElementById('baSituacao').value,
+    obs:       document.getElementById('baObs').value.trim(),
+    data:      new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR')
+  };
+  buscaAtiva.push(reg);
+  try {
+    await db.ref('/painel_busca_ativa').set(buscaAtiva);
+    fecharModal();
+    ['baAluno','baTurma','baObs'].forEach(id => document.getElementById(id).value = '');
+    recalcular();
+  } catch(e) {
+    alert('Erro ao salvar: ' + e.message);
+  }
+}
+</script>
+</body>
+</html>
 
