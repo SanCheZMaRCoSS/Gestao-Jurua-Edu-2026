@@ -358,29 +358,16 @@ function atualizarBadgeReuniao() {
 async function carregarDados() {
   dadosEscolas = {};
   try {
-    const snap = await db.ref('/').get();
-    if (!snap.exists()) { setStatus('err','Nenhum dado no Firebase'); renderVazio(); return; }
+    // Estrutura do Firebase: /escolas/{escolaCode}/
+    const snap = await db.ref('/escolas').get();
+    if (!snap.exists()) { setStatus('err','Nenhum dado em /escolas no Firebase'); renderVazio(); return; }
 
     const root = snap.val();
-
-    // Percorre estrutura: pode ser { escolaCode: { turmas, alunos... } }
-    // ou um nível mais fundo
     for (const [key, val] of Object.entries(root)) {
-      if (key === 'painel_busca_ativa') continue; // pular nó próprio do painel
-      if (val && typeof val === 'object' && (val.turmas || val.alunos || val.frequencia || val.nomeEscola)) {
+      if (key === '_painel_busca_ativa') continue;
+      if (val && typeof val === 'object') {
         dadosEscolas[key] = val;
-      } else if (val && typeof val === 'object') {
-        for (const [k2, v2] of Object.entries(val)) {
-          if (v2 && typeof v2 === 'object' && (v2.turmas || v2.alunos || v2.frequencia || v2.nomeEscola)) {
-            dadosEscolas[k2] = v2;
-          }
-        }
       }
-    }
-
-    // Fallback: raiz é uma escola só
-    if (Object.keys(dadosEscolas).length === 0 && (root.turmas || root.alunos)) {
-      dadosEscolas['_escola'] = root;
     }
 
     const n = Object.keys(dadosEscolas).length;
@@ -402,7 +389,7 @@ async function carregarDados() {
 
 async function carregarBuscaAtiva() {
   try {
-    const snap = await db.ref('/painel_busca_ativa').get();
+    const snap = await db.ref('/escolas/_painel_busca_ativa').get();
     if (snap.exists()) {
       const val = snap.val();
       buscaAtiva = Array.isArray(val) ? val : Object.values(val);
@@ -690,7 +677,7 @@ async function salvarBusca() {
   };
   buscaAtiva.push(reg);
   try {
-    await db.ref('/painel_busca_ativa').set(buscaAtiva);
+    await db.ref('/escolas/_painel_busca_ativa').set(buscaAtiva);
     fecharModal();
     ['baAluno','baTurma','baObs'].forEach(id => document.getElementById(id).value = '');
     recalcular();
@@ -701,4 +688,3 @@ async function salvarBusca() {
 </script>
 </body>
 </html>
-
