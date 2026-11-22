@@ -134,6 +134,27 @@ legend{padding:0 8px;font-weight:700;color:var(--primary-dark);font-size:13.5px;
 .modal-close{position:absolute;top:16px;right:18px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);}
 
 #toast{position:fixed;bottom:20px;right:20px;background:var(--toast-bg);color:var(--toast-text);padding:12px 18px;border-radius:8px;font-size:13.5px;box-shadow:0 4px 18px rgba(0,0,0,0.25);display:none;z-index:1100;}
+
+/* ---------- FICHA INDIVIDUAL (impressão / salvar como PDF) ---------- */
+#area-impressao{background:#ffffff;color:#1d2733;}
+.ficha{max-width:800px;margin:0 auto;padding:10px;font-family:'Segoe UI',Roboto,Arial,sans-serif;}
+.ficha-cabecalho{display:flex;align-items:center;gap:14px;border-bottom:3px solid #154a6e;padding-bottom:12px;margin-bottom:18px;}
+.ficha-cabecalho img{height:54px;width:auto;}
+.ficha-cabecalho h2{margin:0;font-size:17px;color:#154a6e;}
+.ficha-cabecalho p{margin:2px 0 0;font-size:12px;color:#64748b;}
+.ficha-secao{margin-bottom:16px;}
+.ficha-secao h3{font-size:12.5px;text-transform:uppercase;letter-spacing:0.4px;color:#154a6e;border-bottom:1px solid #e2e8f0;padding-bottom:5px;margin:0 0 8px;}
+.ficha-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 20px;}
+.ficha-item{font-size:12.5px;padding:3px 0;border-bottom:1px dotted #e2e8f0;}
+.ficha-item b{display:block;color:#64748b;font-size:10.5px;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:1px;}
+.ficha-obs{font-size:12.5px;white-space:pre-wrap;}
+.ficha-rodape{margin-top:22px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:10.5px;color:#64748b;display:flex;justify-content:space-between;}
+@media print{
+  body *{visibility:hidden;}
+  #area-impressao, #area-impressao *{visibility:visible;}
+  #area-impressao{position:absolute;top:0;left:0;width:100%;}
+  @page{margin:14mm;}
+}
 .muted{color:var(--muted);font-size:12.5px;}
 .actions-col{white-space:nowrap;}
 footer.note{text-align:center;color:var(--muted);font-size:11.5px;padding:18px;}
@@ -403,6 +424,7 @@ footer.note{text-align:center;color:var(--muted);font-size:11.5px;padding:18px;}
 </div>
 
 <div id="toast"></div>
+<div id="area-impressao" class="hidden"></div>
 
 <script>
 /* ======================================================================
@@ -623,12 +645,128 @@ function renderizarLista(){
       <td>${f.tel1||''}</td>
       <td class="actions-col">
         <button class="btn btn-outline btn-sm" onclick="abrirFormulario('${f.id}')">Editar</button>
+        <button class="btn btn-outline btn-sm" onclick="imprimirFicha('${f.id}')">📄 Ficha</button>
       </td>
     </tr>
   `).join('') || '<tr><td colspan="8" class="muted">Nenhum funcionário encontrado.</td></tr>';
 
   document.getElementById('contagem-lista').textContent = `${lista.length} funcionário(s) encontrado(s)`;
 }
+
+/* ---------------- FICHA INDIVIDUAL (impressão / salvar como PDF) ---------------- */
+function formatarDataBR(iso){
+  if(!iso) return '';
+  const partes = String(iso).split('-');
+  if(partes.length !== 3) return iso;
+  const [ano,mes,dia] = partes;
+  return `${dia}/${mes}/${ano}`;
+}
+
+function campoFicha(rotulo, valor){
+  return `<div class="ficha-item"><b>${rotulo}</b>${(valor===undefined||valor===null||valor==='')?'—':valor}</div>`;
+}
+
+function montarFichaHtml(f){
+  const logoSrc = document.querySelector('.logo-semed')?.src || '';
+  const agora = new Date();
+  const emitidoEm = agora.toLocaleDateString('pt-BR') + ' às ' + agora.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const emitidoPor = (typeof perfilAtual !== 'undefined' && perfilAtual) ? perfilAtual.nome : '';
+
+  return `
+    <div class="ficha">
+      <div class="ficha-cabecalho">
+        ${logoSrc ? `<img src="${logoSrc}">` : ''}
+        <div>
+          <h2>Ficha Cadastral de Funcionário</h2>
+          <p>SEMED Juruá/AM — Secretaria Municipal de Educação</p>
+        </div>
+      </div>
+
+      <div class="ficha-secao">
+        <h3>Dados pessoais</h3>
+        <div class="ficha-grid">
+          ${campoFicha('Nome completo', f.nome)}
+          ${campoFicha('CPF', f.cpf)}
+          ${campoFicha('RG', f.rg)}
+          ${campoFicha('Órgão emissor / UF', f.rgOrgao)}
+          ${campoFicha('Data de nascimento', formatarDataBR(f.nascimento))}
+          ${campoFicha('Sexo', f.sexo)}
+          ${campoFicha('Estado civil', f.estadoCivil)}
+          ${campoFicha('Naturalidade / UF', f.naturalidade)}
+          ${campoFicha('Nome da mãe', f.nomeMae)}
+          ${campoFicha('Nome do pai', f.nomePai)}
+          ${campoFicha('Telefone principal', f.tel1)}
+          ${campoFicha('Telefone secundário', f.tel2)}
+          ${campoFicha('E-mail', f.email)}
+          ${campoFicha('Endereço', f.endereco)}
+          ${campoFicha('Zona', f.zona)}
+          ${campoFicha('CEP', f.cep)}
+          ${campoFicha('PIS/PASEP', f.pis)}
+          ${campoFicha('Título Eleitoral', f.tituloEleitoral)}
+        </div>
+      </div>
+
+      <div class="ficha-secao">
+        <h3>Dados funcionais</h3>
+        <div class="ficha-grid">
+          ${campoFicha('Matrícula', f.matricula)}
+          ${campoFicha('Cargo/Função', f.cargo)}
+          ${campoFicha('Lotação (escola/setor)', f.lotacao)}
+          ${campoFicha('Tipo de vínculo', f.vinculoTipo)}
+          ${campoFicha('Situação atual', f.situacao)}
+          ${campoFicha('Data de admissão', formatarDataBR(f.admissao))}
+          ${campoFicha('Carga horária semanal', f.cargaHoraria)}
+          ${campoFicha('Turno', f.turno)}
+          ${campoFicha('Número da portaria/contrato', f.portaria)}
+        </div>
+      </div>
+
+      <div class="ficha-secao">
+        <h3>Formação acadêmica</h3>
+        <div class="ficha-grid">
+          ${campoFicha('Nível de escolaridade', f.escolaridade)}
+          ${campoFicha('Curso', f.curso)}
+          ${campoFicha('Instituição', f.instituicao)}
+          ${campoFicha('Ano de conclusão', f.anoConclusao)}
+          ${campoFicha('Pós-graduação/especializações', f.posGraduacao)}
+        </div>
+      </div>
+
+      <div class="ficha-secao">
+        <h3>Dados bancários</h3>
+        <div class="ficha-grid">
+          ${campoFicha('Banco', f.banco)}
+          ${campoFicha('Agência', f.agencia)}
+          ${campoFicha('Conta', f.conta)}
+        </div>
+      </div>
+
+      ${f.observacoes ? `
+      <div class="ficha-secao">
+        <h3>Observações</h3>
+        <div class="ficha-obs">${f.observacoes}</div>
+      </div>` : ''}
+
+      <div class="ficha-rodape">
+        <span>Emitido em ${emitidoEm}${emitidoPor ? ' por ' + emitidoPor : ''}</span>
+        <span>Sistema de Cadastro de Funcionários — SEMED Juruá/AM</span>
+      </div>
+    </div>`;
+}
+
+function imprimirFicha(id){
+  const f = funcionarios[id];
+  if(!f){ mostrarToast('Funcionário não encontrado.'); return; }
+  const area = document.getElementById('area-impressao');
+  area.innerHTML = montarFichaHtml(f);
+  area.classList.remove('hidden');
+  window.print();
+}
+
+window.addEventListener('afterprint', () => {
+  const area = document.getElementById('area-impressao');
+  if(area){ area.classList.add('hidden'); area.innerHTML = ''; }
+});
 
 /* ---------------- FORMULÁRIO ---------------- */
 function abrirFormulario(id){
